@@ -341,25 +341,27 @@
             background: var(--color-secondary-hover);
         }
         
-          .add-round-btn {
-            display: none !important;
+        .add-round-btn {
+            display: none;
             background: transparent;
-            width: 32px !important;
-            height: 32px !important;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             padding: 0;
-            font-size: 16px !important;
-            margin: 0;
-            margin-left: 10px;
+            font-size: 18px;
+            font-weight: normal;
+            margin: 0 0 0 10px;
             flex-shrink: 0;
-            color: #28a745 !important;  /* ERZWINGT Golf-Grün */
-            border: none !important;
+            color: #28a745;
+            border: none;
+            line-height: 1;
+            cursor: pointer;
         }
         
         .add-round-btn:hover {
             background: transparent;
-            transform: scale(1.05);
-            color: #218838 !important;  /* Dunkler grün */
+            transform: scale(1.1);
+            color: #218838;
         }
         
         @media (max-width: 768px) {
@@ -368,16 +370,10 @@
             }
             
             .add-round-btn {
-                display: inline-block !important;
-                width: 32px !important;
-                height: 32px !important;
-                font-size: 16px !important;
-                color: #28a745 !important;
-                border: none !important;
+                display: inline-block;
             }
         }
 
-        
     </style>
 </head>
 <body>
@@ -481,8 +477,8 @@
                         <button class="toggle-stats-btn small" onclick="toggleAdvancedStats()">
                             📊 Erweiterte Statistiken
                         </button>
-                        <button class="add-round-btn" onclick="scrollToAddRound()" title="Neue Runde erfassen" style="color: #28a745 !important;">
-                            ➕
+                        <button class="add-round-btn" onclick="scrollToAddRound()" title="Neue Runde erfassen">
+                            +
                         </button>
                     </div>
                 </div>
