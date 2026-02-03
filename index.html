@@ -341,25 +341,25 @@
             background: var(--color-secondary-hover);
         }
         
-         .add-round-btn {
-            display: none;
+          .add-round-btn {
+            display: none !important;
             background: transparent;
-            width: 32px;
-            height: 32px;
+            width: 32px !important;
+            height: 32px !important;
             border-radius: 50%;
             padding: 0;
-            font-size: 16px;
+            font-size: 16px !important;
             margin: 0;
             margin-left: 10px;
             flex-shrink: 0;
-            color: var(--color-primary);
-            border: none;
+            color: #28a745 !important;  /* ERZWINGT Golf-Grün */
+            border: none !important;
         }
         
         .add-round-btn:hover {
             background: transparent;
             transform: scale(1.05);
-            color: var(--color-primary-hover);
+            color: #218838 !important;  /* Dunkler grün */
         }
         
         @media (max-width: 768px) {
@@ -368,13 +368,15 @@
             }
             
             .add-round-btn {
-                display: inline-block;
-                width: 32px;
-                height: 32px;
-                font-size: 16px;
-                border: none;
+                display: inline-block !important;
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 16px !important;
+                color: #28a745 !important;
+                border: none !important;
             }
         }
+
         
     </style>
 </head>
@@ -479,7 +481,7 @@
                         <button class="toggle-stats-btn small" onclick="toggleAdvancedStats()">
                             📊 Erweiterte Statistiken
                         </button>
-                        <button class="add-round-btn" onclick="scrollToAddRound()" title="Neue Runde erfassen">
+                        <button class="add-round-btn" onclick="scrollToAddRound()" title="Neue Runde erfassen" style="color: #28a745 !important;">
                             ➕
                         </button>
                     </div>
