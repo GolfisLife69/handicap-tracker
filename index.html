@@ -151,6 +151,17 @@
             background: var(--color-bg-primary);
             color: var(--color-text-primary);
         }
+
+        input[type="date"] {
+            padding: 12px 8px 12px 12px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+        }
         
         input:focus, select:focus {
             outline: none;
