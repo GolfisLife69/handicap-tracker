@@ -352,14 +352,14 @@
             margin: 0;
             margin-left: 10px;
             flex-shrink: 0;
-            color: #28a745;
+            color: var(--color-primary);
             border: none;
         }
         
         .add-round-btn:hover {
             background: transparent;
             transform: scale(1.05);
-            color: #218838;
+            color: var(--color-primary-hover);
         }
         
         @media (max-width: 768px) {
@@ -479,7 +479,7 @@
                         <button class="toggle-stats-btn small" onclick="toggleAdvancedStats()">
                             📊 Erweiterte Statistiken
                         </button>
-                        <button class="add-round-btn small" onclick="scrollToAddRound()" title="Neue Runde erfassen">
+                        <button class="add-round-btn" onclick="scrollToAddRound()" title="Neue Runde erfassen">
                             ➕
                         </button>
                     </div>
