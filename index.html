@@ -1250,60 +1250,138 @@
             const isMobile = window.innerWidth <= 768;
             
             canvas.width = Math.min(containerWidth, 600);
-            canvas.height = isMobile ? 200 : 250;
+            canvas.height = isMobile ? 250 : 300;
             
             const width = canvas.width;
             const height = canvas.height;
-
             
-            const hcpHistory = [];
+            const padding = { left: 50, right: 30, top: 30, bottom: 40 };
+            const chartWidth = width - padding.left - padding.right;
+            const chartHeight = height - padding.top - padding.bottom;
+            
+            // Berechne INOFFIZIELLES Handicap (alle Runden)
+            const unofficialHistory = [];
             for (let i = 0; i < rounds.length; i++) {
                 const tempRounds = rounds.slice(0, i + 1);
                 const allDiffs = tempRounds.map(r => r.scoreDifferential).sort((a,b) => a - b);
                 const n = Math.min(8, allDiffs.length);
                 const avg = allDiffs.slice(0, n).reduce((a,b) => a + b, 0) / n;
-                hcpHistory.push(Math.round(avg * 10) / 10);
+                unofficialHistory.push(Math.round(avg * 10) / 10);
             }
             
-            const maxHcp = Math.max(...hcpHistory, myGolfer.startHcp);
-            const minHcp = Math.min(...hcpHistory);
+            // Berechne OFFIZIELLES Handicap (nur offizielle Runden)
+            const officialHistory = [];
+            for (let i = 0; i < rounds.length; i++) {
+                const tempRounds = rounds.slice(0, i + 1).filter(r => r.official !== false);
+                if (tempRounds.length === 0) {
+                    officialHistory.push(myGolfer.startHcp);
+                    continue;
+                }
+                const allDiffs = tempRounds.map(r => r.scoreDifferential).sort((a,b) => a - b);
+                const n = Math.min(8, allDiffs.length);
+                const avg = allDiffs.slice(0, n).reduce((a,b) => a + b, 0) / n;
+                officialHistory.push(Math.round(avg * 10) / 10);
+            }
+            
+            // Finde min/max für Y-Achse
+            const allValues = [...unofficialHistory, ...officialHistory];
+            const maxHcp = Math.ceil(Math.max(...allValues));
+            const minHcp = Math.floor(Math.min(...allValues));
             const range = maxHcp - minHcp || 1;
             
             ctx.clearRect(0, 0, width, height);
             
-            ctx.strokeStyle = '#28a745';
-            ctx.lineWidth = 3;
+            // Zeichne Hintergrund-Gitter und Y-Achsen-Labels
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+            ctx.lineWidth = 1;
+            ctx.fillStyle = '#666';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'right';
+            
+            const steps = Math.min(5, range + 1);
+            for (let i = 0; i <= steps; i++) {
+                const hcpValue = minHcp + (range * i / steps);
+                const y = padding.top + chartHeight - (chartHeight * i / steps);
+                
+                // Horizontale Gitterlinie
+                ctx.setLineDash([2, 2]);
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(width - padding.right, y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Y-Achsen-Label
+                ctx.fillText(hcpValue.toFixed(1), padding.left - 10, y + 4);
+            }
+            
+            // Hilfsfunktion: HCP-Wert zu Y-Koordinate
+            const hcpToY = (hcp) => {
+                return padding.top + chartHeight - ((hcp - minHcp) / range) * chartHeight;
+            };
+            
+            // Zeichne OFFIZIELLE Linie (gelb, gestrichelt)
+            ctx.strokeStyle = '#ffc107';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             
             ctx.beginPath();
-            hcpHistory.forEach((hcp, i) => {
-                const x = (i / (hcpHistory.length - 1)) * (width - 60) + 30;
-                const y = height - 40 - ((hcp - minHcp) / range) * (height - 80);
+            officialHistory.forEach((hcp, i) => {
+                const x = padding.left + (i / (rounds.length - 1)) * chartWidth;
+                const y = hcpToY(hcp);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Zeichne INOFFIZIELLE Linie (grün, durchgezogen)
+            ctx.strokeStyle = '#28a745';
+            ctx.lineWidth = 3;
+            
+            ctx.beginPath();
+            unofficialHistory.forEach((hcp, i) => {
+                const x = padding.left + (i / (rounds.length - 1)) * chartWidth;
+                const y = hcpToY(hcp);
                 if (i === 0) ctx.moveTo(x, y);
                 else ctx.lineTo(x, y);
             });
             ctx.stroke();
             
-            ctx.strokeStyle = '#ffc107';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([5, 5]);
-            const startY = height - 40 - ((myGolfer.startHcp - minHcp) / range) * (height - 80);
-            ctx.beginPath();
-            ctx.moveTo(30, startY);
-            ctx.lineTo(width - 30, startY);
-            ctx.stroke();
-            ctx.setLineDash([]);
-            
+            // Zeichne Punkte auf INOFFIZIELLER Linie
             ctx.fillStyle = '#28a745';
-            hcpHistory.forEach((hcp, i) => {
-                const x = (i / (hcpHistory.length - 1)) * (width - 60) + 30;
-                const y = height - 40 - ((hcp - minHcp) / range) * (height - 80);
+            unofficialHistory.forEach((hcp, i) => {
+                const x = padding.left + (i / (rounds.length - 1)) * chartWidth;
+                const y = hcpToY(hcp);
                 ctx.beginPath();
                 ctx.arc(x, y, 4, 0, 2 * Math.PI);
                 ctx.fill();
             });
+            
+            // Legende
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'left';
+            
+            // Grüne Linie Legende
+            ctx.fillStyle = '#28a745';
+            ctx.fillRect(padding.left, height - 25, 15, 3);
+            ctx.fillText('Inoffiziell (alle Runden)', padding.left + 20, height - 20);
+            
+            // Gelbe Linie Legende
+            ctx.strokeStyle = '#ffc107';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(padding.left + 200, height - 24);
+            ctx.lineTo(padding.left + 215, height - 24);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#ffc107';
+            ctx.fillText('Offiziell (nur gewertete)', padding.left + 220, height - 20);
         }
+
         
         function addCourse() {
             const name = document.getElementById('courseName').value.trim();
