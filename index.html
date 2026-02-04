@@ -585,7 +585,73 @@
             loadData();
             checkSetup();
         }
-        
+        // ═══════════════════════════════════════════════════════════════
+        // WHS 2024: Expected Score Differential Lookup-Tabelle
+        // ═══════════════════════════════════════════════════════════════
+        function getExpectedScoreDifferential(handicapIndex) {
+            // Lookup-Tabelle für Expected 9-Hole Score Differential
+            // Quelle: USGA World Handicap System 2024
+            const expectedScoreTable = {
+                '-5': 3.8, '-4': 4.0, '-3': 4.2, '-2': 4.4, '-1': 4.6,
+                '0': 4.8, '1': 5.0, '2': 5.2, '3': 5.4, '4': 5.6,
+                '5': 5.8, '6': 6.0, '7': 6.2, '8': 6.4, '9': 6.6,
+                '10': 6.8, '11': 7.0, '12': 7.2, '13': 7.4, '14': 7.6,
+                '15': 7.8, '16': 8.0, '17': 8.2, '18': 8.4, '19': 8.6,
+                '20': 8.8, '21': 9.0, '22': 9.2, '23': 9.4, '24': 9.6,
+                '25': 9.8, '26': 10.0, '28': 10.4, '30': 10.8, '32': 11.2,
+                '34': 11.6, '36': 12.0, '40': 13.0, '45': 14.0, '50': 15.0,
+                '54': 16.0
+            };
+            
+            // Runde Handicap Index auf nächste ganze Zahl
+            const roundedHcp = Math.round(handicapIndex);
+            
+            // Direkte Übereinstimmung in Tabelle
+            if (expectedScoreTable[roundedHcp.toString()] !== undefined) {
+                return expectedScoreTable[roundedHcp.toString()];
+            }
+            
+            // Lineare Interpolation für Zwischenwerte
+            const keys = Object.keys(expectedScoreTable).map(Number).sort((a,b) => a-b);
+            for (let i = 0; i < keys.length - 1; i++) {
+                if (roundedHcp >= keys[i] && roundedHcp < keys[i+1]) {
+                    const x0 = keys[i];
+                    const x1 = keys[i+1];
+                    const y0 = expectedScoreTable[x0];
+                    const y1 = expectedScoreTable[x1];
+                    // Lineare Interpolation: y = y0 + (y1-y0) * (x-x0) / (x1-x0)
+                    return y0 + (y1 - y0) * (roundedHcp - x0) / (x1 - x0);
+                }
+            }
+            
+            // Fallback für extreme Werte außerhalb der Tabelle
+            if (roundedHcp < -5) return 3.8;
+            if (roundedHcp > 54) return 16.0;
+            
+            return 8.0; // Default Mittelwert
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // WHS 2024: 9-Loch zu 18-Loch Äquivalent Konvertierung
+        // ═══════════════════════════════════════════════════════════════
+        function calculate9HoleTo18HoleEquivalent(strokes9, cr9, sr9, currentHandicapIndex) {
+            // 1. Berechne 9-Loch Score Differential (normale Formel)
+            const scoreDiff9 = ((strokes9 - cr9) * 113 / sr9);
+            
+            // 2. Hole Expected Score Differential basierend auf aktuellem Handicap Index
+            const expectedSD9 = getExpectedScoreDifferential(currentHandicapIndex);
+            
+            // 3. Kombiniere zu 18-Loch Äquivalent
+            const scoreDiff18Equivalent = scoreDiff9 + expectedSD9;
+            
+            return {
+                scoreDiff9: parseFloat(scoreDiff9.toFixed(1)),
+                expectedSD9: parseFloat(expectedSD9.toFixed(1)),
+                scoreDiff18: parseFloat(scoreDiff18Equivalent.toFixed(1))
+            };
+        }
+
+
         function checkSetup() {
             const stored = localStorage.getItem('myGolfer');
             myGolfer = stored ? JSON.parse(stored) : null;
@@ -718,10 +784,64 @@
             }
 
         
-            // 9-Loch: CR halbieren, SR bleibt gleich (WHS-konform)
-            const cr = holes === 9 ? course.cr * 0.5 : course.cr;
-            const sr = course.sr;
-            const scoreDifferential = ((strokes - cr) * 113 / sr).toFixed(1);
+            // WHS 2024: Score Differential Berechnung
+            let scoreDifferential;
+            let cr, sr;
+            
+            if (holes === 9) {
+                // ═══ WHS 2024: 9-Loch mit Expected Score ═══
+                
+                // AUTOMATISCHE ERKENNUNG: Ist das ein 18-Loch Platz?
+                // Heuristik: Wenn CR > 40, dann ist es wahrscheinlich ein 18-Loch-Platz
+                const is18HoleCourse = course.cr > 40;
+                
+                if (is18HoleCourse) {
+                    // 18-Loch Platz, aber nur 9 Löcher gespielt
+                    // → Halbiere die Werte für 9-Loch
+                    cr = course.cr / 2;
+                    sr = course.sr / 2;
+                    
+                    console.log(`📌 18-Loch Platz erkannt, halbiert für 9-Loch:`, {
+                        originalCR: course.cr,
+                        originalSR: course.sr,
+                        cr9: cr,
+                        sr9: sr
+                    });
+                } else {
+                    // Echter 9-Loch Platz
+                    cr = course.cr;
+                    sr = course.sr;
+                }
+                
+                // Hole aktuellen Handicap Index
+                const currentHcp = myGolfer.handicapIndex !== undefined 
+                    ? myGolfer.handicapIndex 
+                    : myGolfer.startHcp;
+                
+                // Berechne 18-Loch Äquivalent Score Differential
+                const result = calculate9HoleTo18HoleEquivalent(strokes, cr, sr, currentHcp);
+                scoreDifferential = result.scoreDiff18;
+                
+                console.log(`9-Loch Runde (WHS 2024):`, {
+                    strokes: strokes,
+                    is18HoleCourse: is18HoleCourse,
+                    cr9: cr,
+                    sr9: sr,
+                    scoreDiff9: result.scoreDiff9,
+                    expectedSD9: result.expectedSD9,
+                    scoreDiff18: result.scoreDiff18,
+                    currentHcp: currentHcp
+                });
+                
+            } else {
+                // ═══ 18-Loch: Standard-Formel ═══
+                cr = course.cr;
+                sr = course.sr;
+                scoreDifferential = ((strokes - cr) * 113 / sr).toFixed(1);
+            }
+
+            
+            scoreDifferential = parseFloat(scoreDifferential);
 
             
             const isOfficial = document.getElementById('roundOfficial').checked;
@@ -1240,10 +1360,44 @@
             if (affectedRounds.length === 0) return;
         
             affectedRounds.forEach(round => {
-                const cr = round.holes === 9 ? course.cr * 0.5 : course.cr;
-                const sr = course.sr;
-                const newScoreDifferential = ((round.strokes - cr) * 113 / sr).toFixed(1);
-
+                // WHS 2024: Score Differential neu berechnen
+                let newScoreDifferential;
+                let cr, sr;
+                
+                if (round.holes === 9) {
+                // ═══ WHS 2024: 9-Loch mit Expected Score ═══
+                
+                // AUTOMATISCHE ERKENNUNG: Ist das ein 18-Loch Platz?
+                const is18HoleCourse = course.cr > 40;
+                
+                if (is18HoleCourse) {
+                    // 18-Loch Platz, aber nur 9 Löcher gespielt → halbieren
+                    cr = course.cr / 2;
+                    sr = course.sr / 2;
+                } else {
+                    // Echter 9-Loch Platz
+                    cr = course.cr;
+                    sr = course.sr;
+                }
+                
+                const currentHcp = myGolfer.handicapIndex !== undefined 
+                    ? myGolfer.handicapIndex 
+                    : myGolfer.startHcp;
+                
+                const result = calculate9HoleTo18HoleEquivalent(
+                    round.strokes, 
+                    cr, 
+                    sr, 
+                    currentHcp
+                );
+                newScoreDifferential = result.scoreDiff18.toFixed(1);
+                
+            } else {
+                // ═══ 18-Loch: Standard-Formel ═══
+                cr = course.cr;
+                sr = course.sr;
+                newScoreDifferential = ((round.strokes - cr) * 113 / sr).toFixed(1);
+            }
                 
                 round.cr = cr.toFixed(1);
                 round.sr = sr.toFixed(0);
