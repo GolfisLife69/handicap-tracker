@@ -893,6 +893,14 @@
             }
         
             const count = officialRounds.length;
+
+            // WHS-Regel: Bei weniger als 3 Runden wird Start-Handicap verwendet
+            if (count < 3) {
+                myGolfer.handicapIndex = myGolfer.startHcp;
+                myGolfer.countedRoundIds = [];
+                return;
+            }
+
             let numCounted = 1;  // Anzahl der gewerteten Runden
             let adjustment = 0;   // Anpassung (Bonus)
         
