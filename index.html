@@ -194,8 +194,8 @@
         }
         
         .round-list {
-            max-height: 500px;
-            overflow-y: auto;
+            /* max-height: 500px; */
+            /* overflow-y: auto; */
         }
         
         .round-item {
@@ -483,8 +483,10 @@
                 <input id="courseSR" type="number" placeholder="Slope Rating (18-Loch)">
                 <button onclick="addCourse()">Platz speichern</button>
 
-                
-                <div id="courseManageList" style="margin-top:15px;max-height:200px;overflow-y:auto;"></div>
+                <div id="courseManageList" style="margin-top:15px;"></div>
+                <button id="showAllCoursesBtn" class="show-all-rounds-btn" onclick="toggleAllCourses()" style="display: none; margin-top: 10px; font-size: 12px; padding: 8px;">
+                📋 Alle Plätze anzeigen
+                </button>
                 
                 <h2 style="margin-top: 30px;">🔄 Daten-Verwaltung</h2>
                 <button onclick="exportData()">💾 Daten exportieren (JSON)</button>
@@ -744,10 +746,29 @@
             if (courses.length === 0) {
                 select.innerHTML = '<option value="">Kein Platz - zuerst anlegen!</option>';
             } else {
-               select.innerHTML = courses.map(c => 
-                `<option value="${c.id}">${c.name} (CR ${c.cr.toFixed(1)}, SR ${c.sr})</option>`
-                ).join('');
-
+                // Zähle, wie oft jeder Platz gespielt wurde
+                const courseCounts = {};
+                if (myGolfer && myGolfer.rounds) {
+                    myGolfer.rounds.forEach(round => {
+                        const course = courses.find(c => c.name === round.course);
+                        if (course) {
+                            courseCounts[course.id] = (courseCounts[course.id] || 0) + 1;
+                        }
+                    });
+                }
+                
+                // Sortiere nach Häufigkeit (meist gespielt zuerst) für SELECT
+                const sortedCourses = [...courses].sort((a, b) => {
+                    const countA = courseCounts[a.id] || 0;
+                    const countB = courseCounts[b.id] || 0;
+                    return countB - countA;
+                });
+                
+                select.innerHTML = sortedCourses.map(c => {
+                    const playCount = courseCounts[c.id] || 0;
+                    const countText = playCount > 0 ? ` • ${playCount}x gespielt` : '';
+                    return `<option value="${c.id}">${c.name} (CR ${c.cr.toFixed(1)}, SR ${c.sr})${countText}</option>`;
+                }).join('');
             }
             
             const manageList = document.getElementById('courseManageList');
@@ -755,7 +776,24 @@
                 if (courses.length === 0) {
                     manageList.innerHTML = '<div style="text-align:center;color:var(--color-text-secondary);padding:20px;font-size:14px;">Keine Plätze angelegt</div>';
                 } else {
-                    manageList.innerHTML = courses.map(c => `
+                    // Button nur anzeigen wenn mehr als 3 Plätze
+                    const showAllCoursesBtn = document.getElementById('showAllCoursesBtn');
+                    const showAll = window.showAllCourses || false;
+                    
+                    if (courses.length > 3) {
+                        showAllCoursesBtn.style.display = 'block';
+                        showAllCoursesBtn.textContent = showAll ? '📋 Weniger anzeigen' : '📋 Alle Plätze anzeigen';
+                    } else {
+                        showAllCoursesBtn.style.display = 'none';
+                    }
+                    
+                    // Sortiere nach Neuheit (neueste zuerst) für VERWALTUNG
+                    const sortedCourses = [...courses].sort((a, b) => b.id - a.id);
+                    
+                    // Zeige nur 3 oder alle
+                    const displayCourses = (showAll || sortedCourses.length <= 3) ? sortedCourses : sortedCourses.slice(0, 3);
+                    
+                    manageList.innerHTML = displayCourses.map(c => `
                         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
                             <div style="flex:1;">
                                 <div style="font-weight:600;font-size:14px;">${c.name}</div>
@@ -770,6 +808,7 @@
                 }
             }
         }
+
         
         function saveRound() {
             const courseId = document.getElementById('roundCourse').value;
@@ -1179,7 +1218,11 @@
             }
         }
 
-        
+        function toggleAllCourses() {
+            window.showAllCourses = !window.showAllCourses;
+            renderCourses();
+        }
+
         function deleteRound(roundId) {
             if (!confirm('Diese Runde wirklich löschen?\n\nDein Handicap wird neu berechnet.')) return;
             
