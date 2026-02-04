@@ -462,9 +462,9 @@
         <div class="container">
             <div class="sidebar">
                 <h2>Neue Runde</h2>
-                <select id="roundCourse"></select>
+               <select id="roundCourse" style="height: 46px;"></select>
                 <input id="roundDate" type="date">
-                <select id="roundHoles">
+               <select id="roundHoles" style="height: 46px;">
                     <option value="18">18 Löcher</option>
                     <option value="9">9 Löcher</option>
                 </select>
@@ -488,9 +488,9 @@
                 
                 <h2 style="margin-top: 30px;">🔄 Daten-Verwaltung</h2>
                 <button onclick="exportData()">💾 Daten exportieren (JSON)</button>
-                <div class="file-input-wrapper">
+                <div class="file-input-wrapper" style="margin-bottom: 10px;">
                     <input type="file" id="importFile" accept=".json" onchange="importData(event)">
-                    <button class="secondary">📁 Daten importieren</button>
+                    <button class="secondary" style="margin-bottom: 0;">📁 Daten importieren</button>
                 </div>
                 <button class="secondary" onclick="showHandicapCalculation()">🧮 HCP-Berechnung anzeigen</button>
                 <button class="secondary" onclick="showEditProfile()">👤 Profil bearbeiten</button>
