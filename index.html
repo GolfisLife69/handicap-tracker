@@ -799,7 +799,7 @@
                     // 18-Loch Platz, aber nur 9 Löcher gespielt
                     // → Halbiere die Werte für 9-Loch
                     cr = course.cr / 2;
-                    sr = course.sr / 2;
+                    sr = course.sr;
                     
                     console.log(`📌 18-Loch Platz erkannt, halbiert für 9-Loch:`, {
                         originalCR: course.cr,
@@ -1381,7 +1381,7 @@
                 if (is18HoleCourse) {
                     // 18-Loch Platz, aber nur 9 Löcher gespielt → halbieren
                     cr = course.cr / 2;
-                    sr = course.sr / 2;
+                    sr = course.sr;
                 } else {
                     // Echter 9-Loch Platz
                     cr = course.cr;
