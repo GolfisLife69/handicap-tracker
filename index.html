@@ -601,6 +601,40 @@
             
             document.getElementById('roundDate').valueAsDate = new Date();
         }
+
+                // WHS-Konfiguration für Handicap-Berechnung
+        function getWHSConfig(roundCount) {
+            if (roundCount < 3) {
+                return null; // Keine Berechnung, Start-HCP verwenden
+            }
+            
+            const configs = {
+                3: { numCounted: 1, adjustment: -2.0 },
+                4: { numCounted: 1, adjustment: -1.0 },
+                5: { numCounted: 1, adjustment: 0 },
+                6: { numCounted: 2, adjustment: -1.0 },
+                7: { numCounted: 2, adjustment: -1.0 },
+                8: { numCounted: 2, adjustment: 0 },
+                9: { numCounted: 3, adjustment: 0 },
+                10: { numCounted: 3, adjustment: 0 },
+                11: { numCounted: 3, adjustment: 0 },
+                12: { numCounted: 4, adjustment: 0 },
+                13: { numCounted: 4, adjustment: 0 },
+                14: { numCounted: 4, adjustment: 0 },
+                15: { numCounted: 5, adjustment: 0 },
+                16: { numCounted: 5, adjustment: 0 },
+                17: { numCounted: 6, adjustment: 0 },
+                18: { numCounted: 6, adjustment: 0 },
+                19: { numCounted: 7, adjustment: 0 }
+            };
+            
+            if (roundCount >= 20) {
+                return { numCounted: 8, adjustment: 0 };
+            }
+            
+            return configs[roundCount] || { numCounted: 1, adjustment: 0 };
+        }
+
         
         function setupComplete() {
             const name = document.getElementById('myName').value.trim();
@@ -710,9 +744,13 @@
             const holes = parseInt(document.getElementById('roundHoles').value);
             const date = document.getElementById('roundDate').value;
         
-            if (!strokes || strokes < 18 || !date) {
-                return alert('Bitte alle Felder ausfüllen!');
+            const minStrokes = holes === 9 ? 20 : 40;
+            const maxStrokes = holes === 9 ? 80 : 160;
+            
+            if (!strokes || strokes < minStrokes || strokes > maxStrokes || !date) {
+                return alert(`Bitte gültige Schlagzahl eingeben (${minStrokes}-${maxStrokes} für ${holes} Löcher)!`);
             }
+
         
             // 9-Loch: CR halbieren, SR bleibt gleich (WHS-konform)
             const cr = holes === 9 ? course.cr * 0.5 : course.cr;
@@ -752,6 +790,7 @@
             updateUI();
             document.getElementById('roundStrokes').value = '';
             document.getElementById('roundHoles').value = '18';
+            document.getElementById('roundOfficial').checked = false;
 
             alert(`✅ Runde gespeichert!\n\nScore Differential: ${round.scoreDifferential}\nNeues offizielles HCP: ${myGolfer.handicapIndex.toFixed(1)}\nInoffizielles HCP: ${myGolfer.unofficialHandicap.toFixed(1)}`);
         }
@@ -765,45 +804,29 @@
         
             if (officialRounds.length === 0) {
                 myGolfer.handicapIndex = myGolfer.startHcp;
+                myGolfer.countedRoundIds = [];
                 return;
             }
+
         
             const count = officialRounds.length;
-            let numCounted = 1;  // Anzahl der gewerteten Runden
-            let adjustment = 0;   // Anpassung (Bonus)
-        
-            // WHS-Staffelung nach offiziellen Regeln
-            if (count >= 3 && count <= 4) {
-                numCounted = 1;
-                adjustment = count === 3 ? -2.0 : -1.0;
-            } else if (count === 5) {
-                numCounted = 1;
-                adjustment = 0;
-            } else if (count === 6) {
-                numCounted = 2;
-                adjustment = -1.0;
-            } else if (count >= 7 && count <= 8) {
-                numCounted = 2;
-                adjustment = 0;
-            } else if (count >= 9 && count <= 11) {
-                numCounted = 3;
-                adjustment = 0;
-            } else if (count >= 12 && count <= 14) {
-                numCounted = 4;
-                adjustment = 0;
-            } else if (count >= 15 && count <= 16) {
-                numCounted = 5;
-                adjustment = 0;
-            } else if (count >= 17 && count <= 18) {
-                numCounted = 6;
-                adjustment = 0;
-            } else if (count === 19) {
-                numCounted = 7;
-                adjustment = 0;
-            } else if (count >= 20) {
-                numCounted = 8;
-                adjustment = 0;
+
+            // WHS-Regel: Bei weniger als 3 Runden wird Start-Handicap verwendet
+            if (count < 3) {
+                myGolfer.handicapIndex = myGolfer.startHcp;
+                myGolfer.countedRoundIds = [];
+                return;
             }
+
+            const whsConfig = getWHSConfig(count);
+            if (!whsConfig) {
+                myGolfer.handicapIndex = myGolfer.startHcp;
+                myGolfer.countedRoundIds = [];
+                return;
+            }
+            
+            const { numCounted, adjustment } = whsConfig;
+
         
             const bestRounds = officialRounds.slice(0, numCounted);
             let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
@@ -1384,38 +1407,13 @@
             let numCounted = 1;
             let adjustment = 0;
         
-            // Gleiche WHS-Staffelung wie in updateMyHandicap
-            if (count >= 3 && count <= 4) {
-                numCounted = 1;
-                adjustment = count === 3 ? -2.0 : -1.0;
-            } else if (count === 5) {
-                numCounted = 1;
-                adjustment = 0;
-            } else if (count === 6) {
-                numCounted = 2;
-                adjustment = -1.0;
-            } else if (count >= 7 && count <= 8) {
-                numCounted = 2;
-                adjustment = 0;
-            } else if (count >= 9 && count <= 11) {
-                numCounted = 3;
-                adjustment = 0;
-            } else if (count >= 12 && count <= 14) {
-                numCounted = 4;
-                adjustment = 0;
-            } else if (count >= 15 && count <= 16) {
-                numCounted = 5;
-                adjustment = 0;
-            } else if (count >= 17 && count <= 18) {
-                numCounted = 6;
-                adjustment = 0;
-            } else if (count === 19) {
-                numCounted = 7;
-                adjustment = 0;
-            } else if (count >= 20) {
-                numCounted = 8;
-                adjustment = 0;
+            const whsConfig = getWHSConfig(count);
+            if (!whsConfig) {
+                // Anzeige für < 3 Runden
+                return;
             }
+            
+            const { numCounted, adjustment } = whsConfig;
         
             const bestRounds = officialRounds.slice(0, numCounted);
             const avgSD = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
