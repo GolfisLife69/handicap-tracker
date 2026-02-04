@@ -402,6 +402,32 @@
             }
         }
 
+        .show-all-rounds-btn {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 15px auto;
+            padding: 10px 20px;
+            background: var(--color-secondary);
+            color: var(--color-text-primary);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .show-all-rounds-btn:hover {
+            background: var(--color-secondary-hover);
+            transform: translateY(-1px);
+        }
+        
+        .rounds-hidden {
+            display: none;
+        }
+
 
     </style>
 </head>
@@ -533,6 +559,10 @@
                 </div>
                 
                 <div class="round-list" id="roundList"></div>
+                
+                <button id="showAllRoundsBtn" class="show-all-rounds-btn" onclick="toggleAllRounds()" style="display: none;">
+                    📋 Alle Runden anzeigen
+                </button>
                 
                 <div id="handicapChart" style="display: none;">
                     <canvas id="hcpCanvas"></canvas>
@@ -781,7 +811,7 @@
             myGolfer.countedRoundIds = bestRounds.map(r => r.id);
         }
 
-        
+    
         function updateUnofficialHandicap() {
             const allRounds = myGolfer.rounds
                 .slice(-20)
@@ -945,13 +975,28 @@
             
             if (rounds.length === 0) {
                 container.innerHTML = `<div style="text-align:center;color:var(--color-text-secondary);padding:40px;">Noch keine Runden erfasst</div>`;
+                document.getElementById('showAllRoundsBtn').style.display = 'none';
                 return;
             }
         
             // Hole die IDs der gewerteten Runden aus dem Golfer-Objekt
             const countedRoundIds = myGolfer.countedRoundIds || [];
+            
+            // Zeige Button nur wenn mehr als 5 Runden vorhanden
+            const showAllBtn = document.getElementById('showAllRoundsBtn');
+            const showAll = window.showAllRounds || false;
+            
+            if (rounds.length > 5) {
+                showAllBtn.style.display = 'block';
+                showAllBtn.textContent = showAll ? '📋 Weniger anzeigen' : '📋 Alle Runden anzeigen';
+            } else {
+                showAllBtn.style.display = 'none';
+            }
+            
+            // Entscheide wie viele Runden angezeigt werden
+            const displayRounds = (showAll || rounds.length <= 5) ? rounds : rounds.slice(0, 5);
         
-            container.innerHTML = rounds.slice(0, 20).map(r => {
+            container.innerHTML = displayRounds.map((r, index) => {
                 const diff = (r.scoreDifferential - r.playingHcp).toFixed(1);
                 const color = diff < 0 ? 'var(--color-primary)'
                     : diff > 3 ? 'var(--color-danger)'
@@ -987,6 +1032,19 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        function toggleAllRounds() {
+            window.showAllRounds = !window.showAllRounds;
+            renderRounds();
+            
+            // Scroll sanft zum Button wenn "weniger anzeigen" geklickt wurde
+            if (!window.showAllRounds) {
+                const btn = document.getElementById('showAllRoundsBtn');
+                if (btn) {
+                    btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
         }
 
         
