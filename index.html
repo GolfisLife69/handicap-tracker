@@ -252,6 +252,7 @@
             overflow: hidden;
             display: inline-block;
             width: 100%;
+            margin-bottom: 10px;
         }
         
         .file-input-wrapper input[type=file] {
@@ -801,12 +802,6 @@
                     cr = course.cr / 2;
                     sr = course.sr;
                     
-                    console.log(`📌 18-Loch Platz erkannt, halbiert für 9-Loch:`, {
-                        originalCR: course.cr,
-                        originalSR: course.sr,
-                        cr9: cr,
-                        sr9: sr
-                    });
                 } else {
                     // Echter 9-Loch Platz
                     cr = course.cr;
@@ -821,17 +816,6 @@
                 // Berechne 18-Loch Äquivalent Score Differential
                 const result = calculate9HoleTo18HoleEquivalent(strokes, cr, sr, currentHcp);
                 scoreDifferential = result.scoreDiff18;
-                
-                console.log(`9-Loch Runde (WHS 2024):`, {
-                    strokes: strokes,
-                    is18HoleCourse: is18HoleCourse,
-                    cr9: cr,
-                    sr9: sr,
-                    scoreDiff9: result.scoreDiff9,
-                    expectedSD9: result.expectedSD9,
-                    scoreDiff18: result.scoreDiff18,
-                    currentHcp: currentHcp
-                });
                 
             } else {
                 // ═══ 18-Loch: Standard-Formel ═══
