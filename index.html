@@ -488,11 +488,11 @@
                 
                 <h2 style="margin-top: 30px;">🔄 Daten-Verwaltung</h2>
                 <button onclick="exportData()">💾 Daten exportieren (JSON)</button>
-                <div class="file-input-wrapper" style="margin-bottom: 10px;">
+                <div class="file-input-wrapper" style="margin-bottom: 0;">
                     <input type="file" id="importFile" accept=".json" onchange="importData(event)">
-                    <button class="secondary" style="margin-bottom: 0;">📁 Daten importieren</button>
+                    <button class="secondary">📁 Daten importieren</button>
                 </div>
-                <button class="secondary" onclick="showHandicapCalculation()" style="margin-top: -5px;>🧮 HCP-Berechnung anzeigen</button>
+                <button class="secondary" onclick="showHandicapCalculation()">🧮 HCP-Berechnung anzeigen</button>
                 <button class="secondary" onclick="showEditProfile()">👤 Profil bearbeiten</button>
                 <button class="danger" onclick="clearData()">🗑️ Alles löschen</button>
             </div>
