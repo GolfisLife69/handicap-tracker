@@ -374,6 +374,35 @@
             }
         }
 
+        #handicapChart {
+            background: var(--color-bg-primary);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+        
+        #hcpCanvas {
+            width: 100%;
+            height: auto;
+            max-width: 600px;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        @media (max-width: 768px) {
+            #handicapChart {
+                padding: 15px;
+                margin-top: 15px;
+            }
+            
+            #hcpCanvas {
+                max-width: 100%;
+                min-height: 200px;
+            }
+        }
+
+
     </style>
 </head>
 <body>
@@ -505,11 +534,13 @@
                 
                 <div class="round-list" id="roundList"></div>
                 
-                <div id="handicapChart" style="background: var(--color-bg-primary); border-radius: 12px; padding: 20px; margin-top: 20px; display: none;">
-                    <canvas id="hcpCanvas" width="600" height="250"></canvas>
+                <div id="handicapChart" style="display: none;">
+                    <canvas id="hcpCanvas"></canvas>
                     <div style="margin-top:10px;font-size:14px;color:var(--color-text-secondary);text-align:center;">
                         Handicap-Entwicklung (letzte 20 Runden)
                     </div>
+                </div>
+
                 </div>
             </div>
         </div>
@@ -971,15 +1002,26 @@
         }
         
         function renderChart() {
-            const rounds = myGolfer.rounds.slice(-20).sort((a,b) => new Date(a.date) - new Date(b.date));
+            const rounds = myGolfer.rounds.slice(-20).sort((a, b) => new Date(a.date) - new Date(b.date));
+            
             if (rounds.length < 2) return;
             
             document.getElementById('handicapChart').style.display = 'block';
             
             const canvas = document.getElementById('hcpCanvas');
             const ctx = canvas.getContext('2d');
+            
+            // Responsive Canvas-Größe
+            const container = canvas.parentElement;
+            const containerWidth = container.clientWidth - 40;
+            const isMobile = window.innerWidth <= 768;
+            
+            canvas.width = Math.min(containerWidth, 600);
+            canvas.height = isMobile ? 200 : 250;
+            
             const width = canvas.width;
             const height = canvas.height;
+
             
             const hcpHistory = [];
             for (let i = 0; i < rounds.length; i++) {
@@ -1062,9 +1104,8 @@
         function editCourse(courseId) {
             const course = courses.find(c => c.id === courseId);
             if (!course) return;
-            
+        
             const oldName = course.name;
-            
             const newName = prompt('Platzname ändern:', course.name);
             if (newName === null) return;
             
@@ -1076,35 +1117,80 @@
             
             const newSR = prompt('Slope Rating ändern:', course.sr);
             if (newSR === null) return;
-            
+        
             const holes = parseInt(newHoles);
             const cr = parseFloat(newCR);
             const sr = parseInt(newSR);
-            
-            if (!newName.trim() || isNaN(holes) || (holes !== 9 && holes !== 18) || isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
-                return alert('❌ Ungültige Eingaben!\nLöcher: 9 oder 18\nCR min. 20, SR 55-155');
+        
+            if (!newName.trim() || isNaN(holes) || (holes !== 9 && holes !== 18) || 
+                isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
+                return alert('Ungültige Eingaben!\nLöcher: 9 oder 18\nCR min. 20, SR 55-155');
             }
-            
+        
+            const oldCR = course.cr;
+            const oldSR = course.sr;
+        
             course.name = newName.trim();
             course.holes = holes;
             course.cr = cr;
             course.sr = sr;
-            
+        
             const usedInRounds = myGolfer.rounds.filter(r => r.course === oldName);
-            if (usedInRounds.length > 0 && oldName !== newName.trim()) {
-                if (confirm(`🔄 ${usedInRounds.length} Runden verwenden diesen Platz.\n\nPlatzname in allen Runden automatisch aktualisieren?`)) {
-                    usedInRounds.forEach(round => {
-                        round.course = newName.trim();
-                    });
-                    localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
-                }
-            }
             
+            if (usedInRounds.length > 0) {
+                // Namen aktualisieren wenn geändert
+                if (oldName !== newName.trim()) {
+                    if (confirm(`${usedInRounds.length} Runden verwenden diesen Platz. in allen Runden automatisch aktualisieren?`)) {
+                        usedInRounds.forEach(round => {
+                            round.course = newName.trim();
+                        });
+                    }
+                }
+        
+                // Score Differentials neu berechnen wenn CR/SR geändert
+                if (oldCR !== cr || oldSR !== sr) {
+                    const count = recalculateRoundsForCourse(courseId);
+                    saveCourses();
+                    updateUI();
+                    alert(`Platz wurde aktualisiert!\n${count} Runden wurden mit neuen CR/SR-Werten neu berechnet.\nHandicap wurde aktualisiert.`);
+                    return;
+                }
+        
+                localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+            }
+        
             saveCourses();
             updateUI();
-            alert('✅ Platz wurde aktualisiert!');
+            alert('Platz wurde aktualisiert!');
         }
+
+                
+                function recalculateRoundsForCourse(courseId) {
+            const course = courses.find(c => c.id === courseId);
+            if (!course) return;
         
+            const affectedRounds = myGolfer.rounds.filter(r => r.course === course.name);
+            
+            if (affectedRounds.length === 0) return;
+        
+            affectedRounds.forEach(round => {
+                const cr = course.cr;
+                const sr = course.sr;
+                const newScoreDifferential = ((round.strokes - cr) * 113 / sr).toFixed(1);
+                
+                round.cr = cr.toFixed(1);
+                round.sr = sr.toFixed(0);
+                round.scoreDifferential = parseFloat(newScoreDifferential);
+            });
+        
+            // Handicap neu berechnen
+            updateMyHandicap();
+            updateUnofficialHandicap();
+            localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+            
+            return affectedRounds.length;
+        }
+
         function deleteCourse(courseId) {
             const course = courses.find(c => c.id === courseId);
             if (!course) return;
@@ -1353,6 +1439,14 @@
                 localStorage.setItem('iosInstallPromptShown', now.toString());
             }
         }
+
+        // Chart bei Fenstergrößenänderung neu zeichnen
+        window.addEventListener('resize', function() {
+            if (myGolfer && myGolfer.rounds.length >= 2) {
+                renderChart();
+            }
+        });
+
     </script>
 </body>
 </html>
