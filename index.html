@@ -457,6 +457,10 @@
                 <h2>Neue Runde</h2>
                 <select id="roundCourse"></select>
                 <input id="roundDate" type="date">
+                <select id="roundHoles">
+                    <option value="18">18 Löcher</option>
+                    <option value="9">9 Löcher</option>
+                </select>
                 <input id="roundStrokes" type="number" placeholder="Gesamtschläge">
                 <div style="margin-bottom: 10px;">
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
@@ -468,13 +472,10 @@
                 
                 <h2 style="margin-top: 30px;">Plätze verwalten</h2>
                 <input id="courseName" placeholder="Platzname">
-                <select id="courseHoles">
-                    <option value="18">18 Löcher</option>
-                    <option value="9">9 Löcher</option>
-                </select>
-                <input id="courseCR" type="number" step="0.1" placeholder="Course Rating">
-                <input id="courseSR" type="number" placeholder="Slope Rating">
-                <button onclick="addCourse()">➕ Platz speichern</button>
+                <input id="courseCR" type="number" step="0.1" placeholder="Course Rating (18-Loch)">
+                <input id="courseSR" type="number" placeholder="Slope Rating (18-Loch)">
+                <button onclick="addCourse()">Platz speichern</button>
+
                 
                 <div id="courseManageList" style="margin-top:15px;max-height:200px;overflow-y:auto;"></div>
                 
@@ -670,9 +671,10 @@
             if (courses.length === 0) {
                 select.innerHTML = '<option value="">Kein Platz - zuerst anlegen!</option>';
             } else {
-                select.innerHTML = courses.map(c => 
-                    `<option value="${c.id}">${c.name} (${c.holes}L, CR ${c.cr.toFixed(1)}, SR ${c.sr})</option>`
+               select.innerHTML = courses.map(c => 
+                `<option value="${c.id}">${c.name} (CR ${c.cr.toFixed(1)}, SR ${c.sr})</option>`
                 ).join('');
+
             }
             
             const manageList = document.getElementById('courseManageList');
@@ -683,7 +685,7 @@
                     manageList.innerHTML = courses.map(c => `
                         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
                             <div style="flex:1;">
-                                <div style="font-weight:600;font-size:14px;">${c.name} (${c.holes} Löcher)</div>
+                                <div style="font-weight:600;font-size:14px;">${c.name}</div>
                                 <div style="font-size:12px;color:var(--color-text-secondary);">CR ${c.cr.toFixed(1)} • SR ${c.sr}</div>
                             </div>
                             <div style="display:flex;gap:6px;">
@@ -699,15 +701,21 @@
         function saveRound() {
             const courseId = document.getElementById('roundCourse').value;
             const course = courses.find(c => c.id === courseId);
-            if (!course) return alert('Bitte zuerst einen Platz anlegen oder auswählen!');
-            
+        
+            if (!course) {
+                return alert('Bitte zuerst einen Platz anlegen oder auswählen!');
+            }
+        
             const strokes = parseInt(document.getElementById('roundStrokes').value);
-            const holes = course.holes;
+            const holes = parseInt(document.getElementById('roundHoles').value);
             const date = document.getElementById('roundDate').value;
-            
-            if (!strokes || strokes < 30 || !date) return alert('Bitte alle Felder ausfüllen!');
-            
-            const cr = course.cr;
+        
+            if (!strokes || strokes < 18 || !date) {
+                return alert('Bitte alle Felder ausfüllen!');
+            }
+        
+            // 9-Loch: CR halbieren, SR bleibt gleich (WHS-konform)
+            const cr = holes === 9 ? course.cr * 0.5 : course.cr;
             const sr = course.sr;
             const scoreDifferential = ((strokes - cr) * 113 / sr).toFixed(1);
 
@@ -743,6 +751,8 @@
             
             updateUI();
             document.getElementById('roundStrokes').value = '';
+            document.getElementById('roundHoles').value = '18';
+
             alert(`✅ Runde gespeichert!\n\nScore Differential: ${round.scoreDifferential}\nNeues offizielles HCP: ${myGolfer.handicapIndex.toFixed(1)}\nInoffizielles HCP: ${myGolfer.unofficialHandicap.toFixed(1)}`);
         }
         
@@ -1132,32 +1142,30 @@
         
         function addCourse() {
             const name = document.getElementById('courseName').value.trim();
-            const holes = parseInt(document.getElementById('courseHoles').value);
             const cr = parseFloat(document.getElementById('courseCR').value);
             const sr = parseInt(document.getElementById('courseSR').value);
-            
+        
             if (!name || isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
                 return alert('Bitte korrekte Platzdaten eingeben!\nCR min. 20, SR 55-155');
             }
-            
+        
             courses.push({
                 id: Date.now().toString(),
                 name: name,
-                holes: holes,
                 cr: cr,
                 sr: sr
             });
-            
+        
             saveCourses();
             updateUI();
-            
+        
             document.getElementById('courseName').value = '';
-            document.getElementById('courseHoles').value = '18';
             document.getElementById('courseCR').value = '';
             document.getElementById('courseSR').value = '';
-            
-            alert(`✅ ${name} wurde gespeichert!`);
+        
+            alert(`${name} wurde gespeichert!`);
         }
+
         
         function editCourse(courseId) {
             const course = courses.find(c => c.id === courseId);
@@ -1167,31 +1175,27 @@
             const newName = prompt('Platzname ändern:', course.name);
             if (newName === null) return;
             
-            const newHoles = prompt('Anzahl Löcher ändern (9 oder 18):', course.holes || 18);
-            if (newHoles === null) return;
-            
             const newCR = prompt('Course Rating ändern:', course.cr);
             if (newCR === null) return;
             
             const newSR = prompt('Slope Rating ändern:', course.sr);
             if (newSR === null) return;
         
-            const holes = parseInt(newHoles);
             const cr = parseFloat(newCR);
             const sr = parseInt(newSR);
-        
-            if (!newName.trim() || isNaN(holes) || (holes !== 9 && holes !== 18) || 
-                isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
-                return alert('Ungültige Eingaben!\nLöcher: 9 oder 18\nCR min. 20, SR 55-155');
+            
+            if (!newName.trim() || isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
+                return alert('Ungültige Eingaben!\nCR min. 20, SR 55-155');
             }
+
         
             const oldCR = course.cr;
             const oldSR = course.sr;
         
             course.name = newName.trim();
-            course.holes = holes;
             course.cr = cr;
             course.sr = sr;
+
         
             const usedInRounds = myGolfer.rounds.filter(r => r.course === oldName);
             
@@ -1232,9 +1236,10 @@
             if (affectedRounds.length === 0) return;
         
             affectedRounds.forEach(round => {
-                const cr = course.cr;
+                const cr = round.holes === 9 ? course.cr * 0.5 : course.cr;
                 const sr = course.sr;
                 const newScoreDifferential = ((round.strokes - cr) * 113 / sr).toFixed(1);
+
                 
                 round.cr = cr.toFixed(1);
                 round.sr = sr.toFixed(0);
