@@ -339,42 +339,37 @@
             border-left: 3px solid var(--color-accent);
         }
         
-            .toggle-stats-btn {
-                background: var(--color-surface);
-                color: var(--color-text-primary);
-                border: none;
-                border-radius: 8px;
-                padding: 10px 16px;
-                font-size: 14px;
-                cursor: pointer;
-                transition: all 0.2s;
-                -webkit-tap-highlight-color: transparent;
-                outline: none;
+        .toggle-stats-btn {
+            background: var(--color-surface);
+            color: var(--color-text-primary);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Desktop: Sichtbarer Hover */
+        @media (hover: hover) and (pointer: fine) {
+            .toggle-stats-btn:hover {
+                background: #d0d4d9;
             }
-            
-            .toggle-stats-btn:active {
-                transform: scale(0.98);
+        }
+        
+        /* Desktop Dark Mode */
+        @media (hover: hover) and (pointer: fine) and (prefers-color-scheme: dark) {
+            .toggle-stats-btn:hover {
+                background: #4a5460;
             }
-            
-            .toggle-stats-btn:focus {
-                outline: none;
-            }
-            
-            /* Hover NUR für Desktop */
-            @media (hover: hover) {
-                .toggle-stats-btn:hover {
-                    background: var(--color-bg-secondary);
-                    opacity: 0.9;
-                }
-            }
-            
-            /* Mobile: Kein Hintergrund nach Touch */
-            @media (hover: none) {
-                .toggle-stats-btn:active,
-                .toggle-stats-btn:focus {
-                    background: var(--color-surface) !important;
-                }
-            }
+        }
+        
+        /* Alle Geräte: Active Feedback */
+        .toggle-stats-btn:active {
+            transform: scale(0.98);
+        }
+
 
         .add-round-btn {
             display: none;
@@ -1053,18 +1048,10 @@
             const stats = document.getElementById('advancedStats');
             const btn = document.querySelector('.toggle-stats-btn');
             const isVisible = stats.style.display === 'block';
+            
             stats.style.display = isVisible ? 'none' : 'block';
             btn.textContent = isVisible ? '📊 Erweiterte Statistiken' : '✖ Statistiken ausblenden';
-            
-            // iOS/Safari Fix: Force Redraw
-            btn.style.pointerEvents = 'none';
-            btn.blur();
-            
-            setTimeout(() => {
-                btn.style.pointerEvents = '';
-            }, 300);
         }
-
      
         function renderAdvancedStats() {
             const rounds = myGolfer.rounds || [];
