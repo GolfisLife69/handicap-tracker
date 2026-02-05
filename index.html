@@ -534,6 +534,16 @@
             margin: 15px auto 0 auto;
         }
 
+        @media (max-width: 768px) {
+            #handicapChartWrapper {
+                display: none !important;
+            }
+            
+            #handicapChartWrapper.block {
+                display: block !important;
+            }
+        }
+
     </style>
 </head>
 <body tabindex="-1">
@@ -788,12 +798,16 @@
             
                 renderCourses();
                 renderRounds();
+                const chartWrapper = document.getElementById('handicapChartWrapper');
                 if (rounds.length >= 2) {
-                    document.getElementById('handicapChartWrapper').style.display = 'block';
+                    chartWrapper.style.display = 'block';
+                    chartWrapper.classList.add('block');  // Mobile Override
                     renderChart();
                 } else {
-                    document.getElementById('handicapChartWrapper').style.display = 'none';
+                    chartWrapper.style.display = 'none';
+                    chartWrapper.classList.remove('block');
                 }
+
 
         }
         
