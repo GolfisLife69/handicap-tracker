@@ -339,28 +339,42 @@
             border-left: 3px solid var(--color-accent);
         }
         
-        .toggle-stats-btn {
-            background: var(--color-surface);
-            color: var(--color-text-primary);
-            border: none;
-            border-radius: 8px;
-            padding: 10px 16px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .toggle-stats-btn:active {
-            transform: scale(0.98);
-        }
-        
-        /* Hover NUR für Desktop */
-        @media (hover: hover) {
-            .toggle-stats-btn:hover {
-                background: var(--color-bg-secondary);
-                opacity: 0.9;
+            .toggle-stats-btn {
+                background: var(--color-surface);
+                color: var(--color-text-primary);
+                border: none;
+                border-radius: 8px;
+                padding: 10px 16px;
+                font-size: 14px;
+                cursor: pointer;
+                transition: all 0.2s;
+                -webkit-tap-highlight-color: transparent;
+                outline: none;
             }
-        }
+            
+            .toggle-stats-btn:active {
+                transform: scale(0.98);
+            }
+            
+            .toggle-stats-btn:focus {
+                outline: none;
+            }
+            
+            /* Hover NUR für Desktop */
+            @media (hover: hover) {
+                .toggle-stats-btn:hover {
+                    background: var(--color-bg-secondary);
+                    opacity: 0.9;
+                }
+            }
+            
+            /* Mobile: Kein Hintergrund nach Touch */
+            @media (hover: none) {
+                .toggle-stats-btn:active,
+                .toggle-stats-btn:focus {
+                    background: var(--color-surface) !important;
+                }
+            }
 
         .add-round-btn {
             display: none;
@@ -1042,11 +1056,12 @@
             stats.style.display = isVisible ? 'none' : 'block';
             btn.textContent = isVisible ? '📊 Erweiterte Statistiken' : '✖ Statistiken ausblenden';
             
-            // Mobile: Entferne Focus nach Klick
-            btn.blur();
+            // Mobile: Entferne alle aktiven States
+            setTimeout(() => {
+                btn.blur();
+            }, 10);
         }
-
-        
+     
         function renderAdvancedStats() {
             const rounds = myGolfer.rounds || [];
             if (rounds.length === 0) return;
