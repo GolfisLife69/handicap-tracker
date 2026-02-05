@@ -502,6 +502,7 @@
                 
         <h2 style="margin-top: 30px;">Plätze verwalten</h2>
                 <input id="courseName" placeholder="Platzname">
+                <input id="coursePar" type="number" placeholder="Par (z.B. 72 für 18 Löcher, 36 für 9 Löcher)" style="height: 46px;">
                                 
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="courseHoles9Label">
@@ -623,6 +624,7 @@
         </div>
     </div>
 
+    
     <script>
         let myGolfer = null;
         let courses = [];
@@ -631,89 +633,7 @@
             loadData();
             checkSetup();
         }
-        // ═══════════════════════════════════════════════════════════════
-        // WHS 2024: Expected Score Differential Lookup-Tabelle
-        // ═══════════════════════════════════════════════════════════════
-        function getExpectedScoreDifferential(handicapIndex) {
-            // Lookup-Tabelle für Expected 9-Hole Score Differential
-            // Quelle: USGA World Handicap System 2024
-            const expectedScoreTable = {
-                '-5': 3.8, '-4': 4.0, '-3': 4.2, '-2': 4.4, '-1': 4.6,
-                '0': 4.8, '1': 5.0, '2': 5.2, '3': 5.4, '4': 5.6,
-                '5': 5.8, '6': 6.0, '7': 6.2, '8': 6.4, '9': 6.6,
-                '10': 6.8, '11': 7.0, '12': 7.2, '13': 7.4, '14': 7.6,
-                '15': 7.8, '16': 8.0, '17': 8.2, '18': 8.4, '19': 8.6,
-                '20': 8.8, '21': 9.0, '22': 9.2, '23': 9.4, '24': 9.6,
-                '25': 9.8, '26': 10.0, '28': 10.4, '30': 10.8, '32': 11.2,
-                '34': 11.6, '36': 12.0, '40': 13.0, '45': 14.0, '50': 15.0,
-                '54': 16.0
-            };
-            
-            // Runde Handicap Index auf nächste ganze Zahl
-            const roundedHcp = Math.round(handicapIndex);
-            
-            // Direkte Übereinstimmung in Tabelle
-            if (expectedScoreTable[roundedHcp.toString()] !== undefined) {
-                return expectedScoreTable[roundedHcp.toString()];
-            }
-            
-            // Lineare Interpolation für Zwischenwerte
-            const keys = Object.keys(expectedScoreTable).map(Number).sort((a,b) => a-b);
-            for (let i = 0; i < keys.length - 1; i++) {
-                if (roundedHcp >= keys[i] && roundedHcp < keys[i+1]) {
-                    const x0 = keys[i];
-                    const x1 = keys[i+1];
-                    const y0 = expectedScoreTable[x0];
-                    const y1 = expectedScoreTable[x1];
-                    // Lineare Interpolation: y = y0 + (y1-y0) * (x-x0) / (x1-x0)
-                    return y0 + (y1 - y0) * (roundedHcp - x0) / (x1 - x0);
-                }
-            }
-            
-            // Fallback für extreme Werte außerhalb der Tabelle
-            if (roundedHcp < -5) return 3.8;
-            if (roundedHcp > 54) return 16.0;
-            
-            return 8.0; // Default Mittelwert
-        }
 
-        // ═══════════════════════════════════════════════════════════════
-        // WHS 2024: 9-Loch zu 18-Loch Äquivalent Konvertierung
-        // ═══════════════════════════════════════════════════════════════
-        function calculate9HoleTo18HoleEquivalent(strokes9, cr9, sr9, currentHandicapIndex) {
-            // 1. Berechne 9-Loch Score Differential (normale Formel)
-            const scoreDiff9 = ((strokes9 - cr9) * 113 / sr9);
-            
-            // 2. Hole Expected Score Differential basierend auf aktuellem Handicap Index
-            const expectedSD9 = getExpectedScoreDifferential(currentHandicapIndex);
-            
-            // 3. Kombiniere zu 18-Loch Äquivalent
-            const scoreDiff18Equivalent = scoreDiff9 + expectedSD9;
-            
-            return {
-                scoreDiff9: parseFloat(scoreDiff9.toFixed(1)),
-                expectedSD9: parseFloat(expectedSD9.toFixed(1)),
-                scoreDiff18: parseFloat(scoreDiff18Equivalent.toFixed(1))
-            };
-        }
-
-
-        function checkSetup() {
-            const stored = localStorage.getItem('myGolfer');
-            myGolfer = stored ? JSON.parse(stored) : null;
-            
-            if (!myGolfer) {
-                document.getElementById('setupScreen').style.display = 'block';
-                document.getElementById('mainApp').style.display = 'none';
-            } else {
-                document.getElementById('setupScreen').style.display = 'none';
-                document.getElementById('mainApp').style.display = 'block';
-                updateUI();
-            }
-            
-            document.getElementById('roundDate').valueAsDate = new Date();
-        }
-        
         function setupComplete() {
             const name = document.getElementById('myName').value.trim();
             const gender = document.getElementById('myGender').value;
@@ -777,6 +697,11 @@
         function saveCourses() {
             localStorage.setItem('courses', JSON.stringify(courses));
         }
+
+        function calculateCourseHandicap(handicapIndex, slopeRating, courseRating, par) {
+            // WHS-Formel: Course Handicap = HCP Index × (SR / 113) + (CR - Par)
+            return Math.round(handicapIndex * (slopeRating / 113) + (courseRating - par));
+        }
         
         function renderCourses() {
             filterCoursesByHoles();
@@ -807,7 +732,7 @@
                         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
                             <div style="flex:1;">
                                 <div style="font-weight:600;font-size:14px;">${c.name}</div>
-                                <div style="font-size:12px;color:var(--color-text-secondary);">CR ${c.cr.toFixed(1)} • SR ${c.sr} • ${c.holes || 18} Löcher</div>
+                                <<div style="font-size:12px;color:var(--color-text-secondary);">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)} • ${c.holes || 18} Löcher</div>
                            </div>
                             <div style="display:flex;gap:6px;">
                                 <button onclick="editCourse('${c.id}')" class="small" style="background:#e9ecef;color:#495057;" title="Bearbeiten">✏️</button>
@@ -851,11 +776,40 @@
             
             select.innerHTML = sortedCourses.map(c => {
                 const playCount = courseCounts[c.id] || 0;
-                const countText = playCount > 0 ? ` • ${playCount}x gespielt` : '';
-                return `<option value="${c.id}">${c.name} (CR ${c.cr.toFixed(1)}, SR ${c.sr})${countText}</option>`;
+                const countText = playCount > 0 ? ` • ${playCount}x` : '';
+                
+                // Berechne Spielvorgabe
+                const par = c.par || (c.holes === 9 ? 36 : 72);
+                const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, c.sr, c.cr, par);
+                
+                return `<option value="${c.id}">${c.name} • Vorgabe: ${courseHcp}${countText}</option>`;
             }).join('');
-        }
+            }
 
+        function validateRoundData(strokes, holes, date) {
+            const errors = [];
+            
+            const minStrokes = holes === 9 ? 25 : 50;
+            const maxStrokes = holes === 9 ? 80 : 160;
+            
+            if (!strokes || strokes < minStrokes || strokes > maxStrokes) {
+                errors.push(`Schläge müssen zwischen ${minStrokes} und ${maxStrokes} liegen`);
+            }
+            
+            if (!date || new Date(date) > new Date()) {
+                errors.push('Datum darf nicht in der Zukunft liegen');
+            }
+            
+            // Prüfe ob Datum zu weit in der Vergangenheit (z.B. älter als 3 Jahre)
+            const threeYearsAgo = new Date();
+            threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
+            if (date && new Date(date) < threeYearsAgo) {
+                errors.push('Datum liegt mehr als 3 Jahre zurück - bitte prüfen');
+            }
+            
+            return errors;
+        }
+        
         function saveRound() {
             const courseId = document.getElementById('roundCourse').value;
             const course = courses.find(c => c.id === courseId);
@@ -868,9 +822,11 @@
             const holes = parseInt(document.querySelector('input[name="roundHoles"]:checked').value);
             const date = document.getElementById('roundDate').value;
             
-            if (!strokes || strokes < 18 || !date) {
-                return alert('Bitte alle Felder ausfüllen!');
+            const validationErrors = validateRoundData(strokes, holes, date);
+            if (validationErrors.length > 0) {
+                return alert('❌ Eingabefehler:\n\n' + validationErrors.join('\n'));
             }
+
             
             // WHS 2024: Korrekte 9-Loch Berechnung
             let scoreDifferential;
@@ -1223,9 +1179,8 @@
                                     ${diff < 0 ? diff : diff > 0 ? `+${diff}` : diff}
                                 </div>
                             </div>
-                            <button onclick="deleteRound('${r.id}')" class="small" style="background: #e9ecef; color: #495057;" title="Runde löschen">
-                                🗑️
-                            </button>
+                            <button onclick="editRound('${r.id}')" class="small" style="background:#e9ecef;color:#495057;" title="Bearbeiten">✏️</button>
+                            <button onclick="deleteRound('${r.id}')" class="small" style="background: #e9ecef; color: #495057;" title="Runde löschen">🗑️</button>
                         </div>
                     </div>
                 `;
@@ -1248,6 +1203,45 @@
         function toggleAllCourses() {
             window.showAllCourses = !window.showAllCourses;
             renderCourses();
+        }
+
+        function editRound(roundId) {
+            const round = myGolfer.rounds.find(r => r.id === roundId);
+            if (!round) return;
+        
+            const newStrokes = prompt('Schläge ändern:', round.strokes);
+            if (newStrokes === null) return;
+        
+            const newDate = prompt('Datum ändern (YYYY-MM-DD):', round.date);
+            if (newDate === null) return;
+        
+            const strokes = parseInt(newStrokes);
+            if (isNaN(strokes) || strokes < 18) {
+                return alert('Ungültige Schlagzahl!');
+            }
+        
+            // Finde den Platz für Neuberechnung
+            const course = courses.find(c => c.name === round.course);
+            
+            round.strokes = strokes;
+            round.date = newDate;
+            
+            // Score Differential neu berechnen
+            if (course) {
+                if (round.holes === 9) {
+                    const sd_9_played = ((strokes - course.cr) * (113 / course.sr));
+                    const sd_9_expected = ((myGolfer.handicapIndex * 1.04) + 2.4) / 2;
+                    round.scoreDifferential = parseFloat((sd_9_played + sd_9_expected).toFixed(1));
+                } else {
+                    round.scoreDifferential = parseFloat(((strokes - course.cr) * (113 / course.sr)).toFixed(1));
+                }
+            }
+        
+            updateMyHandicap();
+            updateUnofficialHandicap();
+            localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+            updateUI();
+            alert('✅ Runde aktualisiert!');
         }
 
         function deleteRound(roundId) {
@@ -1421,23 +1415,26 @@
             ctx.fillText('Handicap-Runden', padding.left + 170, height - 20);
         }
         
-        function addCourse() {
-            const name = document.getElementById('courseName').value.trim();
-            const cr = parseFloat(document.getElementById('courseCR').value);
-            const sr = parseInt(document.getElementById('courseSR').value);
-            const holes = parseInt(document.querySelector('input[name="courseHoles"]:checked').value);
-            
-            if (!name || isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
-                return alert('Bitte korrekte Platzdaten eingeben! (CR min. 20, SR 55-155)');
-            }
-            
-            courses.push({
-                id: Date.now().toString(),
-                name: name,
-                cr: cr,
-                sr: sr,
-                holes: holes
-          });
+            function addCourse() {
+                const name = document.getElementById('courseName').value.trim();
+                const cr = parseFloat(document.getElementById('courseCR').value);
+                const sr = parseInt(document.getElementById('courseSR').value);
+                const holes = parseInt(document.querySelector('input[name="courseHoles"]:checked').value);
+                const par = parseInt(document.getElementById('coursePar').value) || (holes === 9 ? 36 : 72);
+                
+                if (!name || isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
+                    return alert('Bitte korrekte Platzdaten eingeben! (CR min. 20, SR 55-155)');
+                }
+                
+                courses.push({
+                    id: Date.now().toString(),
+                    name: name,
+                    cr: cr,
+                    sr: sr,
+                    holes: holes,
+                    par: par
+                });
+
         
                 saveCourses();
                 updateUI();
@@ -1445,6 +1442,8 @@
                 document.getElementById('courseName').value = '';
                 document.getElementById('courseCR').value = '';
                 document.getElementById('courseSR').value = '';
+                document.getElementById('coursePar').value = '';
+
                 
                 alert(`${name} wurde gespeichert!`);
             }
@@ -1471,7 +1470,15 @@
                 if (holes !== 9 && holes !== 18) {
                     return alert('Lochzahl muss 9 oder 18 sein!');
                 }
-            
+                  
+                const newPar = prompt('Par ändern:', course.par || (holes === 9 ? 36 : 72));
+                if (newPar === null) return;
+                  
+                const par = parseInt(newPar);
+                if (isNaN(par) || par < 27 || par > 90) {
+                    return alert('Par muss zwischen 27 und 90 liegen!');
+                }
+                  
                 const cr = parseFloat(newCR);
                 const sr = parseInt(newSR);
             
@@ -1482,10 +1489,12 @@
                 const oldCR = course.cr;
                 const oldSR = course.sr;
             
-                course.name = newName.trim();
-                course.cr = cr;
-                course.sr = sr;
-                course.holes = holes;
+                    course.name = newName.trim();
+                    course.cr = cr;
+                    course.sr = sr;
+                    course.holes = holes;
+                    course.par = par;
+
             
                 const usedInRounds = myGolfer.rounds.filter(r => r.course === oldName);
                 if (usedInRounds.length > 0) {
@@ -1512,66 +1521,51 @@
                 alert('Platz wurde aktualisiert!');
             }
                 
-                function recalculateRoundsForCourse(courseId) {
-            const course = courses.find(c => c.id === courseId);
-            if (!course) return;
-        
-            const affectedRounds = myGolfer.rounds.filter(r => r.course === course.name);
+            function recalculateRoundsForCourse(courseId) {
+                const course = courses.find(c => c.id === courseId);
+                if (!course) return;
             
-            if (affectedRounds.length === 0) return;
-        
-            affectedRounds.forEach(round => {
-                // WHS 2024: Score Differential neu berechnen
-                let newScoreDifferential;
-                let cr, sr;
-                
-                if (round.holes === 9) {
-                // ═══ WHS 2024: 9-Loch mit Expected Score ═══
-                
-                // AUTOMATISCHE ERKENNUNG: Ist das ein 18-Loch Platz?
-                const is18HoleCourse = course.cr > 40;
-                
-                if (is18HoleCourse) {
-                    // 18-Loch Platz, aber nur 9 Löcher gespielt → halbieren
-                    cr = course.cr / 2;
-                    sr = course.sr;
-                } else {
-                    // Echter 9-Loch Platz
-                    cr = course.cr;
-                    sr = course.sr;
-                }
-                
-                const currentHcp = myGolfer.handicapIndex !== undefined 
-                    ? myGolfer.handicapIndex 
-                    : myGolfer.startHcp;
-                
-                const result = calculate9HoleTo18HoleEquivalent(
-                    round.strokes, 
-                    cr, 
-                    sr, 
-                    currentHcp
-                );
-                newScoreDifferential = result.scoreDiff18.toFixed(1);
-                
-            } else {
-                // ═══ 18-Loch: Standard-Formel ═══
-                cr = course.cr;
-                sr = course.sr;
-                newScoreDifferential = ((round.strokes - cr) * 113 / sr).toFixed(1);
+                const affectedRounds = myGolfer.rounds.filter(r => r.course === course.name);
+                if (affectedRounds.length === 0) return;
+            
+                affectedRounds.forEach(round => {
+                    let newScoreDifferential;
+                    let cr, sr;
+            
+                    if (round.holes === 9) {
+                        // ═══ WHS 2024: 9-Loch Berechnung (korrekte Methode) ═══
+                        cr = course.cr;
+                        sr = course.sr;
+            
+                        // 1. Berechne 9-Loch Score Differential (gespielte 9 Löcher)
+                        const sd_9_played = ((round.strokes - cr) * (113 / sr));
+            
+                        // 2. Berechne Expected Score Differential (nicht-gespielte 9 Löcher)
+                        // Formel: ((HCPI × 1.04) + 2.4) / 2
+                        const currentHCPI = myGolfer.handicapIndex !== undefined ? myGolfer.handicapIndex : myGolfer.startHcp;
+                        const sd_9_expected = ((currentHCPI * 1.04) + 2.4) / 2;
+            
+                        // 3. Addiere beide für 18-Loch Score Differential
+                        newScoreDifferential = (sd_9_played + sd_9_expected).toFixed(1);
+                    } else {
+                        // ═══ 18-Loch: Standard-Formel ═══
+                        cr = course.cr;
+                        sr = course.sr;
+                        newScoreDifferential = ((round.strokes - cr) * (113 / sr)).toFixed(1);
+                    }
+            
+                    round.cr = cr.toFixed(1);
+                    round.sr = sr.toFixed(0);
+                    round.scoreDifferential = parseFloat(newScoreDifferential);
+                });
+            
+                // Handicap neu berechnen
+                updateMyHandicap();
+                updateUnofficialHandicap();
+                localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+            
+                return affectedRounds.length;
             }
-                
-                round.cr = cr.toFixed(1);
-                round.sr = sr.toFixed(0);
-                round.scoreDifferential = parseFloat(newScoreDifferential);
-            });
-        
-            // Handicap neu berechnen
-            updateMyHandicap();
-            updateUnofficialHandicap();
-            localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
-            
-            return affectedRounds.length;
-        }
 
         function deleteCourse(courseId) {
             const course = courses.find(c => c.id === courseId);
