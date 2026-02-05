@@ -436,6 +436,7 @@
             border-radius: 12px;
             padding: 20px;
             margin-top: 20px;
+            margin-bottom: 20px;
             overflow-x: auto;
         }
         
@@ -559,7 +560,7 @@
                         <input type="radio" name="roundHoles" id="roundHoles9" value="9" style="width: auto; margin: 0;" onchange="filterCoursesByHoles()">
                         <span style="font-weight: 500;">9 Löcher</span>
                     </label>
-                    <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid var(--color-primary); height: 46px; box-sizing: border-box;" id="roundHoles18Label">
+                    <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="roundHoles18Label">
                         <input type="radio" name="roundHoles" id="roundHoles18" value="18" checked style="width: auto; margin: 0;" onchange="filterCoursesByHoles()">
                         <span style="font-weight: 500;">18 Löcher</span>
                     </label>
@@ -839,15 +840,16 @@
             }
         }
 
-        function filterCoursesByHoles() {
+         function filterCoursesByHoles() {
             const selectedHoles = parseInt(document.querySelector('input[name="roundHoles"]:checked').value);
             const select = document.getElementById('roundCourse');
-            
+        
             // Zähle, wie oft jeder Platz gespielt wurde
             const courseCounts = {};
             if (myGolfer && myGolfer.rounds) {
                 myGolfer.rounds.forEach(round => {
-                    const course = courses.find(c => c.name === round.course);
+                    // FIX: Berücksichtige auch die Lochzahl beim Finden des Platzes
+                    const course = courses.find(c => c.name === round.course && c.holes === round.holes);
                     if (course) {
                         courseCounts[course.id] = (courseCounts[course.id] || 0) + 1;
                     }
