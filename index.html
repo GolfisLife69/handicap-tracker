@@ -373,16 +373,27 @@
             }
         }
         
-        /* Mobile: KEINE Pseudo-States! */
+        /* Mobile: Kurzer Feedback-Flash */
         @media (hover: none) {
             .toggle-stats-btn:hover,
-            .toggle-stats-btn:active,
             .toggle-stats-btn:focus,
             .toggle-stats-btn:focus-visible,
             .toggle-stats-btn:focus-within {
                 background: var(--color-surface) !important;
-                transform: none !important;
                 outline: none !important;
+            }
+            
+            .toggle-stats-btn:active {
+                background: rgba(0, 0, 0, 0.05) !important;
+                transform: scale(0.98) !important;
+                transition: none !important;
+            }
+        }
+        
+        /* Mobile Dark Mode */
+        @media (hover: none) and (prefers-color-scheme: dark) {
+            .toggle-stats-btn:active {
+                background: rgba(255, 255, 255, 0.1) !important;
             }
         }
 
