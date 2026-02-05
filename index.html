@@ -686,14 +686,16 @@
                     </div>
                 </div>
                 
-                <div id="handicapChart" style="display: none;">
-                    <canvas id="hcpCanvas"></canvas>
-                    <div style="margin-top:10px;font-size:14px;color:var(--color-text-secondary);text-align:center;">
+                <!-- NEUES -->
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <div style="margin-top:10px;font-size:14px;color:var(--color-text-secondary);">
                         Handicap-Entwicklung (letzte 20 Runden)
                     </div>
+                    <button id="hcpButtonUnderGraph" class="toggle-stats-btn small" onclick="showHandicapCalculation()" style="margin-top: 20px; display: none;">
+                        HCP-Berechnung anzeigen
+                    </button>
                 </div>
-                <button id="hcpButtonUnderGraph" class="toggle-stats-btn small" onclick="showHandicapCalculation()" style="margin-top: 15px; display: none;">HCP-Berechnung anzeigen</button>
-                
+
                 <div class="round-list" id="roundList"></div>
                 
                 <button id="showAllRoundsBtn" class="show-all-rounds-btn" onclick="toggleAllRounds()" style="display: none;">
