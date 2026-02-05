@@ -1056,11 +1056,15 @@
             stats.style.display = isVisible ? 'none' : 'block';
             btn.textContent = isVisible ? '📊 Erweiterte Statistiken' : '✖ Statistiken ausblenden';
             
-            // Mobile: Entferne alle aktiven States
+            // iOS/Safari Fix: Force Redraw
+            btn.style.pointerEvents = 'none';
+            btn.blur();
+            
             setTimeout(() => {
-                btn.blur();
-            }, 10);
+                btn.style.pointerEvents = '';
+            }, 300);
         }
+
      
         function renderAdvancedStats() {
             const rounds = myGolfer.rounds || [];
