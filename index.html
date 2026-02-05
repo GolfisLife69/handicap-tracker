@@ -602,13 +602,15 @@
                 <h2 style="margin-top: 30px;">🔄 Daten-Verwaltung</h2>
                 <button onclick="exportData()">💾 Daten exportieren (JSON)</button>
                 <div class="file-input-wrapper" style="margin-bottom: 0;">
-                    <input type="file" id="importFile" accept=".json" onchange="importData(event)">
-                    <button class="secondary">📁 Daten importieren</button>
+                
+                <input type="file" id="importFile" accept=".json" onchange="importData(event)">
+                <button class="secondary" onclick="document.getElementById('importFile').click()">📁 Daten importieren</button>
                 </div>
+                
                 <button class="secondary" onclick="showHandicapCalculation()">🧮 HCP-Berechnung anzeigen</button>
                 <button class="secondary" onclick="showEditProfile()">👤 Profil bearbeiten</button>
                 <button class="danger" onclick="clearData()">🗑️ Alles löschen</button>
-            </div>
+                </div>
             
             <div class="main">
                 <div style="text-align: center; margin-bottom: 30px;">
@@ -1005,42 +1007,8 @@
                 return;
             }
 
-            let numCounted = 1;  // Anzahl der gewerteten Runden
-            let adjustment = 0;   // Anpassung (Bonus)
-        
-            // WHS-Staffelung nach offiziellen Regeln
-            if (count >= 3 && count <= 4) {
-                numCounted = 1;
-                adjustment = count === 3 ? -2.0 : -1.0;
-            } else if (count === 5) {
-                numCounted = 1;
-                adjustment = 0;
-            } else if (count === 6) {
-                numCounted = 2;
-                adjustment = -1.0;
-            } else if (count >= 7 && count <= 8) {
-                numCounted = 2;
-                adjustment = 0;
-            } else if (count >= 9 && count <= 11) {
-                numCounted = 3;
-                adjustment = 0;
-            } else if (count >= 12 && count <= 14) {
-                numCounted = 4;
-                adjustment = 0;
-            } else if (count >= 15 && count <= 16) {
-                numCounted = 5;
-                adjustment = 0;
-            } else if (count >= 17 && count <= 18) {
-                numCounted = 6;
-                adjustment = 0;
-            } else if (count === 19) {
-                numCounted = 7;
-                adjustment = 0;
-            } else if (count >= 20) {
-                numCounted = 8;
-                adjustment = 0;
-            }
-        
+            const { numCounted, adjustment } = getWHSParameters(count);
+                    
             const bestRounds = officialRounds.slice(0, numCounted);
             let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
             
@@ -1079,29 +1047,71 @@
             myGolfer.unofficialHandicap = Math.round(newHcp * 10) / 10;
         }
         
+        function getWHSParameters(count) {
+            let numCounted = 1;
+            let adjustment = 0;
+    
+            if (count >= 3 && count <= 4) {
+               numCounted = 1;
+               adjustment = count === 3 ? -2.0 : -1.0;
+          } else if (count === 5) {
+              numCounted = 1;
+              adjustment = 0;
+          } else if (count === 6) {
+              numCounted = 2;
+              adjustment = -1.0;
+          } else if (count >= 7 && count <= 8) {
+              numCounted = 2;
+              adjustment = 0;
+           } else if (count >= 9 && count <= 11) {
+              numCounted = 3;
+              adjustment = 0;
+          } else if (count >= 12 && count <= 14) {
+              numCounted = 4;
+              adjustment = 0;
+           } else if (count >= 15 && count <= 16) {
+               numCounted = 5;
+              adjustment = 0;
+           } else if (count >= 17 && count <= 18) {
+               numCounted = 6;
+               adjustment = 0;
+            } else if (count === 19) {
+                numCounted = 7;
+                adjustment = 0;
+            } else if (count >= 20) {
+                numCounted = 8;
+                adjustment = 0;
+            }
+            
+           return { numCounted, adjustment };
+        }
+        
         function toggleAdvancedStats() {
             const stats = document.getElementById('advancedStats');
             const btn = document.querySelector('.toggle-stats-btn');
             const isVisible = stats.style.display === 'block';
-            
-            stats.style.display = isVisible ? 'none' : 'block';
-            btn.textContent = isVisible ? '📊 Erweiterte Statistiken' : '✖ Statistiken ausblenden';
-            
-            // Mobile Force Blur
-            if (window.matchMedia('(hover: none)').matches) {
-                btn.blur();
-                document.body.focus();
-                
-                // Trigger Repaint
-                requestAnimationFrame(() => {
-                    btn.style.pointerEvents = 'none';
-                    setTimeout(() => {
-                        btn.style.pointerEvents = '';
-                    }, 50);
-                });
+    
+            // NEU: Statistiken berechnen bevor sie angezeigt werden
+            if (!isVisible) {
+              renderAdvancedStats();
             }
+    
+             stats.style.display = isVisible ? 'none' : 'block';
+             btn.textContent = isVisible ? '📊 Erweiterte Statistiken' : '✖ Statistiken ausblenden';
+    
+             // Mobile Force Blur
+                if (window.matchMedia('(hover: none)').matches) {
+                   btn.blur();
+                  document.body.focus();
+                  // Trigger Repaint
+                  requestAnimationFrame(() => {
+                      btn.style.pointerEvents = 'none';
+                     setTimeout(() => {
+                         btn.style.pointerEvents = '';
+                     }, 50);
+                  });
+             }
         }
-
      
         function renderAdvancedStats() {
             const rounds = myGolfer.rounds || [];
@@ -1158,37 +1168,62 @@
                 </div>
             `;
             
-            const coursesPlayed = {};
-            rounds.forEach(r => {
-                if (!coursesPlayed[r.course]) {
-                    coursesPlayed[r.course] = {
-                        count: 0,
-                        strokes: [],
-                        scoreDiffs: []
-                    };
-                }
-                coursesPlayed[r.course].count++;
-                coursesPlayed[r.course].strokes.push(r.strokes);
-                coursesPlayed[r.course].scoreDiffs.push(r.scoreDifferential);
-            });
+ const coursesPlayed = {};
+rounds.forEach(r => {
+    // Gruppiere nach Platzname + Lochzahl
+    const key = `${r.course}-${r.holes}L`;
+    if (!coursesPlayed[key]) {
+        coursesPlayed[key] = { 
+            name: r.course,
+            holes: r.holes,
+            count: 0, 
+            strokes: [], 
+            scoreDiffs: [],
+            rounds: []
+        };
+    }
+    coursesPlayed[key].count++;
+    coursesPlayed[key].strokes.push(r.strokes);
+    coursesPlayed[key].scoreDiffs.push(r.scoreDifferential);
+    coursesPlayed[key].rounds.push(r);
+});
             
-            const courseStatsHtml = Object.entries(coursesPlayed)
-                .sort((a,b) => b[1].count - a[1].count)
-                .slice(0, 5)
-                .map(([course, data]) => {
-                    const avgStrokes = (data.strokes.reduce((a,b) => a + b, 0) / data.count).toFixed(1);
-                    const avgSD = (data.scoreDiffs.reduce((a,b) => a + b, 0) / data.count).toFixed(1);
-                    const bestStrokes = Math.min(...data.strokes);
-                    return `
-                        <div class="course-stats-item">
-                            <div style="font-weight: 600; margin-bottom: 5px;">${course}</div>
-                            <div style="font-size: 0.85em; color: var(--color-text-secondary);">
-                                ${data.count}x gespielt • ⌀ ${avgStrokes} Schläge • ⌀ SD ${avgSD} • Beste: ${bestStrokes}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            
+ const courseStatsHtml = Object.entries(coursesPlayed)
+    .sort((a,b) => b[1].count - a[1].count)
+    .slice(0, 5)
+    .map(([key, data]) => {
+        // Berechne den besten SD
+        const bestSD = Math.min(...data.scoreDiffs);
+        
+        // Finde die beste Runde aus den gespeicherten Runden
+        const bestRound = data.rounds.find(r => r.scoreDifferential === bestSD);
+        
+        // Anzeigename mit Lochzahl
+        const displayName = `${data.name} (${data.holes}L)`;
+
+        const avgStrokes = (data.strokes.reduce((a,b) => a + b, 0) / data.count).toFixed(1);
+        const avgSD = (data.scoreDiffs.reduce((a,b) => a + b, 0) / data.count).toFixed(1);
+        
+        // Par-Wert aus dem Kurs holen (mit korrekter Lochzahl)
+        const courseInfo = courses.find(c => c.name === data.name && c.holes === data.holes);
+        const coursePar = courseInfo ? (courseInfo.par || (data.holes === 9 ? 36 : 72)) : (data.holes === 9 ? 36 : 72);
+
+        // Beste Runde relativ zu Par berechnen
+        const bestStrokes = Math.min(...data.strokes);
+        const bestToPar = bestStrokes - coursePar;
+        const bestToParText = bestToPar > 0 ? `+${bestToPar}` : bestToPar.toString();
+
+        return `
+            <div class="course-stats-item">
+                <div style="font-weight: 600; margin-bottom: 5px;">${displayName}</div>
+                <div style="font-size: 0.85em; color: var(--color-text-secondary);">
+                    ${data.count}x gespielt • ⌀ ${avgStrokes} Schläge • ⌀ SD ${avgSD}<br>
+                    <strong>Beste:</strong> ${bestStrokes} Schläge (${bestToParText} zum Par) • SD: ${bestSD.toFixed(1)}
+                </div>
+            </div>
+        `;
+    }).join('');
+                    
             courseStats.innerHTML = courseStatsHtml || '<div style="text-align:center;color:var(--color-text-secondary);padding:20px;">Keine Platzdaten</div>';
             
             const hcpStart = myGolfer.startHcp;
@@ -1373,20 +1408,35 @@
             const canvas = document.getElementById('hcpCanvas');
             const ctx = canvas.getContext('2d');
             
-            // Responsive Canvas-Größe
+            // Responsive Canvas-Größe mit HiDPI-Unterstützung
             const container = canvas.parentElement;
             const containerWidth = container.clientWidth - 40;
             const isMobile = window.innerWidth <= 768;
-            
-            canvas.width = Math.min(containerWidth, 600);
-            canvas.height = isMobile ? 250 : 300;
-            
+            const dpr = window.devicePixelRatio || 1;
+
+            // CSS-Größe setzen
+            canvas.style.width = Math.min(containerWidth, 600) + 'px';
+            canvas.style.height = (isMobile ? 250 : 300) + 'px';
+
+            // Mobile: Leicht kleinere interne Größe für bessere Performance
+            const scaleFactor = isMobile ? 0.8 : 1;
+            canvas.width = Math.min(containerWidth, 600) * dpr * scaleFactor;
+            canvas.height = (isMobile ? 250 : 300) * dpr * scaleFactor;
+
             const width = canvas.width;
             const height = canvas.height;
+
+            // Skalierung für HiDPI
+            ctx.scale(dpr * scaleFactor, dpr * scaleFactor);
             
+            // Padding und Chart-Größe für HiDPI anpassen
             const padding = { left: 50, right: 30, top: 30, bottom: 40 };
-            const chartWidth = width - padding.left - padding.right;
-            const chartHeight = height - padding.top - padding.bottom;
+            const chartWidth = (width / (dpr * scaleFactor)) - padding.left - padding.right;
+            const chartHeight = (height / (dpr * scaleFactor)) - padding.top - padding.bottom;
+
+            // Schärfere Linien und Text für HiDPI
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
             
             // Sammle HISTORISCHE HCP-Werte aus den Runden
             const unofficialHistory = [];
@@ -1630,11 +1680,11 @@
             }
                 
             function recalculateRoundsForCourse(courseId) {
-                const course = courses.find(c => c.id === courseId);
-                if (!course) return;
-            
-                const affectedRounds = myGolfer.rounds.filter(r => r.course === course.name);
-                if (affectedRounds.length === 0) return;
+               const course = courses.find(c => c.id === courseId);
+               if (!course) return 0;
+    
+               const affectedRounds = myGolfer.rounds.filter(r => r.course === course.name);
+              if (affectedRounds.length === 0) return 0;
             
                 affectedRounds.forEach(round => {
                     let newScoreDifferential;
@@ -1802,42 +1852,8 @@
             }
         
             const count = officialRounds.length;
-            let numCounted = 1;
-            let adjustment = 0;
-        
-            // Gleiche WHS-Staffelung wie in updateMyHandicap
-            if (count >= 3 && count <= 4) {
-                numCounted = 1;
-                adjustment = count === 3 ? -2.0 : -1.0;
-            } else if (count === 5) {
-                numCounted = 1;
-                adjustment = 0;
-            } else if (count === 6) {
-                numCounted = 2;
-                adjustment = -1.0;
-            } else if (count >= 7 && count <= 8) {
-                numCounted = 2;
-                adjustment = 0;
-            } else if (count >= 9 && count <= 11) {
-                numCounted = 3;
-                adjustment = 0;
-            } else if (count >= 12 && count <= 14) {
-                numCounted = 4;
-                adjustment = 0;
-            } else if (count >= 15 && count <= 16) {
-                numCounted = 5;
-                adjustment = 0;
-            } else if (count >= 17 && count <= 18) {
-                numCounted = 6;
-                adjustment = 0;
-            } else if (count === 19) {
-                numCounted = 7;
-                adjustment = 0;
-            } else if (count >= 20) {
-                numCounted = 8;
-                adjustment = 0;
-            }
-        
+            const { numCounted, adjustment } = getWHSParameters(count);
+                    
             const bestRounds = officialRounds.slice(0, numCounted);
             const avgSD = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
             const bestSD = officialRounds[0].sd;
