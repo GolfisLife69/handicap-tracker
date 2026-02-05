@@ -435,20 +435,30 @@
             display: none;
         }
 
-        /* Radio Button Labels mit Highlight */
         input[type="radio"]:checked + span {
             color: var(--color-primary);
             font-weight: 600;
         }
         
-        input[type="radio"]:checked {
-            accent-color: var(--color-primary);
-        }
-        
         label:has(input[type="radio"]:checked) {
             border-color: var(--color-primary) !important;
-            background: var(--color-secondary) !important;
+            background: var(--color-surface) !important;
         }
+        
+        /* Bessere Farben für aktive Radio-Buttons */
+        @media (prefers-color-scheme: light) {
+            label:has(input[type="radio"]:checked) {
+                background: rgba(40, 167, 69, 0.1) !important;
+                color: var(--color-primary);
+            }
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            label:has(input[type="radio"]:checked) {
+                background: rgba(40, 167, 69, 0.2) !important;
+            }
+        }
+
 
         @media (min-width: 769px) {
         .course-stats-item .course-info {
@@ -606,18 +616,18 @@
                     </div>
                 </div>
                 
-                <div class="round-list" id="roundList"></div>
-                
-                <button id="showAllRoundsBtn" class="show-all-rounds-btn" onclick="toggleAllRounds()" style="display: none;">
-                    📋 Alle Runden anzeigen
-                </button>
-                
                 <div id="handicapChart" style="display: none;">
                     <canvas id="hcpCanvas"></canvas>
                     <div style="margin-top:10px;font-size:14px;color:var(--color-text-secondary);text-align:center;">
                         Handicap-Entwicklung (letzte 20 Runden)
                     </div>
-                </div>
+                </div>  
+                
+                <div class="round-list" id="roundList"></div>
+                
+                <button id="showAllRoundsBtn" class="show-all-rounds-btn" onclick="toggleAllRounds()" style="display: none;">
+                    📋 Alle Runden anzeigen
+                </button>
 
                 </div>
             </div>
