@@ -450,6 +450,11 @@
             background: var(--color-secondary) !important;
         }
 
+        @media (min-width: 769px) {
+        .course-stats-item .course-info {
+            white-space: pre-line;
+        }
+
     </style>
 </head>
 <body>
@@ -495,14 +500,14 @@
                 <div style="margin-bottom: 10px;">
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                         <input type="checkbox" id="roundOfficial" style="width: auto; margin: 0;">
-                        <span style="font-size: 14px; font-weight: 500;">📋 Offizielle Runde (zählt für Handicap)</span>
+                        <span style="font-size: 14px; font-weight: 500;">📋 Handicap Runde</span>
                     </label>
                 </div>
                 <button onclick="saveRound()">💾 Runde speichern</button>
                 
         <h2 style="margin-top: 30px;">Plätze verwalten</h2>
                 <input id="courseName" placeholder="Platzname">
-                <input id="coursePar" type="number" placeholder="Par (z.B. 72 für 18 Löcher, 36 für 9 Löcher)" style="height: 46px;">
+                <input id="coursePar" type="number" placeholder="Par (z.B. 72 für 18 Löcher)" style="height: 46px;">
                                 
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="courseHoles9Label">
@@ -738,18 +743,18 @@
                     const sortedCourses = [...courses].sort((a, b) => b.id - a.id);
                     // Zeige nur 3 oder alle
                     const displayCourses = (showAll || sortedCourses.length <= 3) ? sortedCourses : sortedCourses.slice(0, 3);
-                    manageList.innerHTML = displayCourses.map(c => `
-                        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
-                            <div style="flex:1;">
-                                <div style="font-weight:600;font-size:14px;">${c.name}</div>
-                                <div style="font-size:12px;color:var(--color-text-secondary);">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)} • ${c.holes || 18} Löcher</div>
-                            </div>
-                            <div style="display:flex;gap:6px;">
-                                <button onclick="editCourse('${c.id}')" class="small" style="background:#e9ecef;color:#495057;" title="Bearbeiten">✏️</button>
-                                <button onclick="deleteCourse('${c.id}')" class="small" style="background:#e9ecef;color:#495057;" title="Löschen">🗑️</button>
-                            </div>
+                manageList.innerHTML = displayCourses.map(c => `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:14px;">${c.name}</div>
+                            <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)}\n${c.holes || 18} Löcher</div>
                         </div>
-                    `).join('');
+                        <div style="display:flex;gap:6px;">
+                            <button onclick="editCourse('${c.id}')" class="small" style="background:#e9ecef;color:#495057;" title="Bearbeiten">✏️</button>
+                            <button onclick="deleteCourse('${c.id}')" class="small" style="background:#e9ecef;color:#495057;" title="Löschen">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
                 }
             }
         }
