@@ -478,17 +478,16 @@
                 
         <h2>Neue Runde</h2>
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <label style="flex: 1; display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent;" id="roundHoles9Label">
+                <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="roundHoles9Label">
                     <input type="radio" name="roundHoles" id="roundHoles9" value="9" style="width: auto; margin: 0;" onchange="filterCoursesByHoles()">
                     <span style="font-weight: 500;">9 Löcher</span>
                 </label>
-                <label style="flex: 1; display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid var(--color-primary);" id="roundHoles18Label">
+                <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid var(--color-primary); height: 46px; box-sizing: border-box;" id="roundHoles18Label">
                     <input type="radio" name="roundHoles" id="roundHoles18" value="18" checked style="width: auto; margin: 0;" onchange="filterCoursesByHoles()">
                     <span style="font-weight: 500;">18 Löcher</span>
                 </label>
             </div>
 
-            
             <select id="roundCourse" style="height: 46px;"></select>
             <input id="roundDate" type="date">
             <input id="roundStrokes" type="number" placeholder="Gesamtschläge">
@@ -501,19 +500,20 @@
                 </div>
                 <button onclick="saveRound()">💾 Runde speichern</button>
                 
-                <h2 style="margin-top: 30px;">Plätze verwalten</h2>
+        <h2 style="margin-top: 30px;">Plätze verwalten</h2>
                 <input id="courseName" placeholder="Platzname">
                                 
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <label style="flex: 1; display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent;" id="courseHoles9Label">
+                    <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="courseHoles9Label">
                         <input type="radio" name="courseHoles" id="courseHoles9" value="9" style="width: auto; margin: 0;">
                         <span style="font-weight: 500;">9 Löcher</span>
                     </label>
-                    <label style="flex: 1; display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 8px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent;" id="courseHoles18Label">
+                    <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="courseHoles18Label">
                         <input type="radio" name="courseHoles" id="courseHoles18" value="18" checked style="width: auto; margin: 0;">
                         <span style="font-weight: 500;">18 Löcher</span>
                     </label>
                 </div>
+
                 
                 <input id="courseCR" type="number" step="0.1" placeholder="Course Rating">
                 <input id="courseSR" type="number" placeholder="Slope Rating">
