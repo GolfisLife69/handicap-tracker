@@ -462,10 +462,6 @@
         <h2>Einmalige Einrichtung</h2>
         <p style="margin-bottom: 20px;">Deine persönlichen Golf-Daten:</p>
         <input id="myName" placeholder="Dein Name" required>
-        <select id="myGender">
-            <option value="M">Herren</option>
-            <option value="F">Damen</option>
-        </select>
         <input id="myClub" placeholder="Dein Club (optional)">
         <input id="startHcp" type="number" step="0.1" placeholder="Aktuelles Handicap (z.B. 19.5)" required>
         <button onclick="setupComplete()">✅ Einrichtung abschließen</button>
@@ -640,7 +636,6 @@
 
         function setupComplete() {
             const name = document.getElementById('myName').value.trim();
-            const gender = document.getElementById('myGender').value;
             const club = document.getElementById('myClub').value.trim();
             const startHcp = parseFloat(document.getElementById('startHcp').value);
             
@@ -651,7 +646,6 @@
             myGolfer = {
                 id: 'me',
                 name: name,
-                gender: gender,
                 club: club || '',
                 handicapIndex: startHcp,
                 unofficialHandicap: startHcp,
