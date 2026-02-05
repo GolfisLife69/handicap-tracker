@@ -1436,91 +1436,80 @@
                 cr: cr,
                 sr: sr,
                 holes: holes
-            });
+          });
+        
+                saveCourses();
+                updateUI();
+                
+                document.getElementById('courseName').value = '';
+                document.getElementById('courseCR').value = '';
+                document.getElementById('courseSR').value = '';
+                
+                alert(`${name} wurde gespeichert!`);
+            }
+    
   
-        function editCourse(courseId) {
-            const course = courses.find(c => c.id === courseId);
-            if (!course) return;
-        
-            const oldName = course.name;
-            const newName = prompt('Platzname ändern:', course.name);
-            if (newName === null) return;
+              function editCourse(courseId) {
+                const course = courses.find(c => c.id === courseId);
+                if (!course) return;
             
-            const newCR = prompt('Course Rating ändern:', course.cr);
-            if (newCR === null) return;
+                const oldName = course.name;
+                const newName = prompt('Platzname ändern:', course.name);
+                if (newName === null) return;
             
-            const newSR = prompt('Slope Rating ändern:', course.sr);
-            if (newSR === null) return;
+                const newCR = prompt('Course Rating ändern:', course.cr);
+                if (newCR === null) return;
             
-            // NEU: Lochzahl ändern
-            const newHoles = prompt('Lochzahl ändern (9 oder 18):', course.holes || 18);
-            if (newHoles === null) return;
-            const holes = parseInt(newHoles);
-            if (holes !== 9 && holes !== 18) {
-                return alert('Lochzahl muss 9 oder 18 sein!');
-            }
+                const newSR = prompt('Slope Rating ändern:', course.sr);
+                if (newSR === null) return;
             
-            const cr = parseFloat(newCR);
-            const sr = parseInt(newSR);
+                const newHoles = prompt('Lochzahl ändern (9 oder 18):', course.holes || 18);
+                if (newHoles === null) return;
             
-            if (!newName.trim() || isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
-                return alert('Ungültige Eingaben! (CR min. 20, SR 55-155)');
-            }
+                const holes = parseInt(newHoles);
+                if (holes !== 9 && holes !== 18) {
+                    return alert('Lochzahl muss 9 oder 18 sein!');
+                }
             
-            const oldCR = course.cr;
-            const oldSR = course.sr;
+                const cr = parseFloat(newCR);
+                const sr = parseInt(newSR);
             
-            course.name = newName.trim();
-            course.cr = cr;
-            course.sr = sr;
-            course.holes = holes; // NEU!
-
-        
-            const cr = parseFloat(newCR);
-            const sr = parseInt(newSR);
+                if (!newName.trim() || isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
+                    return alert('Ungültige Eingaben! (CR min. 20, SR 55-155)');
+                }
             
-            if (!newName.trim() || isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
-                return alert('Ungültige Eingaben!\nCR min. 20, SR 55-155');
-            }
-
-        
-            const oldCR = course.cr;
-            const oldSR = course.sr;
-        
-            course.name = newName.trim();
-            course.cr = cr;
-            course.sr = sr;
-
-        
-            const usedInRounds = myGolfer.rounds.filter(r => r.course === oldName);
+                const oldCR = course.cr;
+                const oldSR = course.sr;
             
-            if (usedInRounds.length > 0) {
-                // Namen aktualisieren wenn geändert
-                if (oldName !== newName.trim()) {
-                    if (confirm(`${usedInRounds.length} Runden verwenden diesen Platz. in allen Runden automatisch aktualisieren?`)) {
-                        usedInRounds.forEach(round => {
-                            round.course = newName.trim();
-                        });
+                course.name = newName.trim();
+                course.cr = cr;
+                course.sr = sr;
+                course.holes = holes;
+            
+                const usedInRounds = myGolfer.rounds.filter(r => r.course === oldName);
+                if (usedInRounds.length > 0) {
+                    if (oldName !== newName.trim()) {
+                        if (confirm(`${usedInRounds.length} Runden verwenden diesen Platz. In allen Runden automatisch aktualisieren?`)) {
+                            usedInRounds.forEach(round => {
+                                round.course = newName.trim();
+                            });
+                        }
                     }
+            
+                    if (oldCR !== cr || oldSR !== sr) {
+                        const count = recalculateRoundsForCourse(courseId);
+                        saveCourses();
+                        updateUI();
+                        alert(`Platz wurde aktualisiert!\n${count} Runden wurden mit neuen CR/SR-Werten neu berechnet.\nHandicap wurde aktualisiert.`);
+                        return;
+                    }
+                    localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
                 }
-        
-                // Score Differentials neu berechnen wenn CR/SR geändert
-                if (oldCR !== cr || oldSR !== sr) {
-                    const count = recalculateRoundsForCourse(courseId);
-                    saveCourses();
-                    updateUI();
-                    alert(`Platz wurde aktualisiert!\n${count} Runden wurden mit neuen CR/SR-Werten neu berechnet.\nHandicap wurde aktualisiert.`);
-                    return;
-                }
-        
-                localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+            
+                saveCourses();
+                updateUI();
+                alert('Platz wurde aktualisiert!');
             }
-        
-            saveCourses();
-            updateUI();
-            alert('Platz wurde aktualisiert!');
-        }
-
                 
                 function recalculateRoundsForCourse(courseId) {
             const course = courses.find(c => c.id === courseId);
