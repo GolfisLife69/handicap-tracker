@@ -659,6 +659,21 @@
             localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
             checkSetup();
         }
+
+        function checkSetup() {
+            const stored = localStorage.getItem('myGolfer');
+            myGolfer = stored ? JSON.parse(stored) : null;
+        
+            if (!myGolfer) {
+                document.getElementById('setupScreen').style.display = 'block';
+                document.getElementById('mainApp').style.display = 'none';
+            } else {
+                document.getElementById('setupScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                updateUI();
+            }
+            document.getElementById('roundDate').valueAsDate = new Date();
+        }
         
         function updateUI() {
             if (!myGolfer) return;
