@@ -695,8 +695,6 @@
                 </div>
             </div>
         </div>
-    </div>
-
     
     <script>
         let myGolfer = null;
@@ -732,9 +730,14 @@
         }
 
         function checkSetup() {
-            const stored = localStorage.getItem('myGolfer');
-            myGolfer = stored ? JSON.parse(stored) : null;
-        
+            try {
+                const stored = localStorage.getItem('myGolfer');
+                myGolfer = stored ? JSON.parse(stored) : null;
+            } catch (err) {
+                console.error('Fehler beim Laden der Daten:', err);
+                myGolfer = null; // Bei Fehler: Neu starten
+            }
+            
             if (!myGolfer) {
                 document.getElementById('setupScreen').style.display = 'block';
                 document.getElementById('mainApp').style.display = 'none';
@@ -745,6 +748,7 @@
             }
             document.getElementById('roundDate').valueAsDate = new Date();
         }
+
         
         function updateUI() {
             if (!myGolfer) return;
@@ -776,8 +780,13 @@
         }
         
         function loadData() {
-            const data = localStorage.getItem('courses');
-            courses = data ? JSON.parse(data) : [];
+            try {
+                const data = localStorage.getItem('courses');
+                courses = data ? JSON.parse(data) : [];
+            } catch (err) {
+                console.error('Fehler beim Laden der Plätze:', err);
+                courses = []; // Bei Fehler: Leeres Array
+            }
         }
         
         function saveCourses() {
@@ -813,8 +822,8 @@
                     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
                         <div style="flex:1;">
                             <div style="font-weight:600;font-size:14px;">${c.name}</div>
-                            <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)}<span class="mobile-bullet"> • </span>
-                            ${c.holes || 18} Löcher</div>
+                            <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)}
+                            <span class="mobile-bullet"> • </span>${c.holes || 18} Löcher</div>
                                 
                             </div>
                         <div style="display:flex;gap:6px;">
