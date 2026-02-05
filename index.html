@@ -435,6 +435,20 @@
             display: none;
         }
 
+        /* Radio Button Labels mit Highlight */
+        input[type="radio"]:checked + span {
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+        
+        input[type="radio"]:checked {
+            accent-color: var(--color-primary);
+        }
+        
+        label:has(input[type="radio"]:checked) {
+            border-color: var(--color-primary) !important;
+            background: var(--color-secondary) !important;
+        }
 
     </style>
 </head>
@@ -461,14 +475,23 @@
     <div id="mainApp" style="display:none;">
         <div class="container">
             <div class="sidebar">
-                <h2>Neue Runde</h2>
-               <select id="roundCourse" style="height: 46px;"></select>
-                <input id="roundDate" type="date">
-               <select id="roundHoles" style="height: 46px;">
-                    <option value="18">18 Löcher</option>
-                    <option value="9">9 Löcher</option>
-                </select>
-                <input id="roundStrokes" type="number" placeholder="Gesamtschläge">
+                
+        <h2>Neue Runde</h2>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <label style="flex: 1; display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 10px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid var(--color-primary);" id="roundHoles18Label">
+                    <input type="radio" name="roundHoles" id="roundHoles18" value="18" checked style="width: auto; margin: 0;" onchange="filterCoursesByHoles()">
+                    <span style="font-weight: 500;">18 Löcher</span>
+                </label>
+                <label style="flex: 1; display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 10px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent;" id="roundHoles9Label">
+                    <input type="radio" name="roundHoles" id="roundHoles9" value="9" style="width: auto; margin: 0;" onchange="filterCoursesByHoles()">
+                    <span style="font-weight: 500;">9 Löcher</span>
+                </label>
+            </div>
+            
+            <select id="roundCourse"></select>
+            <input id="roundDate" type="date">
+            <input id="roundStrokes" type="number" placeholder="Gesamtschläge">
+
                 <div style="margin-bottom: 10px;">
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                         <input type="checkbox" id="roundOfficial" style="width: auto; margin: 0;">
@@ -479,9 +502,22 @@
                 
                 <h2 style="margin-top: 30px;">Plätze verwalten</h2>
                 <input id="courseName" placeholder="Platzname">
-                <input id="courseCR" type="number" step="0.1" placeholder="Course Rating (18-Loch)">
-                <input id="courseSR" type="number" placeholder="Slope Rating (18-Loch)">
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <label style="flex: 1; display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 10px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent;" id="courseHoles18Label">
+                        <input type="radio" name="courseHoles" id="courseHoles18" value="18" checked style="width: auto; margin: 0;">
+                        <span style="font-weight: 500;">18 Löcher</span>
+                    </label>
+                    <label style="flex: 1; display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 10px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent;" id="courseHoles9Label">
+                        <input type="radio" name="courseHoles" id="courseHoles9" value="9" style="width: auto; margin: 0;">
+                        <span style="font-weight: 500;">9 Löcher</span>
+                    </label>
+                </div>
+                
+                <input id="courseCR" type="number" step="0.1" placeholder="Course Rating">
+                <input id="courseSR" type="number" placeholder="Slope Rating">
                 <button onclick="addCourse()">Platz speichern</button>
+
 
                 <div id="courseManageList" style="margin-top:15px;"></div>
                 <button id="showAllCoursesBtn" class="show-all-rounds-btn" onclick="toggleAllCourses()" style="display: none; margin-top: 10px; font-size: 12px; padding: 8px;">
@@ -742,34 +778,7 @@
         }
         
         function renderCourses() {
-            const select = document.getElementById('roundCourse');
-            if (courses.length === 0) {
-                select.innerHTML = '<option value="">Kein Platz - zuerst anlegen!</option>';
-            } else {
-                // Zähle, wie oft jeder Platz gespielt wurde
-                const courseCounts = {};
-                if (myGolfer && myGolfer.rounds) {
-                    myGolfer.rounds.forEach(round => {
-                        const course = courses.find(c => c.name === round.course);
-                        if (course) {
-                            courseCounts[course.id] = (courseCounts[course.id] || 0) + 1;
-                        }
-                    });
-                }
-                
-                // Sortiere nach Häufigkeit (meist gespielt zuerst) für SELECT
-                const sortedCourses = [...courses].sort((a, b) => {
-                    const countA = courseCounts[a.id] || 0;
-                    const countB = courseCounts[b.id] || 0;
-                    return countB - countA;
-                });
-                
-                select.innerHTML = sortedCourses.map(c => {
-                    const playCount = courseCounts[c.id] || 0;
-                    const countText = playCount > 0 ? ` • ${playCount}x gespielt` : '';
-                    return `<option value="${c.id}">${c.name} (CR ${c.cr.toFixed(1)}, SR ${c.sr})${countText}</option>`;
-                }).join('');
-            }
+            filterCoursesByHoles();
             
             const manageList = document.getElementById('courseManageList');
             if (manageList) {
@@ -797,8 +806,8 @@
                         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
                             <div style="flex:1;">
                                 <div style="font-weight:600;font-size:14px;">${c.name}</div>
-                                <div style="font-size:12px;color:var(--color-text-secondary);">CR ${c.cr.toFixed(1)} • SR ${c.sr}</div>
-                            </div>
+                                <div style="font-size:12px;color:var(--color-text-secondary);">CR ${c.cr.toFixed(1)} • SR ${c.sr} • ${c.holes || 18} Löcher</div>
+                           </div>
                             <div style="display:flex;gap:6px;">
                                 <button onclick="editCourse('${c.id}')" class="small" style="background:#e9ecef;color:#495057;" title="Bearbeiten">✏️</button>
                                 <button onclick="deleteCourse('${c.id}')" class="small" style="background:#e9ecef;color:#495057;" title="Löschen">🗑️</button>
@@ -809,69 +818,85 @@
             }
         }
 
-        
+        function filterCoursesByHoles() {
+            const selectedHoles = parseInt(document.querySelector('input[name="roundHoles"]:checked').value);
+            const select = document.getElementById('roundCourse');
+            
+            // Zähle, wie oft jeder Platz gespielt wurde
+            const courseCounts = {};
+            if (myGolfer && myGolfer.rounds) {
+                myGolfer.rounds.forEach(round => {
+                    const course = courses.find(c => c.name === round.course);
+                    if (course) {
+                        courseCounts[course.id] = (courseCounts[course.id] || 0) + 1;
+                    }
+                });
+            }
+            
+            // Filtere Plätze nach Lochzahl
+            const filteredCourses = courses.filter(c => c.holes === selectedHoles);
+            
+            if (filteredCourses.length === 0) {
+                select.innerHTML = `<option value="">Kein ${selectedHoles}-Loch-Platz angelegt!</option>`;
+                return;
+            }
+            
+            // Sortiere nach Häufigkeit
+            const sortedCourses = [...filteredCourses].sort((a, b) => {
+                const countA = courseCounts[a.id] || 0;
+                const countB = courseCounts[b.id] || 0;
+                return countB - countA;
+            });
+            
+            select.innerHTML = sortedCourses.map(c => {
+                const playCount = courseCounts[c.id] || 0;
+                const countText = playCount > 0 ? ` • ${playCount}x gespielt` : '';
+                return `<option value="${c.id}">${c.name} (CR ${c.cr.toFixed(1)}, SR ${c.sr})${countText}</option>`;
+            }).join('');
+        }
+
         function saveRound() {
             const courseId = document.getElementById('roundCourse').value;
             const course = courses.find(c => c.id === courseId);
-        
+            
             if (!course) {
                 return alert('Bitte zuerst einen Platz anlegen oder auswählen!');
             }
-        
-            const strokes = parseInt(document.getElementById('roundStrokes').value);
-            const holes = parseInt(document.getElementById('roundHoles').value);
-            const date = document.getElementById('roundDate').value;
-        
-            const minStrokes = holes === 9 ? 20 : 40;
-            const maxStrokes = holes === 9 ? 80 : 160;
             
-            if (!strokes || strokes < minStrokes || strokes > maxStrokes || !date) {
-                return alert(`Bitte gültige Schlagzahl eingeben (${minStrokes}-${maxStrokes} für ${holes} Löcher)!`);
+            const strokes = parseInt(document.getElementById('roundStrokes').value);
+            const holes = parseInt(document.querySelector('input[name="roundHoles"]:checked').value);
+            const date = document.getElementById('roundDate').value;
+            
+            if (!strokes || strokes < 18 || !date) {
+                return alert('Bitte alle Felder ausfüllen!');
             }
-
-        
-            // WHS 2024: Score Differential Berechnung
+            
+            // WHS 2024: Korrekte 9-Loch Berechnung
             let scoreDifferential;
             let cr, sr;
             
             if (holes === 9) {
-                // ═══ WHS 2024: 9-Loch mit Expected Score ═══
-                
-                // AUTOMATISCHE ERKENNUNG: Ist das ein 18-Loch Platz?
-                // Heuristik: Wenn CR > 40, dann ist es wahrscheinlich ein 18-Loch-Platz
-                const is18HoleCourse = course.cr > 40;
-                
-                if (is18HoleCourse) {
-                    // 18-Loch Platz, aber nur 9 Löcher gespielt
-                    // → Halbiere die Werte für 9-Loch
-                    cr = course.cr / 2;
-                    sr = course.sr;
-                    
-                } else {
-                    // Echter 9-Loch Platz
-                    cr = course.cr;
-                    sr = course.sr;
-                }
-                
-                // Hole aktuellen Handicap Index
-                const currentHcp = myGolfer.handicapIndex !== undefined 
-                    ? myGolfer.handicapIndex 
-                    : myGolfer.startHcp;
-                
-                // Berechne 18-Loch Äquivalent Score Differential
-                const result = calculate9HoleTo18HoleEquivalent(strokes, cr, sr, currentHcp);
-                scoreDifferential = result.scoreDiff18;
-                
-            } else {
-                // ═══ 18-Loch: Standard-Formel ═══
+                // Verwende 9-Loch CR und SR (NICHT halbiert!)
                 cr = course.cr;
                 sr = course.sr;
-                scoreDifferential = ((strokes - cr) * 113 / sr).toFixed(1);
+                
+                // 1. Berechne 9-Loch Score Differential (gespielte 9 Löcher)
+                const sd_9_played = ((strokes - cr) * (113 / sr));
+                
+                // 2. Berechne Expected Score Differential (nicht-gespielte 9 Löcher)
+                // Formel: ((HCPI × 1.04) + 2.4) / 2
+                const currentHCPI = myGolfer.handicapIndex;
+                const sd_9_expected = ((currentHCPI * 1.04) + 2.4) / 2;
+                
+                // 3. Addiere beide für 18-Loch Score Differential
+                scoreDifferential = (sd_9_played + sd_9_expected).toFixed(1);
+                
+            } else {
+                // 18-Loch: Standard-Berechnung
+                cr = course.cr;
+                sr = course.sr;
+                scoreDifferential = ((strokes - cr) * (113 / sr)).toFixed(1);
             }
-
-            
-            scoreDifferential = parseFloat(scoreDifferential);
-
             
             const isOfficial = document.getElementById('roundOfficial').checked;
             
@@ -889,6 +914,7 @@
             };
             
             myGolfer.rounds.push(round);
+            
             updateMyHandicap();
             updateUnofficialHandicap();
             
@@ -896,17 +922,17 @@
             
             if (myGolfer.rounds.length % 5 === 0) {
                 setTimeout(() => {
-                    if (confirm(`✅ Du hast ${myGolfer.rounds.length} Runden erfasst!\n\n💾 Automatisches Backup jetzt erstellen?`)) {
+                    if (confirm(`Du hast ${myGolfer.rounds.length} Runden erfasst! Automatisches Backup jetzt erstellen?`)) {
                         exportData();
                     }
                 }, 500);
             }
             
             updateUI();
+            
             document.getElementById('roundStrokes').value = '';
-            document.getElementById('roundHoles').value = '18';
-
-            alert(`✅ Runde gespeichert!\n\nScore Differential: ${round.scoreDifferential}\nNeues offizielles HCP: ${myGolfer.handicapIndex.toFixed(1)}\nInoffizielles HCP: ${myGolfer.unofficialHandicap.toFixed(1)}`);
+            
+            alert(`Runde gespeichert!\nDifferential: ${round.scoreDifferential}\n${isOfficial ? 'Offizielles' : 'Inoffizielles'} HCP: ${myGolfer[isOfficial ? 'handicapIndex' : 'unofficialHandicap'].toFixed(1)}`);
         }
         
         function updateMyHandicap() {
@@ -1259,28 +1285,40 @@
             const chartWidth = width - padding.left - padding.right;
             const chartHeight = height - padding.top - padding.bottom;
             
-            // Berechne INOFFIZIELLES Handicap (alle Runden)
+            // Sammle HISTORISCHE HCP-Werte aus den Runden
             const unofficialHistory = [];
-            for (let i = 0; i < rounds.length; i++) {
-                const tempRounds = rounds.slice(0, i + 1);
-                const allDiffs = tempRounds.map(r => r.scoreDifferential).sort((a,b) => a - b);
-                const n = Math.min(8, allDiffs.length);
-                const avg = allDiffs.slice(0, n).reduce((a,b) => a + b, 0) / n;
-                unofficialHistory.push(Math.round(avg * 10) / 10);
-            }
-            
-            // Berechne OFFIZIELLES Handicap (nur offizielle Runden)
             const officialHistory = [];
+            
             for (let i = 0; i < rounds.length; i++) {
-                const tempRounds = rounds.slice(0, i + 1).filter(r => r.official !== false);
-                if (tempRounds.length === 0) {
+                const round = rounds[i];
+                
+                // Inoffizielles HCP nach dieser Runde
+                // Berechne mit allen Runden bis zu diesem Zeitpunkt
+                const tempAllRounds = myGolfer.rounds
+                    .filter(r => new Date(r.date) <= new Date(round.date))
+                    .slice(-20)
+                    .map(r => r.scoreDifferential)
+                    .sort((a, b) => a - b);
+                
+                const n = Math.min(8, tempAllRounds.length);
+                const avgUnofficial = tempAllRounds.slice(0, n).reduce((a, b) => a + b, 0) / n;
+                unofficialHistory.push(Math.round(avgUnofficial * 10) / 10);
+                
+                // Offizielles HCP nach dieser Runde
+                // Berechne nur mit offiziellen Runden bis zu diesem Zeitpunkt
+                const tempOfficialRounds = myGolfer.rounds
+                    .filter(r => r.official !== false && new Date(r.date) <= new Date(round.date))
+                    .slice(-20)
+                    .map(r => r.scoreDifferential)
+                    .sort((a, b) => a - b);
+                
+                if (tempOfficialRounds.length === 0) {
                     officialHistory.push(myGolfer.startHcp);
-                    continue;
+                } else {
+                    const nOff = Math.min(8, tempOfficialRounds.length);
+                    const avgOfficial = tempOfficialRounds.slice(0, nOff).reduce((a, b) => a + b, 0) / nOff;
+                    officialHistory.push(Math.round(avgOfficial * 10) / 10);
                 }
-                const allDiffs = tempRounds.map(r => r.scoreDifferential).sort((a,b) => a - b);
-                const n = Math.min(8, allDiffs.length);
-                const avg = allDiffs.slice(0, n).reduce((a,b) => a + b, 0) / n;
-                officialHistory.push(Math.round(avg * 10) / 10);
             }
             
             // Finde min/max für Y-Achse
@@ -1320,7 +1358,7 @@
                 return padding.top + chartHeight - ((hcp - minHcp) / range) * chartHeight;
             };
             
-            // Zeichne OFFIZIELLE Linie (gelb, gestrichelt)
+            // Zeichne HANDICAP-RUNDEN Linie (gelb, gestrichelt)
             ctx.strokeStyle = '#ffc107';
             ctx.lineWidth = 2;
             ctx.setLineDash([5, 5]);
@@ -1337,7 +1375,7 @@
             ctx.stroke();
             ctx.setLineDash([]);
             
-            // Zeichne INOFFIZIELLE Linie (grün, durchgezogen)
+            // Zeichne ALLE RUNDEN Linie (grün, durchgezogen)
             ctx.strokeStyle = '#28a745';
             ctx.lineWidth = 3;
             
@@ -1350,7 +1388,7 @@
             });
             ctx.stroke();
             
-            // Zeichne Punkte auf INOFFIZIELLER Linie
+            // Zeichne Punkte auf ALLE RUNDEN Linie
             ctx.fillStyle = '#28a745';
             unofficialHistory.forEach((hcp, i) => {
                 const x = padding.left + (i / (rounds.length - 1)) * chartWidth;
@@ -1367,49 +1405,39 @@
             // Grüne Linie Legende
             ctx.fillStyle = '#28a745';
             ctx.fillRect(padding.left, height - 25, 15, 3);
-            ctx.fillText('Inoffiziell (alle Runden)', padding.left + 20, height - 20);
+            ctx.fillText('Alle Runden', padding.left + 20, height - 20);
             
             // Gelbe Linie Legende
             ctx.strokeStyle = '#ffc107';
             ctx.lineWidth = 2;
             ctx.setLineDash([5, 5]);
             ctx.beginPath();
-            ctx.moveTo(padding.left + 200, height - 24);
-            ctx.lineTo(padding.left + 215, height - 24);
+            ctx.moveTo(padding.left + 150, height - 24);
+            ctx.lineTo(padding.left + 165, height - 24);
             ctx.stroke();
             ctx.setLineDash([]);
             ctx.fillStyle = '#ffc107';
-            ctx.fillText('Offiziell (nur gewertete)', padding.left + 220, height - 20);
+            ctx.fillText('Handicap-Runden', padding.left + 170, height - 20);
         }
-
         
         function addCourse() {
             const name = document.getElementById('courseName').value.trim();
             const cr = parseFloat(document.getElementById('courseCR').value);
             const sr = parseInt(document.getElementById('courseSR').value);
-        
+            const holes = parseInt(document.querySelector('input[name="courseHoles"]:checked').value);
+            
             if (!name || isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
-                return alert('Bitte korrekte Platzdaten eingeben!\nCR min. 20, SR 55-155');
+                return alert('Bitte korrekte Platzdaten eingeben! (CR min. 20, SR 55-155)');
             }
-        
+            
             courses.push({
                 id: Date.now().toString(),
                 name: name,
                 cr: cr,
-                sr: sr
+                sr: sr,
+                holes: holes
             });
-        
-            saveCourses();
-            updateUI();
-        
-            document.getElementById('courseName').value = '';
-            document.getElementById('courseCR').value = '';
-            document.getElementById('courseSR').value = '';
-        
-            alert(`${name} wurde gespeichert!`);
-        }
-
-        
+  
         function editCourse(courseId) {
             const course = courses.find(c => c.id === courseId);
             if (!course) return;
@@ -1423,6 +1451,30 @@
             
             const newSR = prompt('Slope Rating ändern:', course.sr);
             if (newSR === null) return;
+            
+            // NEU: Lochzahl ändern
+            const newHoles = prompt('Lochzahl ändern (9 oder 18):', course.holes || 18);
+            if (newHoles === null) return;
+            const holes = parseInt(newHoles);
+            if (holes !== 9 && holes !== 18) {
+                return alert('Lochzahl muss 9 oder 18 sein!');
+            }
+            
+            const cr = parseFloat(newCR);
+            const sr = parseInt(newSR);
+            
+            if (!newName.trim() || isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
+                return alert('Ungültige Eingaben! (CR min. 20, SR 55-155)');
+            }
+            
+            const oldCR = course.cr;
+            const oldSR = course.sr;
+            
+            course.name = newName.trim();
+            course.cr = cr;
+            course.sr = sr;
+            course.holes = holes; // NEU!
+
         
             const cr = parseFloat(newCR);
             const sr = parseInt(newSR);
