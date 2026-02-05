@@ -705,7 +705,6 @@
         
         function renderCourses() {
             filterCoursesByHoles();
-            
             const manageList = document.getElementById('courseManageList');
             if (manageList) {
                 if (courses.length === 0) {
@@ -714,26 +713,22 @@
                     // Button nur anzeigen wenn mehr als 3 Plätze
                     const showAllCoursesBtn = document.getElementById('showAllCoursesBtn');
                     const showAll = window.showAllCourses || false;
-                    
                     if (courses.length > 3) {
                         showAllCoursesBtn.style.display = 'block';
                         showAllCoursesBtn.textContent = showAll ? '📋 Weniger anzeigen' : '📋 Alle Plätze anzeigen';
                     } else {
                         showAllCoursesBtn.style.display = 'none';
                     }
-                    
                     // Sortiere nach Neuheit (neueste zuerst) für VERWALTUNG
                     const sortedCourses = [...courses].sort((a, b) => b.id - a.id);
-                    
                     // Zeige nur 3 oder alle
                     const displayCourses = (showAll || sortedCourses.length <= 3) ? sortedCourses : sortedCourses.slice(0, 3);
-                    
                     manageList.innerHTML = displayCourses.map(c => `
                         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
                             <div style="flex:1;">
                                 <div style="font-weight:600;font-size:14px;">${c.name}</div>
                                 <div style="font-size:12px;color:var(--color-text-secondary);">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)} • ${c.holes || 18} Löcher</div>
-                           </div>
+                            </div>
                             <div style="display:flex;gap:6px;">
                                 <button onclick="editCourse('${c.id}')" class="small" style="background:#e9ecef;color:#495057;" title="Bearbeiten">✏️</button>
                                 <button onclick="deleteCourse('${c.id}')" class="small" style="background:#e9ecef;color:#495057;" title="Löschen">🗑️</button>
