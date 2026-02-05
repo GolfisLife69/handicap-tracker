@@ -349,6 +349,7 @@
             cursor: pointer;
             transition: background 0.2s, transform 0.1s;
             -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
         
         /* Desktop: Sichtbarer Hover */
@@ -365,11 +366,25 @@
             }
         }
         
-        /* Alle Geräte: Active Feedback */
-        .toggle-stats-btn:active {
-            transform: scale(0.98);
+        /* Desktop: Active Feedback */
+        @media (hover: hover) and (pointer: fine) {
+            .toggle-stats-btn:active {
+                transform: scale(0.98);
+            }
         }
-
+        
+        /* Mobile: KEINE Pseudo-States! */
+        @media (hover: none) {
+            .toggle-stats-btn:hover,
+            .toggle-stats-btn:active,
+            .toggle-stats-btn:focus,
+            .toggle-stats-btn:focus-visible,
+            .toggle-stats-btn:focus-within {
+                background: var(--color-surface) !important;
+                transform: none !important;
+                outline: none !important;
+            }
+        }
 
         .add-round-btn {
             display: none;
@@ -504,7 +519,7 @@
 
     </style>
 </head>
-<body>
+<body tabindex="-1">
     <div id="setupScreen" class="setup-form">
         <h2>Einmalige Einrichtung</h2>
         <p style="margin-bottom: 20px;">Deine persönlichen Golf-Daten:</p>
@@ -1051,7 +1066,22 @@
             
             stats.style.display = isVisible ? 'none' : 'block';
             btn.textContent = isVisible ? '📊 Erweiterte Statistiken' : '✖ Statistiken ausblenden';
+            
+            // Mobile Force Blur
+            if (window.matchMedia('(hover: none)').matches) {
+                btn.blur();
+                document.body.focus();
+                
+                // Trigger Repaint
+                requestAnimationFrame(() => {
+                    btn.style.pointerEvents = 'none';
+                    setTimeout(() => {
+                        btn.style.pointerEvents = '';
+                    }, 50);
+                });
+            }
         }
+
      
         function renderAdvancedStats() {
             const rounds = myGolfer.rounds || [];
