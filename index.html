@@ -529,6 +529,10 @@
             }
         }
 
+        #hcpButtonUnderGraph {
+            display: block !important;
+            margin: 15px auto 0 auto;
+        }
 
     </style>
 </head>
@@ -687,9 +691,8 @@
                     <div style="margin-top:10px;font-size:14px;color:var(--color-text-secondary);text-align:center;">
                         Handicap-Entwicklung (letzte 20 Runden)
                     </div>
-                </div>  
-
-                <button class="toggle-stats-btn small" onclick="showHandicapCalculation()" style="margin-top: 15px;">HCP-Berechnung anzeigen</button>
+                </div>
+                <button id="hcpButtonUnderGraph" class="toggle-stats-btn small" onclick="showHandicapCalculation()" style="margin-top: 15px; display: none;">HCP-Berechnung anzeigen</button>
                 
                 <div class="round-list" id="roundList"></div>
                 
@@ -779,9 +782,15 @@
                 document.getElementById('avgStrokes').textContent = '-';
             }
             
-            renderCourses();
-            renderRounds();
-            if (rounds.length >= 2) renderChart();
+                renderCourses();
+                renderRounds();
+                if (rounds.length >= 2) {
+                    renderChart();
+                    document.getElementById('hcpButtonUnderGraph').style.display = 'block';
+                } else {
+                    document.getElementById('hcpButtonUnderGraph').style.display = 'none';
+                }
+
         }
         
         function loadData() {
