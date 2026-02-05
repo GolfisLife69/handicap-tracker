@@ -345,10 +345,15 @@
             margin-top: 10px;
         }
         
-        .toggle-stats-btn:hover {
-            background: var(--color-secondary-hover);
+        .toggle-stats-btn:active {
+            transform: scale(0.98);
         }
-        
+
+        @media (hover: hover) {
+            .toggle-stats-btn:hover {
+                background: var(--color-bg-tertiary);
+            }
+        }
         .add-round-btn {
             display: none;
             background: transparent;
