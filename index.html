@@ -481,34 +481,33 @@
         <div class="container">
             <div class="sidebar">
                 
-        <h2>Neue Runde</h2>
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="roundHoles9Label">
-                    <input type="radio" name="roundHoles" id="roundHoles9" value="9" style="width: auto; margin: 0;" onchange="filterCoursesByHoles()">
-                    <span style="font-weight: 500;">9 Löcher</span>
-                </label>
-                <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid var(--color-primary); height: 46px; box-sizing: border-box;" id="roundHoles18Label">
-                    <input type="radio" name="roundHoles" id="roundHoles18" value="18" checked style="width: auto; margin: 0;" onchange="filterCoursesByHoles()">
-                    <span style="font-weight: 500;">18 Löcher</span>
-                </label>
-            </div>
-
-            <select id="roundCourse" style="height: 46px;"></select>
-            <input id="roundDate" type="date">
-            <input id="roundStrokes" type="number" placeholder="Gesamtschläge">
-
-                <div style="margin-bottom: 10px;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="roundOfficial" style="width: auto; margin: 0;">
-                        <span style="font-size: 14px; font-weight: 500;">📋 Handicap Runde</span>
+                <h2>Neue Runde</h2>
+                
+                <!-- 9/18 Löcher -->
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="roundHoles9Label">
+                        <input type="radio" name="roundHoles" id="roundHoles9" value="9" style="width: auto; margin: 0;" onchange="filterCoursesByHoles()">
+                        <span style="font-weight: 500;">9 Löcher</span>
+                    </label>
+                    <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid var(--color-primary); height: 46px; box-sizing: border-box;" id="roundHoles18Label">
+                        <input type="radio" name="roundHoles" id="roundHoles18" value="18" checked style="width: auto; margin: 0;" onchange="filterCoursesByHoles()">
+                        <span style="font-weight: 500;">18 Löcher</span>
                     </label>
                 </div>
-                <button onclick="saveRound()">💾 Runde speichern</button>
                 
-        <h2 style="margin-top: 30px;">Plätze verwalten</h2>
-                <input id="courseName" placeholder="Platzname">
-                <input id="coursePar" type="number" placeholder="Par (z.B. 72 für 18 Löcher)" style="height: 46px;">
-                                
+                <select id="roundCourse" style="height: 46px; margin-bottom: 10px;"></select>
+                <input id="roundDate" type="date" style="height: 46px; margin-bottom: 10px;">
+                <input id="roundStrokes" type="number" placeholder="Schläge eingeben" style="height: 46px; margin-bottom: 10px;">
+                
+                <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
+                    <input type="checkbox" id="roundOfficial" style="width: 20px; height: 20px; margin: 0; accent-color: var(--color-primary);">
+                    <span style="font-weight: 500;">Offizielle Runde</span>
+                </label>
+                
+                <button onclick="saveRound()">Runde speichern</button>
+
+                
+                <h2 style="margin-top: 30px;">Neuer Platz</h2>
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="courseHoles9Label">
                         <input type="radio" name="courseHoles" id="courseHoles9" value="9" style="width: auto; margin: 0;">
@@ -519,17 +518,17 @@
                         <span style="font-weight: 500;">18 Löcher</span>
                     </label>
                 </div>
-
-                
-                <input id="courseCR" type="number" step="0.1" placeholder="Course Rating">
-                <input id="courseSR" type="number" placeholder="Slope Rating">
+                <input id="courseName" placeholder="Platzname">
+                <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                    <input id="coursePar" type="number" placeholder="Par" style="flex: 1; min-width: 0; text-align: center;">
+                    <input id="courseCR" type="number" step="0.1" placeholder="CR" style="flex: 1; min-width: 0; text-align: center;">
+                    <input id="courseSR" type="number" placeholder="SR" style="flex: 1; min-width: 0; text-align: center;">
+                </div>
                 <button onclick="addCourse()">Platz speichern</button>
 
-
+                <h2 style="margin-top: 30px;">Plätze verwalten</h2>
                 <div id="courseManageList" style="margin-top:15px;"></div>
-                <button id="showAllCoursesBtn" class="show-all-rounds-btn" onclick="toggleAllCourses()" style="display: none; margin-top: 10px; font-size: 12px; padding: 8px;">
-                📋 Alle Plätze anzeigen
-                </button>
+                <button id="showAllCoursesBtn" class="show-all-rounds-btn" onclick="toggleAllCourses()" style="display: none; margin-top: 10px; font-size: 12px; padding: 8px;">Alle Plätze anzeigen</button>
                 
                 <h2 style="margin-top: 30px;">🔄 Daten-Verwaltung</h2>
                 <button onclick="exportData()">💾 Daten exportieren (JSON)</button>
