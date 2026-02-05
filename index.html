@@ -461,9 +461,23 @@
 
 
         @media (min-width: 769px) {
-        .course-stats-item .course-info {
-            white-space: pre-line;
+            .course-stats-item .course-info {
+                white-space: pre-line;
+            }
+            .mobile-bullet {
+                display: none; /* Desktop: kein • */
+            }
         }
+        
+        @media (max-width: 768px) {
+            .course-info {
+                white-space: nowrap; /* Mobile: keine Umbrüche */
+            }
+            .mobile-bullet {
+                display: inline; /* Mobile: zeige • */
+            }
+        }
+
 
     </style>
 </head>
@@ -750,8 +764,10 @@
                     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
                         <div style="flex:1;">
                             <div style="font-weight:600;font-size:14px;">${c.name}</div>
-                            <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)}\n${c.holes || 18} Löcher</div>
-                        </div>
+                            <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)}<span class="mobile-bullet"> • </span>
+                            ${c.holes || 18} Löcher</div>
+                                
+                            </div>
                         <div style="display:flex;gap:6px;">
                             <button onclick="editCourse('${c.id}')" class="small" style="background:#e9ecef;color:#495057;" title="Bearbeiten">✏️</button>
                             <button onclick="deleteCourse('${c.id}')" class="small" style="background:#e9ecef;color:#495057;" title="Löschen">🗑️</button>
