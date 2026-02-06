@@ -570,7 +570,7 @@
         <p style="margin-bottom: 20px;">Deine persönlichen Golf-Daten:</p>
         <input id="myName" placeholder="Dein Name" required>
         <input id="myClub" placeholder="Dein Club (optional)">
-        <input id="startHcp" type="number" step="0.1" placeholder="Aktuelles Handicap (z.B. 19.5)" required>
+        <input id="startHcp" type="number" step="0.1" inputmode="decimal" placeholder="Aktuelles Handicap (z.B. 19.5)" required>
         <button onclick="setupComplete()">✅ Einrichtung abschließen</button>
         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--color-border);">
             <input type="file" id="setupImportFile" accept=".json" onchange="setupImportData(event)" style="display: none;">
@@ -600,7 +600,7 @@
                 
                 <select id="roundCourse" style="height: 46px; margin-bottom: 10px;"></select>
                 <input id="roundDate" type="date" style="height: 46px; margin-bottom: 10px;">
-                <input id="roundStrokes" type="number" placeholder="Schläge eingeben" style="height: 46px; margin-bottom: 10px;">
+                <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge eingeben" style="height: 46px; margin-bottom: 10px;">
                 
                 <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
                     <input type="checkbox" id="roundOfficial" style="width: 20px; height: 20px; margin: 0; accent-color: var(--color-primary);">
@@ -623,9 +623,9 @@
                 </div>
                 <input id="courseName" placeholder="Platzname">
                 <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                    <input id="coursePar" type="number" placeholder="Par" style="flex: 1; min-width: 0; text-align: center;">
-                    <input id="courseCR" type="number" step="0.1" placeholder="CR" style="flex: 1; min-width: 0; text-align: center;">
-                    <input id="courseSR" type="number" placeholder="SR" style="flex: 1; min-width: 0; text-align: center;">
+                    <input id="coursePar" type="number" inputmode="numeric" placeholder="Par" style="flex: 1; min-width: 0; text-align: center;">
+                    <input id="courseCR" type="number" step="0.1" inputmode="decimal" placeholder="CR" style="flex: 1; min-width: 0; text-align: center;">
+                    <input id="courseSR" type="number" inputmode="numeric" placeholder="SR" style="flex: 1; min-width: 0; text-align: center;">
                 </div>
                 <button onclick="addCourse()">Platz speichern</button>
 
