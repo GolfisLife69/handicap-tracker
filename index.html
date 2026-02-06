@@ -547,6 +547,21 @@
             }
         }
 
+        /* Mobile: Tausche Gesamtrunden & Offizielle für bessere Zuordnung */
+        @media (max-width: 768px) {
+            .stats-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            /* Reihenfolge ändern: Offizielle (2) → Position 1, Gesamtrunden (1) → Position 2 */
+            .stat:nth-child(1) { order: 2; }  /* Gesamtrunden nach rechts */
+            .stat:nth-child(2) { order: 1; }  /* Offizielle nach links */
+            .stat:nth-child(3) { order: 3; }  /* Beste Runde bleibt */
+            .stat:nth-child(4) { order: 4; }  /* Ø Schläge bleibt */
+        }
+
+
     </style>
 </head>
 <body tabindex="-1">
