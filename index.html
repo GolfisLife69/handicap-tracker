@@ -1060,21 +1060,34 @@
         function updateUnofficialHandicap() {
             const allRounds = myGolfer.rounds
                 .slice(-20)
-                .map(r => r.scoreDifferential)
-                .sort((a,b) => a - b);
-            
+                .map(r => ({ id: r.id, sd: r.scoreDifferential }))
+                .sort((a, b) => a.sd - b.sd);
+        
             if (allRounds.length === 0) {
                 myGolfer.unofficialHandicap = myGolfer.startHcp;
                 return;
             }
-            
-            const n = Math.min(8, allRounds.length);
-            const bestRounds = allRounds.slice(0, n);
-            let newHcp = bestRounds.reduce((a,b) => a + b, 0) / n;
-            
-            const bestSD = Math.min(...allRounds);
+        
+            const count = allRounds.length;
+        
+            // WHS-Regel: Bei weniger als 3 Runden wird Start-Handicap verwendet
+            if (count < 3) {
+                myGolfer.unofficialHandicap = myGolfer.startHcp;
+                return;
+            }
+        
+            // Gleiche WHS-Parameter wie beim offiziellen HCP
+            const { numCounted, adjustment } = getWHSParameters(count);
+            const bestRounds = allRounds.slice(0, numCounted);
+            let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
+        
+            // Soft Cap: beste SD + 3
+            const bestSD = allRounds[0].sd;
             newHcp = Math.min(newHcp, bestSD + 3);
-            
+        
+            // Anpassung (Bonus) anwenden
+            newHcp += adjustment;
+        
             myGolfer.unofficialHandicap = Math.round(newHcp * 10) / 10;
         }
         
