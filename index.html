@@ -718,7 +718,7 @@
                 <div id="handicapChartWrapper" style="display: none; text-align: center; margin-bottom: 25px;">
                     <canvas id="hcpCanvas"></canvas>
                     <div style="margin-top:10px;font-size:14px;color:var(--color-text-secondary);">
-                        Handicap-Entwicklung (letzte 20 Runden)
+                        Handicap-Entwicklung (letzte 10 Runden)
                     </div>
                     <button id="hcpButtonUnderGraph" class="toggle-stats-btn small" onclick="showHandicapCalculation()" style="margin-top: 10px;">
                         HCP-Berechnung anzeigen
@@ -1543,7 +1543,7 @@ rounds.forEach(r => {
         }
         
         function renderChart() {
-            const rounds = myGolfer.rounds.slice(-20).sort((a, b) => new Date(a.date) - new Date(b.date));
+            const rounds = myGolfer.rounds.slice(-10).sort((a, b) => new Date(a.date) - new Date(b.date));
             
             if (rounds.length < 2) return;
             
@@ -1580,7 +1580,7 @@ rounds.forEach(r => {
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
             
-// Sammle HISTORISCHE HCP-Werte aus den Runden
+            // Sammle HISTORISCHE HCP-Werte aus den Runden
             const unofficialHistory = [];
             const officialHistory = [];
             
