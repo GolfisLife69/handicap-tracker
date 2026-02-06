@@ -1553,7 +1553,40 @@ rounds.forEach(r => {
             } else {
                 // WHS-Regeln anwenden
                 const count = tempOfficialRounds.length;
-                const { numCounted, adjustment } = getWHSParameters(count);
+                let numCounted, adjustment;
+                
+                // WHS-Parameter direkt berechnen
+                if (count >= 3 && count <= 4) {
+                    numCounted = 1;
+                    adjustment = count === 3 ? -2.0 : -1.0;
+                } else if (count === 5) {
+                    numCounted = 1;
+                    adjustment = 0;
+                } else if (count === 6) {
+                    numCounted = 2;
+                    adjustment = -1.0;
+                } else if (count >= 7 && count <= 8) {
+                    numCounted = 2;
+                    adjustment = 0;
+                } else if (count >= 9 && count <= 11) {
+                    numCounted = 3;
+                    adjustment = 0;
+                } else if (count >= 12 && count <= 14) {
+                    numCounted = 4;
+                    adjustment = 0;
+                } else if (count >= 15 && count <= 16) {
+                    numCounted = 5;
+                    adjustment = 0;
+                } else if (count >= 17 && count <= 18) {
+                    numCounted = 6;
+                    adjustment = 0;
+                } else if (count === 19) {
+                    numCounted = 7;
+                    adjustment = 0;
+                } else {
+                    numCounted = 8;
+                    adjustment = 0;
+                }
                 
                 const bestRounds = tempOfficialRounds.slice(0, numCounted);
                 let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
