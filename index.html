@@ -1339,17 +1339,24 @@ rounds.forEach(r => {
             const displayRounds = (showAll || rounds.length <= 5) ? rounds : rounds.slice(0, 5);
         
             container.innerHTML = displayRounds.map((r, index) => {
-                // Differenz zum Handicap (Hauptwert)
-                const diffToHcp = (r.scoreDifferential - r.playingHcp).toFixed(1);
-                const color = diffToHcp < 0 ? 'var(--color-primary)'
-                    : diffToHcp > 3 ? 'var(--color-danger)'
-                    : 'var(--color-warning)';
-            
-                // Differenz zu Par berechnen
+                // Platz finden für Par-Wert
                 const course = courses.find(c => c.name === r.course && c.holes === r.holes);
                 const coursePar = course ? course.par : (r.holes === 9 ? 36 : 72);
+                
+                // Differenz zu Par berechnen
                 const diffToPar = r.strokes - coursePar;
                 const diffToParText = diffToPar > 0 ? `+${diffToPar}` : `${diffToPar}`;
+                
+                // Differenz zur Spielvorgabe (Hauptwert) - NEUE BERECHNUNG
+                const playingHcp = Math.round(r.playingHcp);
+                const allowedStrokes = coursePar + playingHcp;
+                const diffToVorgabe = r.strokes - allowedStrokes;
+                const diffToVorgabeText = diffToVorgabe > 0 ? `+${diffToVorgabe}` : `${diffToVorgabe}`;
+                
+                const color = diffToVorgabe < 0 ? 'var(--color-primary)'
+                    : diffToVorgabe > 3 ? 'var(--color-danger)'
+                    : 'var(--color-warning)';
+
             
                 const isCounted = countedRoundIds.includes(r.id);
                 const officialBadge = isCounted ? ' ⭐' : '';
@@ -1365,9 +1372,9 @@ rounds.forEach(r => {
                         </div>
                         <div style="text-align: right; display: flex; align-items: center; gap: 10px;">
                             <div>
-                                <div style="font-size: 22px; font-weight: bold; color: ${color};">
-                                    ${diffToHcp < 0 ? diffToHcp : diffToHcp > 0 ? `+${diffToHcp}` : diffToHcp}
-                                </div>
+                                    <div style="font-size: 20px; font-weight: bold; color: ${color};">
+                                        ${diffToVorgabeText} <span style="font-size: 11px; font-weight: 400; color: var(--color-text-secondary);">zur Vorgabe</span>
+                                    </div>
                                 <div style="font-size: 12px; color: var(--color-text-secondary);">
                                     ${diffToParText} zu Par
                                 </div>
