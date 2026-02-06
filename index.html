@@ -1537,7 +1537,7 @@ rounds.forEach(r => {
                 
                 unofficialHistory.push(Math.round(newHcp * 10) / 10);
             }
-
+                }
             // Offizielles HCP nach dieser Runde (WHS-KORREKT!)
             const tempOfficialRounds = myGolfer.rounds
                 .filter(r => r.official !== false && new Date(r.date) <= new Date(round.date))
@@ -1600,7 +1600,7 @@ rounds.forEach(r => {
                 
                 officialHistory.push(Math.round(newHcp * 10) / 10);
             }
-
+                }
             
             if (unofficialHistory.length > 0) {
                 unofficialHistory[unofficialHistory.length - 1] = myGolfer.unofficialHandicap;
