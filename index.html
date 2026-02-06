@@ -1339,34 +1339,40 @@ rounds.forEach(r => {
             const displayRounds = (showAll || rounds.length <= 5) ? rounds : rounds.slice(0, 5);
         
             container.innerHTML = displayRounds.map((r, index) => {
-                const diff = (r.scoreDifferential - r.playingHcp).toFixed(1);
-                const color = diff < 0 ? 'var(--color-primary)'
-                    : diff > 3 ? 'var(--color-danger)'
+                // Differenz zum Handicap (Hauptwert)
+                const diffToHcp = (r.scoreDifferential - r.playingHcp).toFixed(1);
+                const color = diffToHcp < 0 ? 'var(--color-primary)'
+                    : diffToHcp > 3 ? 'var(--color-danger)'
                     : 'var(--color-warning)';
-        
+            
+                // Differenz zu Par berechnen
+                const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+                const coursePar = course ? course.par : (r.holes === 9 ? 36 : 72);
+                const diffToPar = r.strokes - coursePar;
+                const diffToParText = diffToPar > 0 ? `+${diffToPar}` : `${diffToPar}`;
+            
                 const isCounted = countedRoundIds.includes(r.id);
                 const officialBadge = isCounted ? ' ⭐' : '';
                 const officialLabel = r.official !== false
                     ? (isCounted ? 'Offiziell (gewertet)' : 'Offiziell')
                     : 'Inoffiziell';
-        
+            
                 return `
                     <div class="round-item">
                         <div style="flex: 1;">
                             <div style="font-weight: 600;">${r.date} - ${r.course}${officialBadge}</div>
-                            <div style="font-size: 14px; color: var(--color-text-secondary);">
-                                ${r.holes}L, ${r.strokes} Schläge · ${officialLabel}
-                            </div>
+                            <div style="font-size: 14px; color: var(--color-text-secondary);">${r.holes}L, ${r.strokes} Schläge • ${officialLabel}</div>
                         </div>
                         <div style="text-align: right; display: flex; align-items: center; gap: 10px;">
                             <div>
                                 <div style="font-size: 22px; font-weight: bold; color: ${color};">
-                                    ${r.scoreDifferential}
+                                    ${diffToHcp < 0 ? diffToHcp : diffToHcp > 0 ? `+${diffToHcp}` : diffToHcp}
                                 </div>
-                                <div style="font-size: 12px;">
-                                    ${diff < 0 ? diff : diff > 0 ? `+${diff}` : diff}
+                                <div style="font-size: 12px; color: var(--color-text-secondary);">
+                                    ${diffToParText} zu Par
                                 </div>
                             </div>
+
                             <button onclick="editRound('${r.id}')" class="small" style="background:#e9ecef;color:#495057;" title="Bearbeiten">✏️</button>
                             <button onclick="deleteRound('${r.id}')" class="small" style="background: #e9ecef; color: #495057;" title="Runde löschen">🗑️</button>
                         </div>
