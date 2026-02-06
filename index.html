@@ -759,6 +759,7 @@
                 name: name,
                 club: club || '',
                 handicapIndex: startHcp,
+                lowestHandicapIndex: startHcp,
                 unofficialHandicap: startHcp,
                 rounds: [],
                 startHcp: startHcp,
@@ -1014,6 +1015,17 @@
             };
             
             myGolfer.rounds.push(round);
+
+            // WHS: Exceptional Score Reduction (ESR)
+            const sdDiff = myGolfer.handicapIndex - parseFloat(scoreDifferential);
+            if (isOfficial && sdDiff >= 10.0) {
+                myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 2.0);
+                alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -2.0 reduziert!');
+            } else if (isOfficial && sdDiff >= 7.0) {
+                myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 1.0);
+                alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -1.0 reduziert!');
+            }
+
             
             updateMyHandicap();
             updateUnofficialHandicap();
@@ -1070,7 +1082,18 @@
             newHcp += adjustment;
         
             myGolfer.handicapIndex = Math.round(newHcp * 10) / 10;
-            
+
+            // WHS: Hard Cap - HCP darf nie mehr als 5.0 über dem besten Wert liegen
+            if (!myGolfer.lowestHandicapIndex) {
+                myGolfer.lowestHandicapIndex = myGolfer.handicapIndex;
+            } else {
+                myGolfer.lowestHandicapIndex = Math.min(myGolfer.lowestHandicapIndex, myGolfer.handicapIndex);
+            }
+            const hardCapLimit = myGolfer.lowestHandicapIndex + 5.0;
+            if (myGolfer.handicapIndex > hardCapLimit) {
+                myGolfer.handicapIndex = hardCapLimit;
+            }
+
             // Speichere die IDs der gewerteten Runden für Stern-Markierung
             myGolfer.countedRoundIds = bestRounds.map(r => r.id);
         }
@@ -1108,6 +1131,16 @@
             newHcp += adjustment;
         
             myGolfer.unofficialHandicap = Math.round(newHcp * 10) / 10;
+
+            // WHS: Hard Cap für inoffizielles HCP
+            if (!myGolfer.lowestHandicapIndex) {
+                myGolfer.lowestHandicapIndex = myGolfer.unofficialHandicap;
+            }
+            const hardCapLimit = myGolfer.lowestHandicapIndex + 5.0;
+            if (myGolfer.unofficialHandicap > hardCapLimit) {
+                myGolfer.unofficialHandicap = hardCapLimit;
+            }
+
         }
         
         function getWHSParameters(count) {
@@ -1296,12 +1329,48 @@ rounds.forEach(r => {
             
             const trendEmoji = hcpChange < 0 ? '📈' : hcpChange > 0 ? '📉' : '➡️';
             const trendText = hcpChange < 0 ? 'Verbesserung' : hcpChange > 0 ? 'Verschlechterung' : 'Stabil';
+
+            // Berechne HCP vor 30 Tagen
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            const rounds30DaysAgo = myGolfer.rounds.filter(r => new Date(r.date) <= thirtyDaysAgo);
+            let hcp30DaysAgo = myGolfer.startHcp;
+            
+            if (rounds30DaysAgo.length >= 3) {
+                const officialRounds30 = rounds30DaysAgo
+                    .filter(r => r.official !== false)
+                    .slice(-20)
+                    .map(r => ({ id: r.id, sd: r.scoreDifferential }))
+                    .sort((a, b) => a.sd - b.sd);
+                
+                if (officialRounds30.length >= 3) {
+                    const [numCounted, adjustment] = getWHSParameters(officialRounds30.length);
+                    const bestRounds = officialRounds30.slice(0, numCounted);
+                    let avgHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
+                    const bestSD = officialRounds30[0].sd;
+                    avgHcp = Math.min(avgHcp, bestSD + 3);
+                    avgHcp += adjustment;
+                    hcp30DaysAgo = Math.round(avgHcp * 10) / 10;
+                }
+            }
+            
+            const monthChange = (myGolfer.handicapIndex - hcp30DaysAgo).toFixed(1);
+            const monthEmoji = monthChange < 0 ? '📈' : monthChange > 0 ? '📉' : '➡️';
+            const monthText = monthChange < 0 ? 'Verbesserung' : monthChange > 0 ? 'Verschlechterung' : 'Stabil';
+
             
             trendStats.innerHTML = `
                 <div class="stat-row">
                     <span class="stat-label">Start-Handicap</span>
                     <span class="stat-data">${hcpStart.toFixed(1)}</span>
                 </div>
+                <div class="stat-row">
+                    <span class="stat-label">📅 Letzter Monat</span>
+                    <span class="stat-data" style="color: ${monthChange < 0 ? 'var(--color-primary)' : monthChange > 0 ? 'var(--color-danger)' : 'var(--color-warning)'}">
+                        ${monthEmoji} ${monthChange > 0 ? '+' : ''}${monthChange} (${monthText})
+                    </span>
+                </div
                 <div class="stat-row">
                     <span class="stat-label">Aktuelles Handicap</span>
                     <span class="stat-data">${hcpCurrent.toFixed(1)}</span>
