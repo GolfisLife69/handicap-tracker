@@ -1555,10 +1555,10 @@ rounds.forEach(r => {
                 return padding.top + chartHeight - ((hcp - minHcp) / range) * chartHeight;
             };
             
-            // Zeichne HANDICAP-RUNDEN Linie (gelb, gestrichelt)
-            ctx.strokeStyle = '#ffc107';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([5, 5]);
+            // Zeichne OFFIZIELLES HCP (Grün, dick, durchgezogen)
+            ctx.strokeStyle = '#28a745';
+            ctx.lineWidth = 3.5;
+            ctx.setLineDash([]);
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             
@@ -1570,11 +1570,10 @@ rounds.forEach(r => {
                 else ctx.lineTo(x, y);
             });
             ctx.stroke();
-            ctx.setLineDash([]);
             
-            // Zeichne ALLE RUNDEN Linie (grün, durchgezogen)
-            ctx.strokeStyle = '#28a745';
-            ctx.lineWidth = 3;
+            // Zeichne INOFFIZIELLES HCP (Grau, normal, durchgezogen)
+            ctx.strokeStyle = '#6c757d';
+            ctx.lineWidth = 2.5;
             
             ctx.beginPath();
             unofficialHistory.forEach((hcp, i) => {
@@ -1585,36 +1584,53 @@ rounds.forEach(r => {
             });
             ctx.stroke();
             
-            // Zeichne Punkte auf ALLE RUNDEN Linie
-            ctx.fillStyle = '#28a745';
-            unofficialHistory.forEach((hcp, i) => {
+            // Zeichne Punkte NUR bei tatsächlich gespielten Runden
+            rounds.forEach((round, i) => {
                 const x = padding.left + (i / (rounds.length - 1)) * chartWidth;
-                const y = hcpToY(hcp);
-                ctx.beginPath();
-                ctx.arc(x, y, 4, 0, 2 * Math.PI);
-                ctx.fill();
+                
+                // Offiziell gespielt? → Grüner Punkt
+                if (round.official !== false) {
+                    const y = hcpToY(officialHistory[i]);
+                    ctx.fillStyle = '#28a745';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+                
+                // Inoffiziell gespielt? → Grauer Punkt
+                if (round.official === false) {
+                    const y = hcpToY(unofficialHistory[i]);
+                    ctx.fillStyle = '#6c757d';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
             });
             
             // Legende
             ctx.font = 'bold 12px Arial';
             ctx.textAlign = 'left';
             
-            // Grüne Linie Legende
-            ctx.fillStyle = '#28a745';
-            ctx.fillRect(padding.left, height - 25, 15, 3);
-            ctx.fillText('Alle Runden', padding.left + 20, height - 20);
-            
-            // Gelbe Linie Legende
-            ctx.strokeStyle = '#ffc107';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([5, 5]);
+            // Grüne Linie
+            ctx.strokeStyle = '#28a745';
+            ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.moveTo(padding.left + 150, height - 24);
-            ctx.lineTo(padding.left + 165, height - 24);
+            ctx.moveTo(padding.left, height - 24);
+            ctx.lineTo(padding.left + 20, height - 24);
             ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.fillStyle = '#ffc107';
-            ctx.fillText('Handicap-Runden', padding.left + 170, height - 20);
+            ctx.fillStyle = '#28a745';
+            ctx.fillText('Offiziell', padding.left + 25, height - 20);
+            
+            // Graue Linie
+            ctx.strokeStyle = '#6c757d';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(padding.left + 120, height - 24);
+            ctx.lineTo(padding.left + 140, height - 24);
+            ctx.stroke();
+            ctx.fillStyle = '#6c757d';
+            ctx.fillText('Inoffiziell', padding.left + 145, height - 20);
+
         }
         
             function addCourse() {
