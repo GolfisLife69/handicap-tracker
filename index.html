@@ -1013,6 +1013,7 @@
             updateUI();
             
             document.getElementById('roundStrokes').value = '';
+            document.getElementById('roundOfficial').checked = false;
             
             alert(`Runde gespeichert!\nDifferential: ${round.scoreDifferential}\n${isOfficial ? 'Offizielles' : 'Inoffizielles'} HCP: ${myGolfer[isOfficial ? 'handicapIndex' : 'unofficialHandicap'].toFixed(1)}`);
         }
