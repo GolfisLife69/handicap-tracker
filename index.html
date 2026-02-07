@@ -1037,20 +1037,21 @@
             };
             
             myGolfer.rounds.push(round);
-
-            // WHS: Exceptional Score Reduction (ESR)
-            const sdDiff = myGolfer.handicapIndex - parseFloat(scoreDifferential);
-            if (isOfficial && sdDiff >= 10.0) {
-                myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 2.0);
-                alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -2.0 reduziert!');
-            } else if (isOfficial && sdDiff >= 7.0) {
-                myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 1.0);
-                alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -1.0 reduziert!');
-            }
-
             
             updateMyHandicap();
             updateUnofficialHandicap();
+    
+            // WHS: Exceptional Score Reduction (ESR) - NACH der normalen Berechnung
+            const sdDiff = myGolfer.handicapIndex - parseFloat(scoreDifferential);
+            if (isOfficial && sdDiff >= 10.0) {
+                myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 2.0);
+                myGolfer.lowestHandicapIndex = Math.min(myGolfer.lowestHandicapIndex, myGolfer.handicapIndex);
+                alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -2.0 reduziert!');
+            } else if (isOfficial && sdDiff >= 7.0) {
+                myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 1.0);
+                myGolfer.lowestHandicapIndex = Math.min(myGolfer.lowestHandicapIndex, myGolfer.handicapIndex);
+                alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -1.0 reduziert!');
+            }
             
             localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
             
@@ -1458,7 +1459,14 @@ rounds.forEach(r => {
                 const diffToParText = diffToPar > 0 ? `+${diffToPar}` : `${diffToPar}`;
                 
                 // Differenz zur Spielvorgabe (Hauptwert) - NEUE BERECHNUNG
-                const playingHcp = Math.round(r.playingHcp);
+                let playingHcp;
+                if (course && r.holes === 9) {
+                    playingHcp = calculateCourseHandicap(r.playingHcp, parseInt(r.sr), parseFloat(r.cr), coursePar);
+                } else if (course) {
+                    playingHcp = calculateCourseHandicap(r.playingHcp, parseInt(r.sr), parseFloat(r.cr), coursePar);
+                } else {
+                    playingHcp = Math.round(r.playingHcp);
+                }
                 const allowedStrokes = coursePar + playingHcp;
                 const diffToVorgabe = r.strokes - allowedStrokes;
                 const diffToVorgabeText = diffToVorgabe > 0 ? `+${diffToVorgabe}` : `${diffToVorgabe}`;
@@ -1677,6 +1685,7 @@ rounds.forEach(r => {
 
                 unofficialHistory.push(Math.round(newHcp * 10) / 10);
                 }
+                
             // Offizielles HCP nach dieser Runde (WHS-KORREKT!)
             const tempOfficialRounds = myGolfer.rounds
                 .filter(r => r.official !== false && new Date(r.date) <= new Date(round.date))
@@ -1729,7 +1738,7 @@ rounds.forEach(r => {
                 
                 const bestRounds = tempOfficialRounds.slice(0, numCounted);
                 let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
-                
+
                 // Soft Cap anwenden
                 const lowestHcp = (typeof myGolfer.lowestHandicapIndex === 'number') ? myGolfer.lowestHandicapIndex : myGolfer.startHcp;
                 newHcp = Math.min(newHcp, lowestHcp + 3.0);
@@ -1737,7 +1746,7 @@ rounds.forEach(r => {
                 // Adjustment anwenden
                 newHcp += adjustment;
 
-                unofficialHistory.push(Math.round(newHcp * 10) / 10);
+                officialHistory.push(Math.round(newHcp * 10) / 10);
             }
                 }
             
@@ -1961,13 +1970,38 @@ rounds.forEach(r => {
                             }
                         }
             
-                    if (oldCR !== cr || oldSR !== sr) {
-                        const count = recalculateRoundsForCourse(courseId);
-                        saveCourses();
-                        updateUI();
-                        alert(`Platz wurde aktualisiert!\n${count} Runden wurden mit neuen CR/SR-Werten neu berechnet.\nHandicap wurde aktualisiert.`);
-                        return;
+            if (oldCR !== cr || oldSR !== sr) {
+                // Neuberechnung muss mit den tatsächlichen Rundendaten matchen
+                // Falls Name/Holes NICHT aktualisiert wurden, temporär zurücksetzen
+                const savedName = course.name;
+                const savedHoles = course.holes;
+                // Finde Runden mit den Werten die sie tatsächlich haben
+                const roundsToRecalc = myGolfer.rounds.filter(r => 
+                    (r.course === savedName && r.holes === savedHoles) ||
+                    (r.course === oldName && r.holes === oldHoles)
+                );
+                roundsToRecalc.forEach(round => {
+                    let newSD;
+                    if (round.holes === 9) {
+                        const sd_9_played = ((round.strokes - cr) * (113 / sr));
+                        const currentHCPI = myGolfer.handicapIndex !== undefined ? myGolfer.handicapIndex : myGolfer.startHcp;
+                        const sd_9_expected = ((currentHCPI * 1.04) + 2.4) / 2;
+                        newSD = parseFloat((sd_9_played + sd_9_expected).toFixed(1));
+                    } else {
+                        newSD = parseFloat(((round.strokes - cr) * (113 / sr)).toFixed(1));
                     }
+                    round.cr = cr.toFixed(1);
+                    round.sr = sr.toFixed(0);
+                    round.scoreDifferential = newSD;
+                });
+                updateMyHandicap();
+                updateUnofficialHandicap();
+                localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+                saveCourses();
+                updateUI();
+                alert(`Platz wurde aktualisiert!\n${roundsToRecalc.length} Runden wurden mit neuen CR/SR-Werten neu berechnet.\nHandicap wurde aktualisiert.`);
+                return;
+            }
                     localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
                 }
             
