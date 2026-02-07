@@ -720,7 +720,7 @@
                     <div style="margin-top:10px;font-size:14px;color:var(--color-text-secondary);">
                         Handicap-Entwicklung (letzte 10 Runden)
                     </div>
-                    <button id="hcpButtonUnderGraph" class="toggle-stats-btn small" onclick="showHandicapCalculation()" style="margin-top: 10px;">
+                    <button id="hcpButtonUnderGraph" class="toggle-stats-btn small" onclick="capCalculation()" style="margin-top: 10px;">
                         HCP-Berechnung anzeigen
                     </button>
                 </div>
@@ -1075,8 +1075,8 @@
             let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
             
             // Soft Cap: beste SD + 3
-            const bestSD = officialRounds[0].sd;
-            newHcp = Math.min(newHcp, bestSD + 3);
+            const softCapLimit = myGolfer.lowestHandicapIndex + 3.0;
+            newHcp = Math.min(newHcp, softCapLimit);
             
             // Anpassung (Bonus) anwenden
             newHcp += adjustment;
@@ -1642,8 +1642,8 @@ rounds.forEach(r => {
                 let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
                 
                 // Soft Cap anwenden
-                const bestSD = tempAllRounds[0].sd;
-                newHcp = Math.min(newHcp, bestSD + 3);
+                const softCapLimit = myGolfer.lowestHandicapIndex || myGolfer.startHcp;
+                newHcp = Math.min(newHcp, softCapLimit + 3.0);
                 
                 // Adjustment anwenden
                 newHcp += adjustment;
@@ -2103,45 +2103,149 @@ rounds.forEach(r => {
         }
         
         function showHandicapCalculation() {
+            // 1. Hole alle offiziellen Runden (max. 20, sortiert nach Score Differential)
             const officialRounds = myGolfer.rounds
                 .filter(r => r.official !== false)
                 .slice(-20)
-                .map(r => ({ date: r.date, course: r.course, sd: r.scoreDifferential }))
+                .map(r => ({ 
+                    id: r.id,
+                    date: r.date, 
+                    course: r.course, 
+                    holes: r.holes,
+                    strokes: r.strokes,
+                    sd: r.scoreDifferential,
+                    playingHcp: r.playingHcp
+                }))
                 .sort((a, b) => a.sd - b.sd);
         
             if (officialRounds.length === 0) {
-                alert('Keine offiziellen Runden vorhanden! Handicap basiert auf dem Startwert.');
+                alert("Keine offiziellen Runden vorhanden!\n\nDein Handicap basiert auf dem Startwert: " + myGolfer.startHcp.toFixed(1));
                 return;
             }
         
             const count = officialRounds.length;
-            const { numCounted, adjustment } = getWHSParameters(count);
-                    
-            const bestRounds = officialRounds.slice(0, numCounted);
-            const avgSD = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
-            const bestSD = officialRounds[0].sd;
-            const capLimit = bestSD + 3;
-            const beforeAdjustment = Math.min(avgSD, capLimit);
-            const finalHcp = beforeAdjustment + adjustment;
+            
+            // Bei weniger als 3 Runden: Start-HCP bleibt
+            if (count < 3) {
+                alert(`WHS HANDICAP-BERECHNUNG\n\nDu hast erst ${count} offizielle Runde${count > 1 ? 'n' : ''}.\n\nMindestens 3 Runden sind nötig für die Berechnung.\nBis dahin gilt dein Start-Handicap: ${myGolfer.startHcp.toFixed(1)}`);
+                return;
+            }
         
-            let message = '═══ WHS HANDICAP-BERECHNUNG ═══\n\n';
-            message += `Offizielle Runden (letzte 20): ${count}\n`;
-            message += `Gewertete beste Runden: ${numCounted}\n`;
+            // 2. WHS-Parameter: Wie viele Runden werden gewertet?
+            const [numCounted, adjustment] = getWHSParameters(count);
+            const countedRounds = officialRounds.slice(0, numCounted);
+            const countedIds = countedRounds.map(r => r.id);
+            
+            // 3. Berechne Durchschnitt der besten Runden
+            let avgBest = countedRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
+            
+            // 4. Soft Cap: Begrenze auf beste SD + 3
+            const bestSD = officialRounds[0].sd;
+            const softCapLimit = bestSD + 3.0;
+            const beforeCap = avgBest;
+            avgBest = Math.min(avgBest, softCapLimit);
+            const softCapApplied = beforeCap > softCapLimit;
+            
+            // 5. Adjustment (Bonus/Anpassung) anwenden
+            let calculatedHcp = avgBest + adjustment;
+            
+            // 6. Hard Cap: HCP darf nie mehr als 5.0 über dem besten Wert liegen
+            const lowIndex = myGolfer.lowestHandicapIndex || calculatedHcp;
+            const hardCapLimit = lowIndex + 5.0;
+            const beforeHardCap = calculatedHcp;
+            calculatedHcp = Math.min(calculatedHcp, hardCapLimit);
+            const hardCapApplied = beforeHardCap > hardCapLimit;
+            
+            // 7. Runde auf 0.1
+            const finalHcp = Math.round(calculatedHcp * 10) / 10;
+        
+            // 8. Finde die Runden die als nächstes "rausfallen"
+            const allOfficialByDate = myGolfer.rounds
+                .filter(r => r.official !== false)
+                .slice(-20)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            const nextToFallOut = allOfficialByDate.slice(0, Math.min(8, allOfficialByDate.length));
+            const fallOutIds = nextToFallOut.map(r => r.id);
+        
+            // === TEXT ERSTELLEN ===
+            let msg = "WHS HANDICAP-BERECHNUNG\n";
+            msg += "━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+            
+            // Übersicht
+            msg += `Offizielle Runden (letzte 20): ${count}\n`;
+            msg += `Davon gewertet (beste): ${numCounted}\n`;
             if (adjustment !== 0) {
-                message += `Anpassung (Bonus): ${adjustment > 0 ? '+' : ''}${adjustment.toFixed(1)}\n`;
+                msg += `WHS-Anpassung: ${adjustment > 0 ? '+' : ''}${adjustment.toFixed(1)}\n`;
             }
-            message += `\n─── GEWERTETE RUNDEN (beste ${numCounted}) ───\n`;
-            bestRounds.forEach((r, i) => {
-                message += `${i+1}. ${r.date} - ${r.course}\n   Score Differential: ${r.sd.toFixed(1)}\n`;
+            msg += "\n";
+        
+            // Schritt 1: Gewertete Runden
+            msg += "GEWERTETE RUNDEN\n";
+            msg += "Die besten Runden zählen für dein HCP:\n\n";
+            
+            countedRounds.forEach((r, i) => {
+                // Finde Platzinfo für zu-Par-Berechnung
+                const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+                const par = course ? course.par : (r.holes === 9 ? 36 : 72);
+                const toPar = r.strokes - par;
+                const toParText = toPar > 0 ? `+${toPar}` : toPar.toString();
+                
+                msg += `${i + 1}. ${r.date} • ${r.course}\n`;
+                msg += `   ${r.strokes} Schläge (${toParText} zu Par) • SD ${r.sd.toFixed(1)}\n`;
             });
-            message += `\n∅ Durchschnitt: ${avgSD.toFixed(1)}\n`;
-            message += `Cap-Limit (beste SD + 3): ${capLimit.toFixed(1)}\n`;
-            if (adjustment !== 0) {
-                message += `Vor Anpassung: ${beforeAdjustment.toFixed(1)}\n`;
+            
+            msg += "\n";
+            msg += `Durchschnitt: ${beforeCap.toFixed(1)}\n`;
+            
+            // Soft Cap
+            if (softCapApplied) {
+                msg += `Soft Cap angewendet (max. ${softCapLimit.toFixed(1)})\n`;
             }
-            message += `\n═══ DEIN HANDICAP: ${finalHcp.toFixed(1)} ═══`;
-            alert(message);
+            
+            // Adjustment
+            if (adjustment !== 0) {
+                msg += `WHS-Anpassung: ${adjustment > 0 ? '+' : ''}${adjustment.toFixed(1)}\n`;
+            }
+            
+            // Hard Cap
+            if (hardCapApplied) {
+                msg += `Hard Cap angewendet (max. ${hardCapLimit.toFixed(1)})\n`;
+            }
+            
+            msg += "\n";
+            msg += `DEIN HANDICAP: ${finalHcp.toFixed(1)}\n`;
+            msg += "\n━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+        
+            // Schritt 2: Nicht gewertete Runden
+            const notCounted = officialRounds.filter(r => !countedIds.includes(r.id));
+            if (notCounted.length > 0) {
+                msg += "WEITERE RUNDEN (nicht gewertet)\n";
+                msg += "Diese Runden sind in der Berechnung, zählen aber nicht:\n\n";
+                
+                notCounted.slice(0, 12).forEach(r => {
+                    const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+                    const par = course ? course.par : (r.holes === 9 ? 36 : 72);
+                    const toPar = r.strokes - par;
+                    const toParText = toPar > 0 ? `+${toPar}` : toPar.toString();
+                    
+                    // Markiere ob Runde bald rausfällt
+                    const willFallOut = fallOutIds.includes(r.id);
+                    const marker = willFallOut ? "⚠" : "•";
+                    
+                    msg += `${marker} ${r.date} • ${r.course} • SD ${r.sd.toFixed(1)}\n`;
+                });
+                
+                if (notCounted.length > 12) {
+                    msg += `\n... und ${notCounted.length - 12} weitere\n`;
+                }
+                
+                msg += "\n⚠ = fällt bei nächster Runde raus\n`;
+            }
+        
+            alert(msg);
         }
+
 
         
         function clearData() {
