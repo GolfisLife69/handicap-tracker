@@ -662,12 +662,16 @@
                 
             <!-- Schläge + HCP-Runde in einer Zeile -->
             <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge" style="flex: 1; height: 46px; padding: 12px; border: 2px solid var(--color-border); border-radius: 8px; background: var(--color-bg-primary); color: var(--color-text-primary); font-size: 14px; box-sizing: border-box; min-width: 0;">
+                <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge eingeben" style="flex: 1; height: 46px; padding: 12px; border: 2px solid var(--color-border); border-radius: 8px; background: var(--color-bg-primary); color: var(--color-text-primary); font-size: 14px; box-sizing: border-box; min-width: 0;">
                 
-            <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid var(--color-border); height: 46px; box-sizing: border-box; min-width: 0;" id="roundOfficialLabel">
-                <input type="checkbox" id="roundOfficial">
-                <span style="font-weight: 400; font-size: 14px; white-space: nowrap;">HCP-Runde</span>
-            </label>
+                <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid var(--color-border); height: 46px; box-sizing: border-box; min-width: 0;" id="roundOfficialLabel">
+                    <input type="checkbox" id="roundOfficial">
+                    <span style="font-weight: 400; font-size: 14px; white-space: nowrap;">HCP-Runde</span>
+                </label>
+            </div>
+            
+            <button onclick="saveRound()">Runde speichern</button>
+
 
 
                 
