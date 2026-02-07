@@ -1421,8 +1421,8 @@ rounds.forEach(r => {
         }
         
         function renderRounds() {
-            const rounds = myGolfer.rounds
-                .sort((a, b) => new Date(b.date) - new Date(a.date));
+            const rounds = [...myGolfer.rounds]
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
             
             const container = document.getElementById('roundList');
             
@@ -2039,6 +2039,7 @@ rounds.forEach(r => {
         const newHcp = prompt('Handicap manuell setzen:', myGolfer.handicapIndex);
                 if (newHcp !== null && !isNaN(newHcp)) {
                     const hcpValue = parseFloat(newHcp);
+                    
                     myGolfer.handicapIndex = hcpValue;
                     myGolfer.unofficialHandicap = hcpValue;
                     if (typeof myGolfer.lowestHandicapIndex === 'number') {
