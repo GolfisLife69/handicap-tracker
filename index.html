@@ -598,16 +598,28 @@
                     </label>
                 </div>
                 
-                <select id="roundCourse" style="height: 46px; margin-bottom: 10px;"></select>
-                <input id="roundDate" type="date" style="height: 46px; margin-bottom: 10px;">
-                <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge eingeben" style="height: 46px; margin-bottom: 10px;">
+                <select id="roundCourse" onchange="updateCourseInfo()" style="height: 46px; margin-bottom: 10px"></select>
+
+                <!-- Datum + Par/Vorgabe in einer Zeile -->
+                <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                    <input id="roundDate" type="date" style="flex: 1; height: 46px;">
+                    <div id="courseInfoCompact" style="flex: 1; height: 46px; display: flex; align-items: center; justify-content: center; background: var(--color-bg-primary); border-radius: 8px; font-size: 14px; color: var(--color-text-secondary); border: 2px solid var(--color-border);">
+                        <span id="courseInfoText">Par – · Vgb. –</span>
+                    </div>
+                </div>
                 
-                <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
-                    <input type="checkbox" id="roundOfficial" style="width: 20px; height: 20px; margin: 0; accent-color: var(--color-primary);">
-                    <span style="font-weight: 500;">Offizielle Runde</span>
-                </label>
+                <!-- Schläge + HCP-Runde in einer Zeile -->
+                <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                    <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge eingeben" style="flex: 1; height: 46px; min-width: 0;">
+                    
+                    <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid var(--color-border); height: 46px; box-sizing: border-box;" id="roundOfficialLabel">
+                        <input type="radio" name="roundOfficial" id="roundOfficial" value="official" style="width: auto; margin: 0;">
+                        <span style="font-weight: 500;">HCP-Runde</span>
+                    </label>
+                </div>
                 
                 <button onclick="saveRound()">Runde speichern</button>
+
 
                 
                 <h2 style="margin-top: 30px;">Neuer Platz</h2>
@@ -940,17 +952,35 @@
                 return countB - countA;
             });
             
-            select.innerHTML = sortedCourses.map(c => {
-                const playCount = courseCounts[c.id] || 0;
-                const countText = playCount > 0 ? ` • ${playCount}x` : '';
+            select.innerHTML = '<option value="">-- Platz auswählen --</option>' + 
+                sortedCourses.map(c => {
+                    const playCount = courseCounts[c.id] || 0;
+                    const countText = playCount > 0 ? ` • ${playCount}x` : '';
+                    
+                    // Berechne Spielvorgabe
+                    const par = c.par || (c.holes === 9 ? 36 : 72);
+                    const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, c.sr, c.cr, par);
                 
-                // Berechne Spielvorgabe
-                const par = c.par || (c.holes === 9 ? 36 : 72);
-                const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, c.sr, c.cr, par);
-                
-                return `<option value="${c.id}">${c.name} • Vorgabe: ${courseHcp}${countText}</option>`;
-            }).join('');
+                    return `<option value="${c.id}">${c.name}</option>`;
+                }).join('');
             }
+
+        function updateCourseInfo() {
+            const courseId = document.getElementById('roundCourse').value;
+            const course = courses.find(c => c.id === courseId);
+            const infoText = document.getElementById('courseInfoText');
+            
+            if (!infoText) return; // Sicherheitscheck
+            
+            if (course && courseId) {
+                const par = course.par || (course.holes === 9 ? 36 : 72);
+                const vorgabe = calculateCourseHandicap(myGolfer.handicapIndex, course.sr, course.cr, par);
+                infoText.textContent = `Par ${par} · Vgb. ${vorgabe}`;
+            } else {
+                infoText.textContent = 'Par – · Vgb. –';
+            }
+        }
+
 
         function validateRoundData(strokes, holes, date) {
             const errors = [];
