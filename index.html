@@ -741,6 +741,8 @@
         let courses = [];
         
         function init() {
+            myGolfer = null;
+            courses = []; 
             loadData();
             checkSetup();
         }
@@ -748,25 +750,44 @@
         function setupComplete() {
             const name = document.getElementById('myName').value.trim();
             const club = document.getElementById('myClub').value.trim();
-            const startHcp = parseFloat(document.getElementById('startHcp').value);
+            const startHcpStr = document.getElementById('startHcp').value; // Hole den String zuerst
             
-            if (!name || !startHcp || startHcp < -5 || startHcp > 54) {
-                return alert('Bitte Name und gültiges Handicap (-5 bis 54) eingeben!');
+            // Trimmen und Komma durch Punkt ersetzen (wichtig für deutsche Eingabe)
+            const startHcp = parseFloat(startHcpStr.replace(',', '.'));
+        
+            // Detaillierte Fehlerprüfung mit Alert
+            if (!name) {
+                return alert('Bitte einen Namen eingeben!');
             }
             
-            myGolfer = {
-                id: 'me',
-                name: name,
-                club: club || '',
-                handicapIndex: startHcp,
-                lowestHandicapIndex: startHcp,
-                unofficialHandicap: startHcp,
-                rounds: [],
-                startHcp: startHcp,
-                created: new Date().toISOString()
-            };
+            if (isNaN(startHcp)) {
+                return alert('Bitte ein gültiges Handicap eingeben (z.B. 19.5 oder 19,5)!');
+            }
             
+            if (startHcp < -5 || startHcp > 54) {
+                return alert('Handicap muss zwischen -5 und 54 liegen!');
+            }
+        
+            if (!myGolfer) {
+                // Falls myGolfer noch null ist (Sicherheitsnetz)
+                myGolfer = {};
+            }
+        
+            // Profil korrekt erstellen
+            myGolfer.id = 'me';
+            myGolfer.name = name;
+            myGolfer.club = club || '';
+            myGolfer.handicapIndex = startHcp;
+            myGolfer.lowestHandicapIndex = startHcp;
+            myGolfer.unofficialHandicap = startHcp;
+            myGolfer.rounds = [];
+            myGolfer.startHcp = startHcp;
+            myGolfer.created = new Date().toISOString();
+        
+            // Speichern
             localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+            
+            // UI Update auslösen
             checkSetup();
         }
 
@@ -2050,56 +2071,59 @@ rounds.forEach(r => {
             alert('✅ Daten wurden exportiert!');
         }
         
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (data.golfer && data.golfer.rounds) {
+            function importData(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        // Validierung zuerst
+                        if (!data.golfer || !data.golfer.rounds || !Array.isArray(data.golfer.rounds)) {
+                            throw new Error('Ungültiges Datenformat');
+                        }
+                        // Daten erst jetzt speichern
                         myGolfer = data.golfer;
                         courses = data.courses || [];
                         localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
                         saveCourses();
                         checkSetup();
                         alert('✅ Import erfolgreich!\n\n' + myGolfer.rounds.length + ' Runden wurden geladen.');
-                    } else {
-                        throw new Error('Ungültiges Datenformat');
+                    } catch(err) {
+                        alert('❌ Import-Fehler: ' + err.message);
                     }
-                } catch(err) {
-                    alert('❌ Import-Fehler: ' + err.message);
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        }
+                };
+                reader.readAsText(file);
+                event.target.value = '';
+            }
         
         function setupImportData(event) {
             const file = event.target.files[0];
             if (!file) return;
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const data = JSON.parse(e.target.result);
-                    if (data.golfer && data.golfer.rounds) {
-                        myGolfer = data.golfer;
-                        courses = data.courses || [];
-                        localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
-                        saveCourses();
-                        alert('✅ Import erfolgreich!\n\n' + myGolfer.rounds.length + ' Runden wurden geladen.');
-                        checkSetup();
-                    } else {
-                        throw new Error('Ungültiges Datenformat');
+                    // Validierung zuerst!
+                    if (!data.golfer || !data.golfer.rounds || !Array.isArray(data.golfer.rounds)) {
+                        throw new Error('Ungültiges Datenformat: "golfer.rounds" fehlt oder ist kein Array.');
                     }
+                    // ERST HIER die globalen Variablen aktualisieren
+                    myGolfer = data.golfer;
+                    courses = data.courses || [];
+                    localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+                    saveCourses();
+                    // DANACH erst die UI neu initialisieren
+                    alert('✅ Import erfolgreich!\n\n' + myGolfer.rounds.length + ' Runden wurden geladen.');
+                    checkSetup();
                 } catch(err) {
+                    // FEHLERFALL: myGolfer und courses wurden NICHT verändert
+                    console.error("Setup Import failed:", err);
                     alert('❌ Import-Fehler: ' + err.message);
                 }
             };
             reader.readAsText(file);
-            event.target.value = '';
+            event.target.value = ''; // Input zurücksetzen
         }
         
         function showHandicapCalculation() {
