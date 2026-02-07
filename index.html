@@ -1042,7 +1042,7 @@
             updateUnofficialHandicap();
     
             // WHS: Exceptional Score Reduction (ESR) - NACH der normalen Berechnung
-            const sdDiff = myGolfer.handicapIndex - parseFloat(scoreDifferential);
+            const sdDiff = round.playingHcp - parseFloat(scoreDifferential);
             if (isOfficial && sdDiff >= 10.0) {
                 myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 2.0);
                 myGolfer.lowestHandicapIndex = Math.min(myGolfer.lowestHandicapIndex, myGolfer.handicapIndex);
@@ -1459,14 +1459,10 @@ rounds.forEach(r => {
                 const diffToParText = diffToPar > 0 ? `+${diffToPar}` : `${diffToPar}`;
                 
                 // Differenz zur Spielvorgabe (Hauptwert) - NEUE BERECHNUNG
-                let playingHcp;
-                if (course && r.holes === 9) {
-                    playingHcp = calculateCourseHandicap(r.playingHcp, parseInt(r.sr), parseFloat(r.cr), coursePar);
-                } else if (course) {
-                    playingHcp = calculateCourseHandicap(r.playingHcp, parseInt(r.sr), parseFloat(r.cr), coursePar);
-                } else {
-                    playingHcp = Math.round(r.playingHcp);
-                }
+                const playingHcp = course
+                ? calculateCourseHandicap(r.playingHcp, parseInt(r.sr), parseFloat(r.cr), coursePar)
+                : Math.round(r.playingHcp);
+                
                 const allowedStrokes = coursePar + playingHcp;
                 const diffToVorgabe = r.strokes - allowedStrokes;
                 const diffToVorgabeText = diffToVorgabe > 0 ? `+${diffToVorgabe}` : `${diffToVorgabe}`;
@@ -2008,52 +2004,6 @@ rounds.forEach(r => {
                 saveCourses();
                 updateUI();
                 alert('Platz wurde aktualisiert!');
-            }
-                
-            function recalculateRoundsForCourse(courseId) {
-               const course = courses.find(c => c.id === courseId);
-               if (!course) return 0;
-    
-               const affectedRounds = myGolfer.rounds.filter(r => r.course === course.name && r.holes === course.holes);
-                    if (affectedRounds.length === 0) return 0;
-            
-                affectedRounds.forEach(round => {
-                    let newScoreDifferential;
-                    let cr, sr;
-            
-                    if (round.holes === 9) {
-                        // ═══ WHS 2024: 9-Loch Berechnung (korrekte Methode) ═══
-                        cr = course.cr;
-                        sr = course.sr;
-            
-                        // 1. Berechne 9-Loch Score Differential (gespielte 9 Löcher)
-                        const sd_9_played = ((round.strokes - cr) * (113 / sr));
-            
-                        // 2. Berechne Expected Score Differential (nicht-gespielte 9 Löcher)
-                        // Formel: ((HCPI × 1.04) + 2.4) / 2
-                        const currentHCPI = myGolfer.handicapIndex !== undefined ? myGolfer.handicapIndex : myGolfer.startHcp;
-                        const sd_9_expected = ((currentHCPI * 1.04) + 2.4) / 2;
-            
-                        // 3. Addiere beide für 18-Loch Score Differential
-                        newScoreDifferential = (sd_9_played + sd_9_expected).toFixed(1);
-                    } else {
-                        // ═══ 18-Loch: Standard-Formel ═══
-                        cr = course.cr;
-                        sr = course.sr;
-                        newScoreDifferential = ((round.strokes - cr) * (113 / sr)).toFixed(1);
-                    }
-            
-                    round.cr = cr.toFixed(1);
-                    round.sr = sr.toFixed(0);
-                    round.scoreDifferential = parseFloat(newScoreDifferential);
-                });
-            
-                // Handicap neu berechnen
-                updateMyHandicap();
-                updateUnofficialHandicap();
-                localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
-            
-                return affectedRounds.length;
             }
 
         function deleteCourse(courseId) {
