@@ -561,6 +561,22 @@
             .stat:nth-child(4) { order: 4; }  /* Ø Schläge bleibt */
         }
 
+        /* Zentrierung der spezifischen Eingabefelder */
+            #roundCourse,
+            #roundDate,
+            #roundStrokes,
+            #courseName {
+              margin-left: auto;
+              margin-right: auto;
+              max-width: 400px;
+            }
+            
+            /* Sicherstellen, dass die Labels/Buttons darüber nicht beeinflusst werden */
+            #roundCourse,
+            #roundDate,
+            #roundStrokes {
+              display: block;
+            }
 
     </style>
 </head>
@@ -621,7 +637,7 @@
                         <span style="font-weight: 500;">18 Löcher</span>
                     </label>
                 </div>
-                <input id="courseName" placeholder="Platzname">
+                <input id="courseName" placeholder="Platzname angeben">
                 <div style="display: flex; gap: 8px; margin-bottom: 10px;">
                     <input id="coursePar" type="number" inputmode="numeric" placeholder="Par" style="flex: 1; min-width: 0; text-align: center;">
                     <input id="courseCR" type="number" step="0.1" inputmode="decimal" placeholder="CR" style="flex: 1; min-width: 0; text-align: center;">
