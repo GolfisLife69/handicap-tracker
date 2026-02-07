@@ -1095,8 +1095,9 @@
             const bestRounds = officialRounds.slice(0, numCounted);
             let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
             
-            // Soft Cap: beste SD + 3
-            const softCapLimit = myGolfer.lowestHandicapIndex + 3.0;
+            // Soft Cap: lowestHCP + 3
+            const lowestHcp = (typeof myGolfer.lowestHandicapIndex === 'number') ? myGolfer.lowestHandicapIndex : myGolfer.startHcp;
+            const softCapLimit = lowestHcp + 3.0;
             newHcp = Math.min(newHcp, softCapLimit);
             
             // Anpassung (Bonus) anwenden
@@ -1105,7 +1106,7 @@
             myGolfer.handicapIndex = Math.round(newHcp * 10) / 10;
 
             // WHS: Hard Cap - HCP darf nie mehr als 5.0 über dem besten Wert liegen
-            if (!myGolfer.lowestHandicapIndex) {
+            if (typeof myGolfer.lowestHandicapIndex !== 'number') {
                 myGolfer.lowestHandicapIndex = myGolfer.handicapIndex;
             } else {
                 myGolfer.lowestHandicapIndex = Math.min(myGolfer.lowestHandicapIndex, myGolfer.handicapIndex);
@@ -1145,8 +1146,8 @@
             let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
         
             // Soft Cap: beste SD + 3
-            const softCapLimit = myGolfer.lowestHandicapIndex || myGolfer.startHcp;
-            newHcp = Math.min(newHcp, softCapLimit + 3.0);
+            const lowestHcp = (typeof myGolfer.lowestHandicapIndex === 'number') ? myGolfer.lowestHandicapIndex : myGolfer.startHcp;
+            newHcp = Math.min(newHcp, lowestHcp + 3.0);
         
             // Anpassung (Bonus) anwenden
             newHcp += adjustment;
@@ -1154,9 +1155,9 @@
             myGolfer.unofficialHandicap = Math.round(newHcp * 10) / 10;
 
             // WHS: Hard Cap für inoffizielles HCP
-            if (!myGolfer.lowestHandicapIndex) {
-                myGolfer.lowestHandicapIndex = myGolfer.unofficialHandicap;
-            }
+            if (typeof myGolfer.lowestHandicapIndex !== 'number') {
+                        myGolfer.lowestHandicapIndex = myGolfer.unofficialHandicap;
+                    }
             const hardCapLimit = myGolfer.lowestHandicapIndex + 5.0;
             if (myGolfer.unofficialHandicap > hardCapLimit) {
                 myGolfer.unofficialHandicap = hardCapLimit;
@@ -1391,7 +1392,7 @@ rounds.forEach(r => {
                     <span class="stat-data" style="color: ${monthChange < 0 ? 'var(--color-primary)' : monthChange > 0 ? 'var(--color-danger)' : 'var(--color-warning)'}">
                         ${monthEmoji} ${monthChange > 0 ? '+' : ''}${monthChange} (${monthText})
                     </span>
-                </div
+                </div>
                 <div class="stat-row">
                     <span class="stat-label">Aktuelles Handicap</span>
                     <span class="stat-data">${hcpCurrent.toFixed(1)}</span>
@@ -1529,7 +1530,7 @@ rounds.forEach(r => {
             }
         
             // Finde den Platz für Neuberechnung
-            const course = courses.find(c => c.name === round.course);
+            const course = courses.find(c => c.name === round.course && c.holes === round.holes);
             
             round.strokes = strokes;
             round.date = newDate;
@@ -1588,6 +1589,10 @@ rounds.forEach(r => {
 
             const width = canvas.width;
             const height = canvas.height;
+    
+            // CSS-Koordinaten für Zeichenbefehle (nach ctx.scale)
+            const cssW = width / (dpr * scaleFactor);
+            const cssH = height / (dpr * scaleFactor);
 
             // Skalierung für HiDPI
             ctx.scale(dpr * scaleFactor, dpr * scaleFactor);
@@ -1748,7 +1753,7 @@ rounds.forEach(r => {
             const minHcp = Math.floor(Math.min(...allValues));
             const range = maxHcp - minHcp || 1;
             
-            ctx.clearRect(0, 0, width, height);
+            ctx.clearRect(0, 0, cssW, cssH);
             
             // Zeichne Hintergrund-Gitter und Y-Achsen-Labels
             ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
@@ -1766,7 +1771,7 @@ rounds.forEach(r => {
                 ctx.setLineDash([2, 2]);
                 ctx.beginPath();
                 ctx.moveTo(padding.left, y);
-                ctx.lineTo(width - padding.right, y);
+                ctx.lineTo(cssW - padding.right, y);
                 ctx.stroke();
                 ctx.setLineDash([]);
                 
@@ -1839,21 +1844,21 @@ rounds.forEach(r => {
             ctx.strokeStyle = '#28a745';
             ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.moveTo(padding.left, height - 24);
-            ctx.lineTo(padding.left + 20, height - 24);
+            ctx.moveTo(padding.left, cssH - 24);
+            ctx.lineTo(padding.left + 20, cssH - 24);
             ctx.stroke();
             ctx.fillStyle = '#28a745';
-            ctx.fillText('Offiziell', padding.left + 25, height - 20);
-            
+            ctx.fillText('Offiziell', padding.left + 25, cssH - 20);
+
             // Graue Linie
             ctx.strokeStyle = '#6c757d';
             ctx.lineWidth = 2.5;
             ctx.beginPath();
-            ctx.moveTo(padding.left + 120, height - 24);
-            ctx.lineTo(padding.left + 140, height - 24);
+            ctx.moveTo(padding.left + 120, cssH - 24);
+            ctx.lineTo(padding.left + 140, cssH - 24);
             ctx.stroke();
             ctx.fillStyle = '#6c757d';
-            ctx.fillText('Inoffiziell', padding.left + 145, height - 20);
+            ctx.fillText('Inoffiziell', padding.left + 145, cssH - 20);
 
         }
         
@@ -1967,8 +1972,8 @@ rounds.forEach(r => {
                const course = courses.find(c => c.id === courseId);
                if (!course) return 0;
     
-               const affectedRounds = myGolfer.rounds.filter(r => r.course === course.name);
-              if (affectedRounds.length === 0) return 0;
+               const affectedRounds = myGolfer.rounds.filter(r => r.course === course.name && r.holes === course.holes);
+                    if (affectedRounds.length === 0) return 0;
             
                 affectedRounds.forEach(round => {
                     let newScoreDifferential;
@@ -2165,7 +2170,8 @@ rounds.forEach(r => {
             
             // 4. Soft Cap: Begrenze auf beste SD + 3
             const bestSD = officialRounds[0].sd;
-            const softCapLimit = myGolfer.lowestHandicapIndex + 3.0;
+            const lowestHcp = (typeof myGolfer.lowestHandicapIndex === 'number') ? myGolfer.lowestHandicapIndex : myGolfer.startHcp;
+            const softCapLimit = lowestHcp + 3.0;
             const beforeCap = avgBest;
             avgBest = Math.min(avgBest, softCapLimit);
             const softCapApplied = beforeCap > softCapLimit;
@@ -2174,7 +2180,7 @@ rounds.forEach(r => {
             let calculatedHcp = avgBest + adjustment;
             
             // 6. Hard Cap: HCP darf nie mehr als 5.0 über dem besten Wert liegen
-            const lowIndex = myGolfer.lowestHandicapIndex || calculatedHcp;
+            const lowIndex = (typeof myGolfer.lowestHandicapIndex === 'number') ? myGolfer.lowestHandicapIndex : calculatedHcp;
             const hardCapLimit = lowIndex + 5.0;
             const beforeHardCap = calculatedHcp;
             calculatedHcp = Math.min(calculatedHcp, hardCapLimit);
@@ -2189,7 +2195,7 @@ rounds.forEach(r => {
                 .slice(-20)
                 .sort((a, b) => new Date(a.date) - new Date(b.date));
             
-            const nextToFallOut = allOfficialByDate.slice(0, Math.min(8, allOfficialByDate.length));
+            const nextToFallOut = allOfficialByDate.length >= 20 ? [allOfficialByDate[0]] : [];
             const fallOutIds = nextToFallOut.map(r => r.id);
         
             // === TEXT ERSTELLEN ===
