@@ -420,6 +420,43 @@
             transform: scale(1.1);
             color: #218838;
         }
+
+        /* Runde Checkbox wie Radio-Button */
+        input[type="checkbox"]#roundOfficial {
+            width: 20px;
+            height: 20px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            border: 2px solid var(--color-border);
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            background: var(--color-bg-primary);
+            transition: all 0.2s;
+        }
+        
+        /* Aktivierter Zustand (grüner Punkt innen) */
+        input[type="checkbox"]#roundOfficial:checked {
+            border-color: var(--color-primary);
+        }
+        
+        input[type="checkbox"]#roundOfficial:checked::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            background: var(--color-primary);
+            border-radius: 50%;
+        }
+        
+        /* Hover-Effekt */
+        input[type="checkbox"]#roundOfficial:hover {
+            border-color: var(--color-primary);
+        }
         
         @media (max-width: 768px) {
             .container {
@@ -585,7 +622,7 @@
             <div class="sidebar">
                 
                 <h2>Neue Runde</h2>
-                
+
                 <!-- 9/18 Löcher -->
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="roundHoles9Label">
@@ -598,28 +635,28 @@
                     </label>
                 </div>
                 
-                <select id="roundCourse" onchange="updateCourseInfo()" style="height: 46px; margin-bottom: 10px"></select>
-
+                <select id="roundCourse" onchange="updateCourseInfo()" style="height: 46px; margin-bottom: 10px; text-align: center;"></select>
+                
                 <!-- Datum + Par/Vorgabe in einer Zeile -->
                 <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                    <input id="roundDate" type="date" style="flex: 1; height: 46px;">
-                    <div id="courseInfoCompact" style="flex: 1; height: 46px; display: flex; align-items: center; justify-content: center; background: var(--color-bg-primary); border-radius: 8px; font-size: 14px; color: var(--color-text-secondary); border: 2px solid var(--color-border);">
+                    <input id="roundDate" type="date" style="flex: 1; height: 46px; padding: 12px; border: 2px solid var(--color-border); border-radius: 8px; background: var(--color-bg-primary); color: var(--color-text-primary); font-size: 14px; box-sizing: border-box;">
+                    <div id="courseInfoCompact" style="flex: 1; height: 46px; display: flex; align-items: center; justify-content: center; background: var(--color-bg-primary); border-radius: 8px; font-size: 14px; color: var(--color-text-secondary); border: 2px solid var(--color-border); box-sizing: border-box; padding: 12px;">
                         <span id="courseInfoText">Par – · Vgb. –</span>
                     </div>
                 </div>
                 
-                <!-- Schläge + HCP-Runde in einer Zeile -->
-                <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                    <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge eingeben" style="flex: 1; height: 46px; min-width: 0;">
-                    
-                    <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid var(--color-border); height: 46px; box-sizing: border-box;" id="roundOfficialLabel">
-                        <input type="radio" name="roundOfficial" id="roundOfficial" value="official" style="width: auto; margin: 0;">
-                        <span style="font-weight: 500;">HCP-Runde</span>
-                    </label>
-                </div>
+            <!-- Schläge + HCP-Runde in einer Zeile -->
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge eingeben" style="flex: 1; height: 46px; padding: 12px; border: 2px solid var(--color-border); border-radius: 8px; background: var(--color-bg-primary); color: var(--color-text-primary); font-size: 14px; box-sizing: border-box; min-width: 0;">
+                
+                <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid var(--color-border); height: 46px; box-sizing: border-box;" id="roundOfficialLabel">
+                    <input type="checkbox" id="roundOfficial">
+                    <span style="font-weight: 400; font-size: 14px;">HCP-Runde</span>
+                </label>
+            </div>
+
                 
                 <button onclick="saveRound()">Runde speichern</button>
-
 
                 
                 <h2 style="margin-top: 30px;">Neuer Platz</h2>
@@ -979,6 +1016,8 @@
             } else {
                 infoText.textContent = 'Par – · Vgb. –';
             }
+            document.getElementById('roundOfficial').checked = false;
+            
         }
 
 
