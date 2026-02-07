@@ -720,7 +720,7 @@
                     <div style="margin-top:10px;font-size:14px;color:var(--color-text-secondary);">
                         Handicap-Entwicklung (letzte 10 Runden)
                     </div>
-                    <button id="hcpButtonUnderGraph" class="toggle-stats-btn small" onclick="capCalculation()" style="margin-top: 10px;">
+                    <button id="hcpButtonUnderGraph" class="toggle-stats-btn small" onclick="showHandicapCalculation()" style="margin-top: 10px;">
                         HCP-Berechnung anzeigen
                     </button>
                 </div>
@@ -1124,8 +1124,8 @@
             let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
         
             // Soft Cap: beste SD + 3
-            const bestSD = allRounds[0].sd;
-            newHcp = Math.min(newHcp, bestSD + 3);
+            const softCapLimit = myGolfer.lowestHandicapIndex || myGolfer.startHcp;
+            newHcp = Math.min(newHcp, softCapLimit + 3.0);
         
             // Anpassung (Bonus) anwenden
             newHcp += adjustment;
@@ -1704,8 +1704,8 @@ rounds.forEach(r => {
                 let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
                 
                 // Soft Cap anwenden
-                const bestSD = tempOfficialRounds[0].sd;
-                newHcp = Math.min(newHcp, bestSD + 3);
+                const softCapLimit = myGolfer.lowestHandicapIndex || myGolfer.startHcp;
+                newHcp = Math.min(newHcp, softCapLimit + 3.0);
                 
                 // Adjustment anwenden
                 newHcp += adjustment;
@@ -2141,7 +2141,7 @@ rounds.forEach(r => {
             
             // 4. Soft Cap: Begrenze auf beste SD + 3
             const bestSD = officialRounds[0].sd;
-            const softCapLimit = bestSD + 3.0;
+            const softCapLimit = myGolfer.lowestHandicapIndex + 3.0;
             const beforeCap = avgBest;
             avgBest = Math.min(avgBest, softCapLimit);
             const softCapApplied = beforeCap > softCapLimit;
