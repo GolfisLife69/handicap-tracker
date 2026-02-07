@@ -2168,7 +2168,7 @@ rounds.forEach(r => {
             let avgBest = countedRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
             
             // 4. Soft Cap: Begrenze auf beste SD + 3
-            const lowestHcp = (typeof myGolfer.lowestHandicapIndex === 'number') ? myGolfer.lowestHandicapIndex : myGolfer.startHcp;
+            const lowestHcp = (typeof myGolfer.lowestHandicapIndex === 'number') ? myGolfer.lowestHandicapIndex : myGolfer.handicapIndex;
             const softCapLimit = lowestHcp + 3.0;
             const beforeCap = avgBest;
             avgBest = Math.min(avgBest, softCapLimit);
