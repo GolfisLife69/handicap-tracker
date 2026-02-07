@@ -1349,7 +1349,7 @@ rounds.forEach(r => {
             const hcpStart = myGolfer.startHcp;
             const hcpCurrent = myGolfer.handicapIndex;
             const hcpChange = (hcpCurrent - hcpStart).toFixed(1);
-            const hcpChangePercent = ((hcpChange / hcpStart) * 100).toFixed(1);
+            const hcpChangePercent = hcpStart !== 0 ? ((hcpChange / hcpStart) * 100).toFixed(1) : '0.0';
             
             const trendEmoji = hcpChange < 0 ? '📈' : hcpChange > 0 ? '📉' : '➡️';
             const trendText = hcpChange < 0 ? 'Verbesserung' : hcpChange > 0 ? 'Verschlechterung' : 'Stabil';
@@ -2036,11 +2036,17 @@ rounds.forEach(r => {
                 myGolfer.club = newClub.trim();
             }
             
-            const newHcp = prompt('Handicap manuell setzen:', myGolfer.handicapIndex);
-            if (newHcp !== null && !isNaN(newHcp)) {
-                myGolfer.handicapIndex = parseFloat(newHcp);
-                myGolfer.unofficialHandicap = parseFloat(newHcp);
-            }
+        const newHcp = prompt('Handicap manuell setzen:', myGolfer.handicapIndex);
+                if (newHcp !== null && !isNaN(newHcp)) {
+                    const hcpValue = parseFloat(newHcp);
+                    myGolfer.handicapIndex = hcpValue;
+                    myGolfer.unofficialHandicap = hcpValue;
+                    if (typeof myGolfer.lowestHandicapIndex === 'number') {
+                        myGolfer.lowestHandicapIndex = Math.min(myGolfer.lowestHandicapIndex, hcpValue);
+                    } else {
+                        myGolfer.lowestHandicapIndex = hcpValue;
+                    }
+                }
             
             localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
             updateUI();
