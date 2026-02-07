@@ -874,9 +874,10 @@
             filterCoursesByHoles();
             const manageList = document.getElementById('courseManageList');
             if (manageList) {
-                if (courses.length === 0) {
-                    manageList.innerHTML = '<div style="text-align:center;color:var(--color-text-secondary);padding:20px;font-size:14px;">Keine Plätze angelegt</div>';
-                } else {
+            if (courses.length === 0) {
+                        manageList.innerHTML = '<div style="text-align:center;color:var(--color-text-secondary);padding:20px;font-size:14px;">Keine Plätze angelegt</div>';
+                        document.getElementById('showAllCoursesBtn').style.display = 'none';
+                    } else {
                     // Button nur anzeigen wenn mehr als 3 Plätze
                     const showAllCoursesBtn = document.getElementById('showAllCoursesBtn');
                     const showAll = window.showAllCourses || false;
@@ -1366,15 +1367,15 @@ rounds.forEach(r => {
                     .map(r => ({ id: r.id, sd: r.scoreDifferential }))
                     .sort((a, b) => a.sd - b.sd);
                 
-                if (officialRounds30.length >= 3) {
-                    const { numCounted, adjustment } = getWHSParameters(officialRounds30.length);
-                    const bestRounds = officialRounds30.slice(0, numCounted);
-                    let avgHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
-                    const bestSD = officialRounds30[0].sd;
-                    avgHcp = Math.min(avgHcp, bestSD + 3);
-                    avgHcp += adjustment;
-                    hcp30DaysAgo = Math.round(avgHcp * 10) / 10;
-                }
+            if (officialRounds30.length >= 3) {
+                            const { numCounted, adjustment } = getWHSParameters(officialRounds30.length);
+                            const bestRounds = officialRounds30.slice(0, numCounted);
+                            let avgHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
+                            const lowestHcp = (typeof myGolfer.lowestHandicapIndex === 'number') ? myGolfer.lowestHandicapIndex : myGolfer.startHcp;
+                            avgHcp = Math.min(avgHcp, lowestHcp + 3.0);
+                            avgHcp += adjustment;
+                            hcp30DaysAgo = Math.round(avgHcp * 10) / 10;
+                    }
             }
             
             const monthChange = (myGolfer.handicapIndex - hcp30DaysAgo).toFixed(1);
@@ -1668,12 +1669,12 @@ rounds.forEach(r => {
                 let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
                 
                 // Soft Cap anwenden
-                const softCapLimit = myGolfer.lowestHandicapIndex || myGolfer.startHcp;
-                newHcp = Math.min(newHcp, softCapLimit + 3.0);
-                
+                const lowestHcp = (typeof myGolfer.lowestHandicapIndex === 'number') ? myGolfer.lowestHandicapIndex : myGolfer.startHcp;
+                newHcp = Math.min(newHcp, lowestHcp + 3.0);
+
                 // Adjustment anwenden
                 newHcp += adjustment;
-                
+
                 unofficialHistory.push(Math.round(newHcp * 10) / 10);
                 }
             // Offizielles HCP nach dieser Runde (WHS-KORREKT!)
@@ -1730,13 +1731,13 @@ rounds.forEach(r => {
                 let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
                 
                 // Soft Cap anwenden
-                const softCapLimit = myGolfer.lowestHandicapIndex || myGolfer.startHcp;
-                newHcp = Math.min(newHcp, softCapLimit + 3.0);
-                
+                const lowestHcp = (typeof myGolfer.lowestHandicapIndex === 'number') ? myGolfer.lowestHandicapIndex : myGolfer.startHcp;
+                newHcp = Math.min(newHcp, lowestHcp + 3.0);
+
                 // Adjustment anwenden
                 newHcp += adjustment;
-                
-                officialHistory.push(Math.round(newHcp * 10) / 10);
+
+                unofficialHistory.push(Math.round(newHcp * 10) / 10);
             }
                 }
             
@@ -1934,24 +1935,31 @@ rounds.forEach(r => {
                 }
             
                 const oldCR = course.cr;
-                const oldSR = course.sr;
-            
-                    course.name = newName.trim();
-                    course.cr = cr;
-                    course.sr = sr;
-                    course.holes = holes;
-                    course.par = par;
-
-            
-                const usedInRounds = myGolfer.rounds.filter(r => r.course === oldName);
+                        const oldSR = course.sr;
+                        const oldHoles = course.holes || 18;
+                
+                        course.name = newName.trim();
+                        course.cr = cr;
+                        course.sr = sr;
+                        course.holes = holes;
+                        course.par = par;
+                
+                        const usedInRounds = myGolfer.rounds.filter(r => r.course === oldName && r.holes === oldHoles);
+                  
                 if (usedInRounds.length > 0) {
-                    if (oldName !== newName.trim()) {
-                        if (confirm(`${usedInRounds.length} Runden verwenden diesen Platz. In allen Runden automatisch aktualisieren?`)) {
-                            usedInRounds.forEach(round => {
-                                round.course = newName.trim();
-                            });
+                        const nameChanged = oldName !== newName.trim();
+                        const holesChanged = oldHoles !== holes;
+                        if (nameChanged || holesChanged) {
+                            const changes = [];
+                            if (nameChanged) changes.push('Name');
+                            if (holesChanged) changes.push('Lochzahl');
+                            if (confirm(`${usedInRounds.length} Runden verwenden diesen Platz. ${changes.join(' und ')} in allen Runden aktualisieren?`)) {
+                                usedInRounds.forEach(round => {
+                                    if (nameChanged) round.course = newName.trim();
+                                    if (holesChanged) round.holes = holes;
+                                });
+                            }
                         }
-                    }
             
                     if (oldCR !== cr || oldSR !== sr) {
                         const count = recalculateRoundsForCourse(courseId);
@@ -2169,7 +2177,6 @@ rounds.forEach(r => {
             let avgBest = countedRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
             
             // 4. Soft Cap: Begrenze auf beste SD + 3
-            const bestSD = officialRounds[0].sd;
             const lowestHcp = (typeof myGolfer.lowestHandicapIndex === 'number') ? myGolfer.lowestHandicapIndex : myGolfer.startHcp;
             const softCapLimit = lowestHcp + 3.0;
             const beforeCap = avgBest;
