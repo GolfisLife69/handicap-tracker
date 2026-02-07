@@ -420,58 +420,6 @@
             transform: scale(1.1);
             color: #218838;
         }
-
-        /* Runde Checkbox wie Radio-Button - OPTIMIERT */
-        input[type="checkbox"]#roundOfficial {
-            width: 16px;
-            height: 16px;
-            min-width: 16px;
-            min-height: 16px;
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            border: 2px solid #6c757d;
-            border-radius: 50%;
-            cursor: pointer;
-            position: relative;
-            background: var(--color-bg-primary);
-            transition: all 0.2s ease;
-            flex-shrink: 0;
-        }
-        
-        /* Aktivierter Zustand (grüner Punkt innen) */
-        input[type="checkbox"]#roundOfficial:checked {
-            border-color: var(--color-primary);
-            background: var(--color-bg-primary);
-        }
-        
-        input[type="checkbox"]#roundOfficial:checked::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 8px;
-            height: 8px;
-            background: var(--color-primary);
-            border-radius: 50%;
-        }
-        
-        /* Hover-Effekt */
-        input[type="checkbox"]#roundOfficial:hover {
-            border-color: var(--color-primary);
-        }
-        
-        /* Dark Mode Anpassung */
-        @media (prefers-color-scheme: dark) {
-            input[type="checkbox"]#roundOfficial {
-                border-color: #adb5bd;
-            }
-            
-            input[type="checkbox"]#roundOfficial:hover {
-                border-color: var(--color-primary);
-            }
-        }
         
         @media (max-width: 768px) {
             .container {
@@ -636,10 +584,10 @@
         <div class="container">
             <div class="sidebar">
                 
-                <h2 style="margin-bottom: 16px;">Neue Runde</h2>
-
+                <h2>Neue Runde</h2>
+                
                 <!-- 9/18 Löcher -->
-                <div style="display: flex; gap: 10px; margin-bottom: 8px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="roundHoles9Label">
                         <input type="radio" name="roundHoles" id="roundHoles9" value="9" style="width: auto; margin: 0;" onchange="filterCoursesByHoles()">
                         <span style="font-weight: 500;">9 Löcher</span>
@@ -650,27 +598,17 @@
                     </label>
                 </div>
                 
-                <select id="roundCourse" onchange="updateCourseInfo()" style="height: 46px; margin-bottom: 8px; text-align: center;"></select>
+                <select id="roundCourse" style="height: 46px; margin-bottom: 10px;"></select>
+                <input id="roundDate" type="date" style="height: 46px; margin-bottom: 10px;">
+                <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge eingeben" style="height: 46px; margin-bottom: 10px;">
                 
-                <!-- Datum + Par/Vorgabe in einer Zeile -->
-                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                    <input id="roundDate" type="date" style="flex: 1; height: 46px; padding: 12px; border: 2px solid var(--color-border); border-radius: 8px; background: var(--color-bg-primary); color: var(--color-text-primary); font-size: 14px; box-sizing: border-box;">
-                    <div id="courseInfoCompact" style="flex: 1; height: 46px; display: flex; align-items: center; justify-content: center; background: var(--color-bg-primary); border-radius: 8px; font-size: 14px; color: var(--color-text-secondary); border: 2px solid var(--color-border); box-sizing: border-box; padding: 12px;">
-                        <span id="courseInfoText">Par – · Vgb. –</span>
-                    </div>
-                </div>
-                
-                <!-- Schläge + HCP-Runde in einer Zeile -->
-                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                    <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge" style="flex: 1; height: 46px; padding: 12px; border: 2px solid var(--color-border); border-radius: 8px; background: var(--color-bg-primary); color: var(--color-text-primary); font-size: 14px; box-sizing: border-box; min-width: 0;">
-                    
-                <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 8px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid var(--color-border); height: 46px; box-sizing: border-box; min-width: 0;" id="roundOfficialLabel">
-                    <input type="checkbox" id="roundOfficial">
-                    <span style="font-weight: 400; font-size: 13px;">HCP-Runde</span>
+                <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
+                    <input type="checkbox" id="roundOfficial" style="width: 20px; height: 20px; margin: 0; accent-color: var(--color-primary);">
+                    <span style="font-weight: 500;">Offizielle Runde</span>
                 </label>
-                </div>
                 
                 <button onclick="saveRound()">Runde speichern</button>
+
                 
                 <h2 style="margin-top: 30px;">Neuer Platz</h2>
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
@@ -1002,37 +940,17 @@
                 return countB - countA;
             });
             
-            select.innerHTML = '<option value="">-- Platz auswählen --</option>' + 
-                sortedCourses.map(c => {
-                    const playCount = courseCounts[c.id] || 0;
-                    const countText = playCount > 0 ? ` • ${playCount}x` : '';
-                    
-                    // Berechne Spielvorgabe
-                    const par = c.par || (c.holes === 9 ? 36 : 72);
-                    const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, c.sr, c.cr, par);
+            select.innerHTML = sortedCourses.map(c => {
+                const playCount = courseCounts[c.id] || 0;
+                const countText = playCount > 0 ? ` • ${playCount}x` : '';
                 
-                    return `<option value="${c.id}">${c.name}• ${countText}</option>`;
-                }).join('');
+                // Berechne Spielvorgabe
+                const par = c.par || (c.holes === 9 ? 36 : 72);
+                const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, c.sr, c.cr, par);
+                
+                return `<option value="${c.id}">${c.name} • Vorgabe: ${courseHcp}${countText}</option>`;
+            }).join('');
             }
-
-        function updateCourseInfo() {
-            const courseId = document.getElementById('roundCourse').value;
-            const course = courses.find(c => c.id === courseId);
-            const infoText = document.getElementById('courseInfoText');
-            
-            if (!infoText) return; // Sicherheitscheck
-            
-            if (course && courseId) {
-                const par = course.par || (course.holes === 9 ? 36 : 72);
-                const vorgabe = calculateCourseHandicap(myGolfer.handicapIndex, course.sr, course.cr, par);
-                infoText.textContent = `Par ${par} · Vgb. ${vorgabe}`;
-            } else {
-                infoText.textContent = 'Par – · Vgb. –';
-            }
-            document.getElementById('roundOfficial').checked = false;
-            
-        }
-
 
         function validateRoundData(strokes, holes, date) {
             const errors = [];
