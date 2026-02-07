@@ -1366,7 +1366,7 @@ rounds.forEach(r => {
                     .sort((a, b) => a.sd - b.sd);
                 
                 if (officialRounds30.length >= 3) {
-                    const [numCounted, adjustment] = getWHSParameters(officialRounds30.length);
+                    const { numCounted, adjustment } = getWHSParameters(officialRounds30.length);
                     const bestRounds = officialRounds30.slice(0, numCounted);
                     let avgHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
                     const bestSD = officialRounds30[0].sd;
@@ -2156,7 +2156,7 @@ rounds.forEach(r => {
             }
         
             // 2. WHS-Parameter: Wie viele Runden werden gewertet?
-            const [numCounted, adjustment] = getWHSParameters(count);
+            const { numCounted, adjustment } = getWHSParameters(count);
             const countedRounds = officialRounds.slice(0, numCounted);
             const countedIds = countedRounds.map(r => r.id);
             
@@ -2264,7 +2264,7 @@ rounds.forEach(r => {
                     msg += `\n... und ${notCounted.length - 12} weitere\n`;
                 }
                 
-                msg += "\n⚠ = fällt bei nächster Runde raus\n`;
+                msg += "\n⚠ = fällt bei nächster Runde raus\n";
             }
         
             alert(msg);
