@@ -599,19 +599,13 @@
                 </div>
                 
                 <select id="roundCourse" style="height: 46px; margin-bottom: 10px;"></select>
-
-                <!-- Datum + HCP-Runde Zeile -->
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <input id="roundDate" type="date" style="flex: 1; height: 46px;">
-                    
-                    <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="roundOfficialLabel">
-                        <input type="radio" name="roundOfficial" id="roundOfficial" value="official" style="width: auto; margin: 0;" onchange="resetOfficialOnCourseChange()">
-                        <span style="font-weight: 500; font-size: 14px;">HCP-Runde</span>
-                    </label>
-                </div>
+                <input id="roundDate" type="date" style="height: 46px; margin-bottom: 10px;">
+                <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge eingeben" style="height: 46px; margin-bottom: 10px;">
                 
-                <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge eingeben" style="height: 46px; margin-bottom: 10px; margin-top: 0;">
-
+                <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
+                    <input type="checkbox" id="roundOfficial" style="width: 20px; height: 20px; margin: 0; accent-color: var(--color-primary);">
+                    <span style="font-weight: 500; font-size: 14px;">HCP-Runde</span>
+                </label>
                 
                 <button onclick="saveRound()">Runde speichern</button>
 
@@ -1000,17 +994,6 @@
             
             return errors;
         }
-
-        function resetOfficialOnCourseChange() {
-            // Speichere die Funktion für später
-            if (!window.courseChangeListenerAdded) {
-                document.getElementById('roundCourse').addEventListener('change', function() {
-                    document.getElementById('roundOfficial').checked = false;
-                });
-                window.courseChangeListenerAdded = true;
-            }
-        }
-
         
         function saveRound() {
             const courseId = document.getElementById('roundCourse').value;
