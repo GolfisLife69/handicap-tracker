@@ -421,24 +421,28 @@
             color: #218838;
         }
 
-        /* Runde Checkbox wie Radio-Button */
+        /* Runde Checkbox wie Radio-Button - OPTIMIERT */
         input[type="checkbox"]#roundOfficial {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            min-height: 18px;
             appearance: none;
             -webkit-appearance: none;
             -moz-appearance: none;
-            border: 2px solid var(--color-border);
+            border: 2px solid #6c757d;
             border-radius: 50%;
             cursor: pointer;
             position: relative;
             background: var(--color-bg-primary);
-            transition: all 0.2s;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
         }
         
         /* Aktivierter Zustand (grüner Punkt innen) */
         input[type="checkbox"]#roundOfficial:checked {
             border-color: var(--color-primary);
+            background: var(--color-bg-primary);
         }
         
         input[type="checkbox"]#roundOfficial:checked::before {
@@ -447,8 +451,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             background: var(--color-primary);
             border-radius: 50%;
         }
@@ -456,6 +460,17 @@
         /* Hover-Effekt */
         input[type="checkbox"]#roundOfficial:hover {
             border-color: var(--color-primary);
+        }
+        
+        /* Dark Mode Anpassung */
+        @media (prefers-color-scheme: dark) {
+            input[type="checkbox"]#roundOfficial {
+                border-color: #adb5bd;
+            }
+            
+            input[type="checkbox"]#roundOfficial:hover {
+                border-color: var(--color-primary);
+            }
         }
         
         @media (max-width: 768px) {
@@ -647,13 +662,13 @@
                 
             <!-- Schläge + HCP-Runde in einer Zeile -->
             <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge eingeben" style="flex: 1; height: 46px; padding: 12px; border: 2px solid var(--color-border); border-radius: 8px; background: var(--color-bg-primary); color: var(--color-text-primary); font-size: 14px; box-sizing: border-box; min-width: 0;">
+                <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge" style="flex: 1; height: 46px; padding: 12px; border: 2px solid var(--color-border); border-radius: 8px; background: var(--color-bg-primary); color: var(--color-text-primary); font-size: 14px; box-sizing: border-box; min-width: 0;">
                 
-                <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid var(--color-border); height: 46px; box-sizing: border-box;" id="roundOfficialLabel">
-                    <input type="checkbox" id="roundOfficial">
-                    <span style="font-weight: 400; font-size: 14px;">HCP-Runde</span>
-                </label>
-            </div>
+            <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid var(--color-border); height: 46px; box-sizing: border-box; min-width: 0;" id="roundOfficialLabel">
+                <input type="checkbox" id="roundOfficial">
+                <span style="font-weight: 400; font-size: 14px; white-space: nowrap;">HCP-Runde</span>
+            </label>
+
 
                 
                 <button onclick="saveRound()">Runde speichern</button>
