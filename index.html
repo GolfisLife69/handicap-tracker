@@ -561,6 +561,20 @@
             .stat:nth-child(4) { order: 4; }  /* Ø Schläge bleibt */
         }
 
+            input[type="checkbox"]#roundOfficial:checked {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+        input[type="checkbox"]#roundOfficial:checked::after {
+            content: "✓";
+            position: absolute;
+            color: var(--color-primary);
+            font-size: 14px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
 
     </style>
 </head>
@@ -599,13 +613,16 @@
                 </div>
                 
                 <select id="roundCourse" style="height: 46px; margin-bottom: 10px;"></select>
-                <input id="roundDate" type="date" style="height: 46px; margin-bottom: 10px;">
-                <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge eingeben" style="height: 46px; margin-bottom: 10px;">
-                
-                <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
-                    <input type="checkbox" id="roundOfficial" style="width: 20px; height: 20px; margin: 0; accent-color: var(--color-primary);">
-                    <span style="font-weight: 500;">Offizielle Runde</span>
+                   <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input id="roundDate" type="date" style="flex: 0 0 160px; height: 46px;">
+                    <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge" style="flex: 1; height: 46px;">
+                </div>
+
+                <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 10px;"> 
+                    <input type="checkbox" id="roundOfficial" style="width: 20px; height: 20px; margin: 0; accent-color: var(--color-primary); border-radius: 50%; appearance: none; border: 2px solid var(--color-border); cursor: pointer; position: relative;"> 
+                    <span style="font-weight: 500; font-size: 14px;">Offizielle Runde</span> 
                 </label>
+
                 
                 <button onclick="saveRound()">Runde speichern</button>
 
