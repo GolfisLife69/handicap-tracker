@@ -1519,31 +1519,26 @@ rounds.forEach(r => {
                 // Differenz zu Par berechnen
                 const diffToPar = r.strokes - coursePar;
                 const diffToParText = diffToPar > 0 ? `+${diffToPar}` : `${diffToPar}`;
-
+                
                 // Differenz zur Spielvorgabe (Nettoanzeige)
                 let diffToVorgabe = 0;
                 let diffToVorgabeText = '0';
+                let color = 'var(--color-text-secondary)';
                 
                 if (course) {
                     const playingHcp = getPlayingCourseHandicap(r, course, myGolfer.handicapIndex);
                     const allowedStrokes = coursePar + playingHcp;      // Par + Vorgabe
                     diffToVorgabe = r.strokes - allowedStrokes;         // gespielte Schläge - erlaubte Schläge
                     diffToVorgabeText = diffToVorgabe > 0 ? `+${diffToVorgabe}` : `${diffToVorgabe}`;
+                
+                    // Farb-Logik wie bisher
+                    color = diffToVorgabe < 0
+                        ? 'var(--color-primary)'
+                        : diffToVorgabe > 3
+                            ? 'var(--color-danger)'
+                            : 'var(--color-warning)';
                 }
 
-                
-                // Differenz zur Spielvorgabe (Hauptwert) - NEUE BERECHNUNG
-                const playingHcp = course
-                ? calculateCourseHandicap(r.playingHcp, parseInt(r.sr), parseFloat(r.cr), coursePar)
-                : Math.round(r.playingHcp);
-                
-                const allowedStrokes = coursePar + playingHcp;
-                const diffToVorgabe = r.strokes - allowedStrokes;
-                const diffToVorgabeText = diffToVorgabe > 0 ? `+${diffToVorgabe}` : `${diffToVorgabe}`;
-                
-                const color = diffToVorgabe < 0 ? 'var(--color-primary)'
-                    : diffToVorgabe > 3 ? 'var(--color-danger)'
-                    : 'var(--color-warning)';
 
             
                 const isCounted = countedRoundIds.includes(r.id);
