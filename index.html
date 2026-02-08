@@ -2119,9 +2119,7 @@ rounds.forEach(r => {
                     alert(
                           "Import erfolgreich!\n\n" +
                           "Spieler: " + (myGolfer.name || "Unbekannt") + "\n" +
-                          "Aktuelles Handicap: " + (typeof myGolfer.handicapIndex === "number"
-                            ? myGolfer.handicapIndex.toFixed(1)
-                            : "n/a") + "\n" +
+                        "Handicap: " + myGolfer.handicapIndex.toFixed(1) + "\n" +
                           "Runden: " + (myGolfer.rounds ? myGolfer.rounds.length : 0) + "\n" +
                           "Plätze: " + (Array.isArray(courses) ? courses.length : 0)
                         );
@@ -2154,9 +2152,7 @@ rounds.forEach(r => {
                     alert(
                       "Import erfolgreich!\n\n" +
                       "Spieler: " + (myGolfer.name || "Unbekannt") + "\n" +
-                      "Aktuelles Handicap: " + (typeof myGolfer.handicapIndex === "number"
-                        ? myGolfer.handicapIndex.toFixed(1)
-                        : "n/a") + "\n" +
+                        "Handicap: " + myGolfer.handicapIndex.toFixed(1) + "\n" + 
                       "Runden: " + (myGolfer.rounds ? myGolfer.rounds.length : 0) + "\n" +
                       "Plätze: " + (Array.isArray(courses) ? courses.length : 0)
                     );
