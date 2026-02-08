@@ -1462,6 +1462,25 @@ rounds.forEach(r => {
                 </div>
             `;
         }
+
+        function getPlayingCourseHandicap(round, course, handicapIndex) {
+            if (!course) return 0;
+        
+            const is9 = round.holes === 9;
+        
+            // Par/CR/SR aus dem Kursobjekt
+            const par = course.par;
+            const cr  = course.cr;
+            const sr  = course.sr;
+        
+            // 9-Loch: halbes Handicap Index
+            let adjustedIndex = handicapIndex;
+            if (is9) {
+                adjustedIndex /= 2; // WHS: 9-Loch = halbes HCPI [web:81]
+            }
+        
+            return calculateCourseHandicap(adjustedIndex, sr, cr, par);
+        }
         
         function renderRounds() {
             const rounds = [...myGolfer.rounds]
@@ -1500,6 +1519,18 @@ rounds.forEach(r => {
                 // Differenz zu Par berechnen
                 const diffToPar = r.strokes - coursePar;
                 const diffToParText = diffToPar > 0 ? `+${diffToPar}` : `${diffToPar}`;
+
+                // Differenz zur Spielvorgabe (Nettoanzeige)
+                let diffToVorgabe = 0;
+                let diffToVorgabeText = '0';
+                
+                if (course) {
+                    const playingHcp = getPlayingCourseHandicap(r, course, myGolfer.handicapIndex);
+                    const allowedStrokes = coursePar + playingHcp;      // Par + Vorgabe
+                    diffToVorgabe = r.strokes - allowedStrokes;         // gespielte Schläge - erlaubte Schläge
+                    diffToVorgabeText = diffToVorgabe > 0 ? `+${diffToVorgabe}` : `${diffToVorgabe}`;
+                }
+
                 
                 // Differenz zur Spielvorgabe (Hauptwert) - NEUE BERECHNUNG
                 const playingHcp = course
