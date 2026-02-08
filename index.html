@@ -847,8 +847,8 @@
             
             document.getElementById('totalRounds').textContent = rounds.length;
             document.getElementById('officialRounds').textContent = officialRounds.length;
-            document.getElementById('officialHcp-div').textContent = myGolfer.handicapIndex.toFixed(1);
-            document.getElementById('unofficialHcp-div').textContent = (myGolfer.unofficialHandicap || myGolfer.handicapIndex).toFixed(1);
+            document.getElementById('officialHcp').textContent = myGolfer.handicapIndex.toFixed(1);
+            document.getElementById('unofficialHcp').textContent = (myGolfer.unofficialHandicap || myGolfer.handicapIndex).toFixed(1);
             
             if (rounds.length > 0) {
                 const strokes18 = rounds.filter(r => r.holes === 18).map(r => r.strokes);
