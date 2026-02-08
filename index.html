@@ -943,7 +943,7 @@
               if (course) courseCounts[course.id] = (courseCounts[course.id] || 0) + 1;
             });
           }
-          let html = '<option value="">-- Platz auswählen --</option>';
+          let html = '<option value="">Platz auswählen</option>';
           const filteredCourses = courses.filter(c => c.holes === selectedHoles);
           if (filteredCourses.length === 0) {
             html += `<option value="" disabled>Kein ${selectedHoles}-Loch-Platz angelegt</option>`;
