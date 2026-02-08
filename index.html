@@ -560,29 +560,57 @@
             .stat:nth-child(3) { order: 3; }  /* Beste Runde bleibt */
             .stat:nth-child(4) { order: 4; }  /* Ø Schläge bleibt */
         }
-
-            .sidebar #roundCourse,
-            .sidebar #roundDate,
-            .sidebar #roundStrokes,
-            .sidebar #courseName {
-              display: block !important;
-                text-align: center !important;
-                text-align-last: center !important;
-            }
-
+        
+        .sidebar #roundCourse,
+        .sidebar #roundDate,
+        .sidebar #roundStrokes,
+        .sidebar #courseName {
+          display: block !important;
+          text-align: center !important;
+          text-align-last: center !important;
+          padding-right: 40px !important;  /* Platz für Pfeile rechts */
+          background-position: right 12px center !important;
+          background-repeat: no-repeat !important;
+          background-size: 16px !important;
+        }
+        
         .sidebar #roundCourse option {
-              text-align: center !important;  /* Optionen im Dropdown */
-              padding: 0 10px;  /* Leichter Abstand für Pfeil */
-            }
-            
-            @media (max-width: 768px) {
-              .sidebar #roundCourse,
-              .sidebar #roundDate,
-              .sidebar #roundStrokes,
-              .sidebar #courseName {
-                text-align: center !important;
-              }
-            }
+          text-align: center !important;
+          padding: 0 10px;
+        }
+        
+        /* Date-Pfeil fixen */
+        .sidebar #roundDate::-webkit-calendar-picker-indicator {
+          right: 12px !important;
+          left: auto !important;
+          margin-right: 0 !important;
+        }
+        
+        /* Number +/- rechts */
+        .sidebar #roundStrokes::-webkit-inner-spin-button,
+        .sidebar #roundStrokes::-webkit-outer-spin-button {
+          margin-left: auto !important;
+          margin-right: 0 !important;
+        }
+        
+        /* Select-Pfeil (Custom SVG grau) */
+        .sidebar #roundCourse {
+          -webkit-appearance: none !important;
+          -moz-appearance: none !important;
+          appearance: none !important;
+          background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236c757d'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e") !important;
+        }
+        
+        @media (max-width: 768px) {
+          .sidebar #roundCourse,
+          .sidebar #roundDate,
+          .sidebar #roundStrokes,
+          .sidebar #courseName {
+            text-align: center !important;
+            padding-right: 35px !important;  /* Etwas enger mobil */
+          }
+        }
+
 
     </style>
 </head>
