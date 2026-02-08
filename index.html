@@ -969,20 +969,30 @@
           updateStrokesPlaceholder();
         }
 
-        function updateStrokesPlaceholder() {
-                const courseId = document.getElementById('roundCourse').value;
-                const course = courses.find(c => c.id === courseId);
-                const strokesInput = document.getElementById('roundStrokes');
-        
-                if (course) {
-                    const par = course.par || (course.holes === 9 ? 36 : 72);
-                    const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, course.sr, course.cr, par);
-                    const vorgabeText = courseHcp >= 0 ? `+${courseHcp}` : `${courseHcp}`;
-                    strokesInput.placeholder = `Par ${par} • Vorgabe ${vorgabeText}`;
-                } else {
-                    strokesInput.placeholder = 'Schläge eingeben';
-                }
-            }
+function updateStrokesPlaceholder() {
+    const courseId = document.getElementById('roundCourse').value;
+    const course = courses.find(c => c.id === courseId);
+    const strokesInput = document.getElementById('roundStrokes');
+    const is9HoleRound = course?.holes === 9 || course?.is9Hole; // Flag oder Löcher prüfen
+
+    if (course) {
+        // Par und CR/SR je Rundenlänge aus Course-Objekt (z. B. course.par9, course.cr9)
+        const par = is9HoleRound ? (course.par9 || course.par) : course.par;
+        const cr = is9HoleRound ? (course.cr9 || course.cr) : course.cr;
+        const sr = is9HoleRound ? (course.sr9 || course.sr) : course.sr;
+
+        let adjustedIndex = myGolfer.handicapIndex;
+        if (is9HoleRound) {
+            adjustedIndex /= 2; // Halbes Index für 9-Loch [web:81]
+        }
+
+        const courseHcp = calculateCourseHandicap(adjustedIndex, sr, cr, par);
+        const vorgabeText = courseHcp >= 0 ? `+${courseHcp}` : courseHcp;
+        strokesInput.placeholder = `Par ${par} • Vorgabe ${vorgabeText}`;
+    } else {
+        strokesInput.placeholder = 'Schläge eingeben';
+    }
+}
 
 
         function validateRoundData(strokes, holes, date) {
