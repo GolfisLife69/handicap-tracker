@@ -951,10 +951,10 @@
             const sortedCourses = [...filteredCourses].sort((a,b)=>(courseCounts[b.id]||0)-(courseCounts[a.id]||0));
             sortedCourses.forEach(c => {
               const playCount = courseCounts[c.id] || 0;
-              const countText = playCount > 0 ? ` (${playCount}x)` : '';
+              const countText = playCount > 0 ? ` • ${playCount}x` : '';
               const par = c.par || (c.holes === 9 ? 36 : 72);
               const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, c.sr, c.cr, par);
-              html += `<option value="${c.id}">${c.name} •${countText} Vorgabe\u00A0${courseHcp}</option>`;
+              html += `<option value="${c.id}">${c.name}${countText}</option>`;
             });
 
           }
@@ -967,10 +967,12 @@
                 const courseId = document.getElementById('roundCourse').value;
                 const course = courses.find(c => c.id === courseId);
                 const strokesInput = document.getElementById('roundStrokes');
-                
+        
                 if (course) {
                     const par = course.par || (course.holes === 9 ? 36 : 72);
-                    strokesInput.placeholder = `Schläge eingeben • Par ${par}`;
+                    const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, course.sr, course.cr, par);
+                    const vorgabeText = courseHcp >= 0 ? `+${courseHcp}` : `${courseHcp}`;
+                    strokesInput.placeholder = `Par ${par} • Vorgabe ${vorgabeText}`;
                 } else {
                     strokesInput.placeholder = 'Schläge eingeben';
                 }
