@@ -700,15 +700,21 @@
                         <div>HCP Runden ☆</div>
                     </div>
                     <div class="stat">
-                        <div class="stat-value" id="bestRound">-</div>
-                        <div>Beste Runde</div>
+                    <div class="stat-value" id="formLast5" style="font-size: 1.8em;">-</div>
+                    <div style="font-size: 0.75em; margin-top: 5px; color: var(--color-text-secondary);" id="formTrend">-</div>
+                    <div>Form (letzte 5)</div>
+                </div>
+                <div class="stat">
+                    <div style="margin-bottom: 8px;">
+                        <div style="font-size: 1.5em; font-weight: bold; color: var(--color-primary);" id="bestNettoRound">-</div>
+                        <div style="font-size: 0.75em; color: var(--color-text-secondary);">Beste Netto-Runde</div>
                     </div>
-                    <div class="stat">
-                        <div class="stat-value" id="avgStrokes">-</div>
-                        <div>⌀ Schläge</div>
+                    <div>
+                        <div style="font-size: 1.3em; font-weight: 600; color: var(--color-accent);" id="bestParRound">-</div>
+                        <div style="font-size: 0.75em; color: var(--color-text-secondary);">Beste Par-Runde</div>
                     </div>
                 </div>
-                
+                </div>           
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h2 style="margin: 0;">Letzte Runden</h2>
                     <div style="display: flex; align-items: center;">
@@ -853,15 +859,72 @@
             document.getElementById('officialHcp').textContent = myGolfer.handicapIndex.toFixed(1);
             document.getElementById('unofficialHcp').textContent = (myGolfer.unofficialHandicap || myGolfer.handicapIndex).toFixed(1);
             
-            if (rounds.length > 0) {
-                const strokes18 = rounds.filter(r => r.holes === 18).map(r => r.strokes);
-                const bestStroke = strokes18.length > 0 ? Math.min(...strokes18) : Math.min(...rounds.map(r => r.strokes));
-                document.getElementById('bestRound').textContent = bestStroke;
-                document.getElementById('avgStrokes').textContent = Math.round(rounds.map(r => r.strokes).reduce((a,b) => a + b, 0) / rounds.length);
-            } else {
-                document.getElementById('bestRound').textContent = '-';
-                document.getElementById('avgStrokes').textContent = '-';
-            }
+if (rounds.length > 0) {
+    // === FORM (Letzte 5 Runden) ===
+    const last5 = rounds.slice(-5);
+    if (last5.length > 0) {
+        const avgLast5SD = (last5.map(r => r.scoreDifferential).reduce((a,b) => a + b, 0) / last5.length).toFixed(1);
+        const avgAllSD = (rounds.map(r => r.scoreDifferential).reduce((a,b) => a + b, 0) / rounds.length).toFixed(1);
+        
+        document.getElementById('formLast5').textContent = `Ø ${avgLast5SD}`;
+        
+        const diff = parseFloat(avgLast5SD) - parseFloat(avgAllSD);
+        let trendText = '';
+        let trendColor = '';
+        
+        if (diff <= -1.0) {
+            trendText = '📈 Besser';
+            trendColor = 'var(--color-primary)';
+        } else if (diff >= 1.0) {
+            trendText = '📉 Schlechter';
+            trendColor = 'var(--color-danger)';
+        } else {
+            trendText = '➡️ Stabil';
+            trendColor = 'var(--color-text-secondary)';
+        }
+        
+        document.getElementById('formTrend').textContent = trendText;
+        document.getElementById('formTrend').style.color = trendColor;
+    } else {
+        document.getElementById('formLast5').textContent = '-';
+        document.getElementById('formTrend').textContent = '-';
+    }
+    
+    // === BESTE NETTO-RUNDE (kleinstes Score Differential) ===
+    const bestSD = Math.min(...rounds.map(r => r.scoreDifferential));
+    const bestNettoRound = rounds.find(r => r.scoreDifferential === bestSD);
+    
+    if (bestNettoRound) {
+        const diff = bestNettoRound.playingHcp - bestSD;
+        const diffText = diff > 0 ? `${diff.toFixed(1)} unter HCP` : diff < 0 ? `${Math.abs(diff).toFixed(1)} über HCP` : 'Par HCP';
+        document.getElementById('bestNettoRound').textContent = diffText;
+    } else {
+        document.getElementById('bestNettoRound').textContent = '-';
+    }
+    
+    // === BESTE RUNDE ZU PAR ===
+    const roundsWithPar = rounds.map(r => {
+        const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+        const par = course ? course.par : (r.holes === 9 ? 36 : 72);
+        return { round: r, toPar: r.strokes - par };
+    });
+    
+    const bestToParObj = roundsWithPar.reduce((best, curr) => 
+        curr.toPar < best.toPar ? curr : best
+    );
+    
+    const toParText = bestToParObj.toPar > 0 
+        ? `+${bestToParObj.toPar}` 
+        : `${bestToParObj.toPar}`;
+    document.getElementById('bestParRound').textContent = `${toParText} zu Par`;
+    
+} else {
+    document.getElementById('formLast5').textContent = '-';
+    document.getElementById('formTrend').textContent = '-';
+    document.getElementById('bestNettoRound').textContent = '-';
+    document.getElementById('bestParRound').textContent = '-';
+}
+
             
                 renderCourses();
                 renderRounds();
