@@ -700,21 +700,21 @@
                         <div>HCP Runden ☆</div>
                     </div>
                     <div class="stat">
-                    <div class="stat-value" id="formLast5" style="font-size: 1.8em;">-</div>
-                    <div style="font-size: 0.75em; margin-top: 5px; color: var(--color-text-secondary);" id="formTrend">-</div>
-                    <div>Form (letzte 5)</div>
-                </div>
-                <div class="stat">
-                    <div style="margin-bottom: 8px;">
-                        <div style="font-size: 1.5em; font-weight: bold; color: var(--color-primary);" id="bestNettoRound">-</div>
-                        <div style="font-size: 0.75em; color: var(--color-text-secondary);">Beste Netto-Runde</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 1.3em; font-weight: 600; color: var(--color-accent);" id="bestParRound">-</div>
-                        <div style="font-size: 0.75em; color: var(--color-text-secondary);">Beste Par-Runde</div>
-                    </div>
-                </div>
-                </div>           
+    <div class="stat-value" id="formNettoLast5" style="font-size: 1.8em;">-</div>
+    <div style="font-size: 0.75em; margin-top: 5px; color: var(--color-text-secondary);" id="formNettoTrend">-</div>
+    <div>Form (letzte 5)</div>
+</div>
+<div class="stat">
+    <div style="margin-bottom: 12px;">
+        <div style="font-size: 1.5em; font-weight: bold; color: var(--color-primary);" id="avgToParLast5">-</div>
+        <div style="font-size: 0.75em; color: var(--color-text-secondary);">Ø zu Par (letzte 5)</div>
+    </div>
+    <div>
+        <div style="font-size: 1.5em; font-weight: bold; color: var(--color-accent);" id="percentInHcpLast10">-</div>
+        <div style="font-size: 0.75em; color: var(--color-text-secondary);">Runden im HCP (letzte 10)</div>
+    </div>
+</div>
+</div>           
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h2 style="margin: 0;">Letzte Runden</h2>
                     <div style="display: flex; align-items: center;">
@@ -860,22 +860,43 @@
             document.getElementById('unofficialHcp').textContent = (myGolfer.unofficialHandicap || myGolfer.handicapIndex).toFixed(1);
             
 if (rounds.length > 0) {
-    // === FORM (Letzte 5 Runden) ===
+    // === FORM NETTO (Letzte 5 Runden) ===
     const last5 = rounds.slice(-5);
+    
     if (last5.length > 0) {
-        const avgLast5SD = (last5.map(r => r.scoreDifferential).reduce((a,b) => a + b, 0) / last5.length).toFixed(1);
-        const avgAllSD = (rounds.map(r => r.scoreDifferential).reduce((a,b) => a + b, 0) / rounds.length).toFixed(1);
+        // Berechne Ø Netto-Abweichung (unter/über HCP)
+        const nettoDeltas = last5.map(r => r.playingHcp - r.scoreDifferential);
+        const avgNettoDelta = (nettoDeltas.reduce((a,b) => a + b, 0) / last5.length);
         
-        document.getElementById('formLast5').textContent = `Ø ${avgLast5SD}`;
+        let nettoText = '';
+        let nettoColor = '';
         
-        const diff = parseFloat(avgLast5SD) - parseFloat(avgAllSD);
+        if (avgNettoDelta >= 0.5) {
+            nettoText = `${avgNettoDelta.toFixed(1)} unter HCP`;
+            nettoColor = 'var(--color-primary)';
+        } else if (avgNettoDelta <= -0.5) {
+            nettoText = `${Math.abs(avgNettoDelta).toFixed(1)} über HCP`;
+            nettoColor = 'var(--color-danger)';
+        } else {
+            nettoText = 'Par HCP';
+            nettoColor = 'var(--color-text-secondary)';
+        }
+        
+        document.getElementById('formNettoLast5').textContent = nettoText;
+        document.getElementById('formNettoLast5').style.color = nettoColor;
+        
+        // Trend-Anzeige: Vergleich mit Gesamtdurchschnitt
+        const allNettoDeltas = rounds.map(r => r.playingHcp - r.scoreDifferential);
+        const avgNettoAll = allNettoDeltas.reduce((a,b) => a + b, 0) / rounds.length;
+        const trendDiff = avgNettoDelta - avgNettoAll;
+        
         let trendText = '';
         let trendColor = '';
         
-        if (diff <= -1.0) {
+        if (trendDiff >= 1.0) {
             trendText = '📈 Besser';
             trendColor = 'var(--color-primary)';
-        } else if (diff >= 1.0) {
+        } else if (trendDiff <= -1.0) {
             trendText = '📉 Schlechter';
             trendColor = 'var(--color-danger)';
         } else {
@@ -883,48 +904,49 @@ if (rounds.length > 0) {
             trendColor = 'var(--color-text-secondary)';
         }
         
-        document.getElementById('formTrend').textContent = trendText;
-        document.getElementById('formTrend').style.color = trendColor;
+        document.getElementById('formNettoTrend').textContent = trendText;
+        document.getElementById('formNettoTrend').style.color = trendColor;
     } else {
-        document.getElementById('formLast5').textContent = '-';
-        document.getElementById('formTrend').textContent = '-';
+        document.getElementById('formNettoLast5').textContent = '-';
+        document.getElementById('formNettoTrend').textContent = '-';
     }
     
-    // === BESTE NETTO-RUNDE (kleinstes Score Differential) ===
-    const bestSD = Math.min(...rounds.map(r => r.scoreDifferential));
-    const bestNettoRound = rounds.find(r => r.scoreDifferential === bestSD);
-    
-    if (bestNettoRound) {
-        const diff = bestNettoRound.playingHcp - bestSD;
-        const diffText = diff > 0 ? `${diff.toFixed(1)} unter HCP` : diff < 0 ? `${Math.abs(diff).toFixed(1)} über HCP` : 'Par HCP';
-        document.getElementById('bestNettoRound').textContent = diffText;
+    // === Ø ZU PAR (Letzte 5 Runden) ===
+    if (last5.length > 0) {
+        const toParValues = last5.map(r => {
+            const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+            const par = course ? course.par : (r.holes === 9 ? 36 : 72);
+            return r.strokes - par;
+        });
+        
+        const avgToPar = toParValues.reduce((a,b) => a + b, 0) / last5.length;
+        const toParText = avgToPar > 0 
+            ? `+${Math.round(avgToPar)}` 
+            : `${Math.round(avgToPar)}`;
+        
+        document.getElementById('avgToParLast5').textContent = toParText;
     } else {
-        document.getElementById('bestNettoRound').textContent = '-';
+        document.getElementById('avgToParLast5').textContent = '-';
     }
     
-    // === BESTE RUNDE ZU PAR ===
-    const roundsWithPar = rounds.map(r => {
-        const course = courses.find(c => c.name === r.course && c.holes === r.holes);
-        const par = course ? course.par : (r.holes === 9 ? 36 : 72);
-        return { round: r, toPar: r.strokes - par };
-    });
+    // === RUNDEN IM HCP (Letzte 10) ===
+    const last10 = rounds.slice(-10);
     
-    const bestToParObj = roundsWithPar.reduce((best, curr) => 
-        curr.toPar < best.toPar ? curr : best
-    );
-    
-    const toParText = bestToParObj.toPar > 0 
-        ? `+${bestToParObj.toPar}` 
-        : `${bestToParObj.toPar}`;
-    document.getElementById('bestParRound').textContent = `${toParText} zu Par`;
+    if (last10.length > 0) {
+        const roundsUnderHcp = last10.filter(r => r.scoreDifferential <= r.playingHcp).length;
+        const percentInHcp = Math.round((roundsUnderHcp / last10.length) * 100);
+        
+        document.getElementById('percentInHcpLast10').textContent = `${percentInHcp}%`;
+    } else {
+        document.getElementById('percentInHcpLast10').textContent = '-';
+    }
     
 } else {
-    document.getElementById('formLast5').textContent = '-';
-    document.getElementById('formTrend').textContent = '-';
-    document.getElementById('bestNettoRound').textContent = '-';
-    document.getElementById('bestParRound').textContent = '-';
+    document.getElementById('formNettoLast5').textContent = '-';
+    document.getElementById('formNettoTrend').textContent = '-';
+    document.getElementById('avgToParLast5').textContent = '-';
+    document.getElementById('percentInHcpLast10').textContent = '-';
 }
-
             
                 renderCourses();
                 renderRounds();
