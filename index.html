@@ -566,7 +566,13 @@
             .sidebar #roundStrokes,
             .sidebar #courseName {
               display: block !important;
-              text-align: center !important;
+                text-align: center !important;
+                text-align-last: center !important;
+            }
+
+        .sidebar #roundCourse option {
+              text-align: center !important;  /* Optionen im Dropdown */
+              padding: 0 10px;  /* Leichter Abstand für Pfeil */
             }
             
             @media (max-width: 768px) {
