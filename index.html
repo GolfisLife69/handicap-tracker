@@ -568,12 +568,10 @@
             display: block !important;
             text-align: center !important;
             text-align-last: center !important;
-            padding-right: 44px;
-            padding-left: 44px;
         }
 
         .sidebar #roundCourse option {
-          text-align: center !important;
+          text-align: center !important;  /* Optionen im Dropdown */
         }
         
         @media (max-width: 768px) {
@@ -2117,7 +2115,7 @@ rounds.forEach(r => {
                         localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
                         saveCourses();
                         checkSetup();
-                    alert(`✅ Import erfolgreich!\n\nName: ${myGolfer.name || 'Unbekannt'}\nRunden: ${myGolfer.rounds.length}\nPlätze: ${courses.length}\nGeladen`); 
+                    alert(`✅ Import erfolgreich!\n\nName: ${myGolfer.name || 'Unbekannt'}\nRunden: ${myGolfer.rounds.length}\nPlätze: ${courses.length}`); 
 
                     } catch(err) {
                         alert('❌ Import-Fehler: ' + err.message);
@@ -2144,7 +2142,7 @@ rounds.forEach(r => {
                     localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
                     saveCourses();
                     // DANACH erst die UI neu initialisieren
-                    alert(`✅ Import erfolgreich!\n\nName: ${myGolfer.name || 'Unbekannt'}\nRunden: ${myGolfer.rounds.length}\nPlätze: ${courses.length}\nGeladen`);  
+                    alert(`✅ Import erfolgreich!\n\nName: ${myGolfer.name || 'Unbekannt'}\nRunden: ${myGolfer.rounds.length}\nPlätze: ${courses.length}`);  
                     checkSetup();
                 } catch(err) {
                     // FEHLERFALL: myGolfer und courses wurden NICHT verändert
