@@ -699,11 +699,7 @@
                         <div class="stat-value" id="officialRounds">0</div>
                         <div>HCP Runden ☆</div>
                     </div>
-                    <div class="stat">
-    <div class="stat-value" id="formNettoLast5" style="font-size: 1.8em;">-</div>
-    <div style="font-size: 0.75em; margin-top: 5px; color: var(--color-text-secondary);" id="formNettoTrend">-</div>
-    <div>Form (letzte 5)</div>
-</div>
+    
 <div class="stat">
     <div style="margin-bottom: 12px;">
         <div style="font-size: 1.5em; font-weight: bold; color: var(--color-primary);" id="avgToParLast5">-</div>
@@ -713,6 +709,11 @@
         <div style="font-size: 1.5em; font-weight: bold; color: var(--color-accent);" id="percentInHcpLast10">-</div>
         <div style="font-size: 0.75em; color: var(--color-text-secondary);">Runden im HCP (letzte 10)</div>
     </div>
+</div>
+<div class="stat">
+    <div class="stat-value" id="formNettoLast5" style="font-size: 1.8em;">-</div>
+    <div style="font-size: 0.75em; margin-top: 5px; color: var(--color-text-secondary);" id="formNettoTrend">-</div>
+    <div><br>Netto (Ø letzte 5)</div>
 </div>
 </div>           
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -861,55 +862,58 @@
             
 if (rounds.length > 0) {
     // === FORM NETTO (Letzte 5 Runden) ===
-    const last5 = rounds.slice(-5);
+const last5 = rounds.slice(-5);
+
+if (last5.length > 0) {
+    // Berechne Ø Netto-Abweichung (unter/über HCP)
+    const nettoDeltas = last5.map(r => r.playingHcp - r.scoreDifferential);
+    const avgNettoDelta = (nettoDeltas.reduce((a,b) => a + b, 0) / last5.length);
     
-    if (last5.length > 0) {
-        // Berechne Ø Netto-Abweichung (unter/über HCP)
-        const nettoDeltas = last5.map(r => r.playingHcp - r.scoreDifferential);
-        const avgNettoDelta = (nettoDeltas.reduce((a,b) => a + b, 0) / last5.length);
-        
-        let nettoText = '';
-        let nettoColor = '';
-        
-        if (avgNettoDelta >= 0.5) {
-            nettoText = `${avgNettoDelta.toFixed(1)} unter HCP`;
-            nettoColor = 'var(--color-primary)';
-        } else if (avgNettoDelta <= -0.5) {
-            nettoText = `${Math.abs(avgNettoDelta).toFixed(1)} über HCP`;
-            nettoColor = 'var(--color-danger)';
-        } else {
-            nettoText = 'Par HCP';
-            nettoColor = 'var(--color-text-secondary)';
-        }
-        
-        document.getElementById('formNettoLast5').textContent = nettoText;
-        document.getElementById('formNettoLast5').style.color = nettoColor;
-        
-        // Trend-Anzeige: Vergleich mit Gesamtdurchschnitt
-        const allNettoDeltas = rounds.map(r => r.playingHcp - r.scoreDifferential);
-        const avgNettoAll = allNettoDeltas.reduce((a,b) => a + b, 0) / rounds.length;
-        const trendDiff = avgNettoDelta - avgNettoAll;
-        
-        let trendText = '';
-        let trendColor = '';
-        
-        if (trendDiff >= 1.0) {
-            trendText = '📈 Besser';
-            trendColor = 'var(--color-primary)';
-        } else if (trendDiff <= -1.0) {
-            trendText = '📉 Schlechter';
-            trendColor = 'var(--color-danger)';
-        } else {
-            trendText = '➡️ Stabil';
-            trendColor = 'var(--color-text-secondary)';
-        }
-        
-        document.getElementById('formNettoTrend').textContent = trendText;
-        document.getElementById('formNettoTrend').style.color = trendColor;
+    let nettoText = '';
+    let nettoColor = '';
+    
+    if (avgNettoDelta >= 0.5) {
+        // Unter HCP = gut = positiv anzeigen
+        nettoText = `+${avgNettoDelta.toFixed(1)}`;
+        nettoColor = 'var(--color-primary)';
+    } else if (avgNettoDelta <= -0.5) {
+        // Über HCP = schlecht = negativ anzeigen
+        nettoText = `${avgNettoDelta.toFixed(1)}`;
+        nettoColor = 'var(--color-danger)';
     } else {
-        document.getElementById('formNettoLast5').textContent = '-';
-        document.getElementById('formNettoTrend').textContent = '-';
+        // Nahe bei 0 = neutral
+        nettoText = '±0,0';
+        nettoColor = 'var(--color-text-secondary)';
     }
+    
+    document.getElementById('formNettoLast5').textContent = nettoText;
+    document.getElementById('formNettoLast5').style.color = nettoColor;
+    
+    // Trend-Anzeige: Vergleich mit Gesamtdurchschnitt
+    const allNettoDeltas = rounds.map(r => r.playingHcp - r.scoreDifferential);
+    const avgNettoAll = allNettoDeltas.reduce((a,b) => a + b, 0) / rounds.length;
+    const trendDiff = avgNettoDelta - avgNettoAll;
+    
+    let trendText = '';
+    let trendColor = '';
+    
+    if (trendDiff >= 1.0) {
+        trendText = '📈 Besser';
+        trendColor = 'var(--color-primary)';
+    } else if (trendDiff <= -1.0) {
+        trendText = '📉 Schlechter';
+        trendColor = 'var(--color-danger)';
+    } else {
+        trendText = '➡️ Stabil';
+        trendColor = 'var(--color-text-secondary)';
+    }
+    
+    document.getElementById('formNettoTrend').textContent = trendText;
+    document.getElementById('formNettoTrend').style.color = trendColor;
+} else {
+    document.getElementById('formNettoLast5').textContent = '-';
+    document.getElementById('formNettoTrend').textContent = '-';
+}
     
     // === Ø ZU PAR (Letzte 5 Runden) ===
     if (last5.length > 0) {
