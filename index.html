@@ -1908,7 +1908,7 @@ rounds.forEach(r => {
                 const par = parseInt(document.getElementById('coursePar').value) || (holes === 9 ? 36 : 72);
                 
                 if (!name || isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
-                    return alert('Bitte korrekte Platzdaten eingeben! (CR min. 20, SR 55-155)');
+                    return alert('Bitte korrekte Platzdaten eingeben!\n(CR min. 20, SR 55-155)');
                 }
                 
                 courses.push({
