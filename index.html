@@ -959,9 +959,9 @@
                 par
               );
             
-              const countPart = playCount ? ` · ${playCount}x` : "";
-              const vorgabeBlock = `Vorgabe: \u00A0${courseHcp}`;
-              const label = `${c.name}${countPart} ${vorgabeBlock}`;
+              const countPart = playCount ? `${playCount}x` : "";
+              const vorgabeBlock = `Vorgabe:\u00A0${courseHcp}`;
+              const label = `${c.name} · ${countPart} ${vorgabeBlock}`;
             
               html += `<option value="${c.id}">${label}</option>`;
             });
