@@ -934,8 +934,7 @@
         }
 
         function filterCoursesByHoles() {
-        //const isMobile = window.matchMedia("(pointer: coarse)").matches;
-            const isMobile = window.matchMedia("(max-width: 768px)").matches;
+        const isMobile = window.matchMedia("(pointer: coarse)").matches;
           const selectedHoles = parseInt(document.querySelector('input[name="roundHoles"]:checked').value);
           const select = document.getElementById('roundCourse');
           const courseCounts = {};
