@@ -931,28 +931,49 @@
         }
 
          function filterCoursesByHoles() {
-            const selectedHoles = parseInt(document.querySelector('input[name="roundHoles"]:checked').value);
-            const select = document.getElementById('roundCourse');
-        
-            // Zähle, wie oft jeder Platz gespielt wurde
-            const courseCounts = {};
-            if (myGolfer && myGolfer.rounds) {
+              const selectedHoles = parseInt(document.querySelector('input[name="roundHoles"]:checked').value);
+              const select = document.getElementById('roundCourse');
+            
+              // Zähle Häufigkeit (bleibt gleich)
+              const courseCounts = {};
+              if (myGolfer && myGolfer.rounds) {
                 myGolfer.rounds.forEach(round => {
-                    // FIX: Berücksichtige auch die Lochzahl beim Finden des Platzes
-                    const course = courses.find(c => c.name === round.course && c.holes === round.holes);
-                    if (course) {
-                        courseCounts[course.id] = (courseCounts[course.id] || 0) + 1;
-                    }
+                  const course = courses.find(c => c.name === round.course && c.holes === round.holes);
+                  if (course) {
+                    courseCounts[course.id] = (courseCounts[course.id] || 0) + 1;
+                  }
                 });
-            }
+              }
             
-            // Filtere Plätze nach Lochzahl
-            const filteredCourses = courses.filter(c => c.holes === selectedHoles);
+              // Immer leere Option zuerst
+              let options = '<option value="">-- Platz auswählen --</option>';
             
-            if (filteredCourses.length === 0) {
-                select.innerHTML = `<option value="">Kein ${selectedHoles}-Loch-Platz angelegt!</option>`;
-                return;
+              // Filtere und sortiere nach Häufigkeit
+              const filteredCourses = courses.filter(c => c.holes === selectedHoles);
+              if (filteredCourses.length === 0) {
+                options += `<option value="" disabled>Kein ${selectedHoles}-Loch-Platz angelegt</option>`;
+              } else {
+                const sortedCourses = [...filteredCourses].sort((a, b) => {
+                  const countA = courseCounts[a.id] || 0;
+                  const countB = courseCounts[b.id] || 0;
+                  return countB - countA;
+                });
+                sortedCourses.forEach(c => {
+                  const playCount = courseCounts[c.id] || 0;
+                  const countText = playCount > 0 ? ` (${playCount}x)` : '';
+                  const par = c.par * (c.holes === 9 ? 2 : 1);
+                  const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, c.sr, c.cr, par);
+                  options += `<option value="${c.id}">${c.name} Vorgabe: ${courseHcp}${countText}</option>`;
+                });
+              }
+            
+              select.innerHTML = options;
+            
+              // Event-Listener und Update (bleibt gleich)
+              document.getElementById('roundCourse').addEventListener('change', updateStrokesPlaceholder);
+              updateStrokesPlaceholder();
             }
+
             
             // Sortiere nach Häufigkeit
             const sortedCourses = [...filteredCourses].sort((a, b) => {
