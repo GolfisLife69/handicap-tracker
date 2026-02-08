@@ -2116,7 +2116,15 @@ rounds.forEach(r => {
                         localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
                         saveCourses();
                         checkSetup();
-                    alert(`✅ Import erfolgreich!\n\nName: ${myGolfer.name || 'Unbekannt'}\nRunden: ${myGolfer.rounds.length}\nPlätze: ${courses.length}`); 
+                    alert(
+                          "Import erfolgreich!\n\n" +
+                          "Spieler: " + (myGolfer.name || "Unbekannt") + "\n" +
+                          "Aktuelles Handicap: " + (typeof myGolfer.handicapIndex === "number"
+                            ? myGolfer.handicapIndex.toFixed(1)
+                            : "n/a") + "\n" +
+                          "Runden: " + (myGolfer.rounds ? myGolfer.rounds.length : 0) + "\n" +
+                          "Plätze: " + (Array.isArray(courses) ? courses.length : 0)
+                        );
 
                     } catch(err) {
                         alert('❌ Import-Fehler: ' + err.message);
@@ -2143,7 +2151,15 @@ rounds.forEach(r => {
                     localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
                     saveCourses();
                     // DANACH erst die UI neu initialisieren
-                    alert(`✅ Import erfolgreich!\n\nName: ${myGolfer.name || 'Unbekannt'}\nRunden: ${myGolfer.rounds.length}\nPlätze: ${courses.length}`);  
+                    alert(
+                      "Import erfolgreich!\n\n" +
+                      "Spieler: " + (myGolfer.name || "Unbekannt") + "\n" +
+                      "Aktuelles Handicap: " + (typeof myGolfer.handicapIndex === "number"
+                        ? myGolfer.handicapIndex.toFixed(1)
+                        : "n/a") + "\n" +
+                      "Runden: " + (myGolfer.rounds ? myGolfer.rounds.length : 0) + "\n" +
+                      "Plätze: " + (Array.isArray(courses) ? courses.length : 0)
+                    );
                     checkSetup();
                 } catch(err) {
                     // FEHLERFALL: myGolfer und courses wurden NICHT verändert
