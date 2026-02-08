@@ -653,7 +653,10 @@
                 </div>
                 <button onclick="addCourse()">Platz speichern</button>
 
-                <h2 style="margin-top: 30px;">Plätze verwalten</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px;">
+                <h2 style="margin: 0;">Plätze verwalten</h2>
+                <button id="collapseCoursesBtn" class="small" onclick="toggleAllCourses()" style="display: none; background: transparent; color: var(--color-text-secondary); font-size: 20px; font-weight: bold; padding: 0 8px; line-height: 1; border: none;">−</button>
+                </div>
                 <div id="courseManageList" style="margin-top:15px;"></div>
                 <button id="showAllCoursesBtn" class="show-all-rounds-btn" onclick="toggleAllCourses()" style="display: none; margin-top: 10px; font-size: 12px; padding: 8px;">Alle Plätze anzeigen</button>
                 
@@ -905,12 +908,15 @@
                     // Button nur anzeigen wenn mehr als 3 Plätze
                     const showAllCoursesBtn = document.getElementById('showAllCoursesBtn');
                     const showAll = window.showAllCourses || false;
-                    if (courses.length > 3) {
-                        showAllCoursesBtn.style.display = 'block';
-                        showAllCoursesBtn.textContent = showAll ? 'Weniger anzeigen' : 'Alle Plätze anzeigen';
-                    } else {
-                        showAllCoursesBtn.style.display = 'none';
-                    }
+                    const collapseBtn = document.getElementById('collapseCoursesBtn');
+                                if (courses.length > 3) {
+                                    showAllCoursesBtn.style.display = 'block';
+                                    showAllCoursesBtn.textContent = showAll ? 'Weniger anzeigen' : 'Alle Plätze anzeigen';
+                                    collapseBtn.style.display = showAll ? 'inline-block' : 'none';
+                                } else {
+                                    showAllCoursesBtn.style.display = 'none';
+                                    collapseBtn.style.display = 'none';
+                                }
                     // Sortiere nach Neuheit (neueste zuerst) für VERWALTUNG
                     const sortedCourses = [...courses].sort((a, b) => b.id - a.id);
                     // Zeige nur 3 oder alle
