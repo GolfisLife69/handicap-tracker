@@ -568,14 +568,9 @@
           text-align: center !important;
         }
         
-        .sidebar #roundCourse {
-          direction: rtl !important;  /* Pfeil rechts wie bei date/number */
-        }
-        
         .sidebar #roundCourse option {
-          direction: ltr !important;  /* Text in Optionen normal */
           text-align: center !important;
-          padding: 0 10px;
+          padding: 12px 10px;  /* Symmetrisch für Optionen */
         }
         
         @media (max-width: 768px) {
@@ -585,13 +580,8 @@
           .sidebar #courseName {
             text-align: center !important;
           }
-          .sidebar #roundCourse {
-            direction: rtl !important;
-          }
-          .sidebar #roundCourse option {
-            direction: ltr !important;
-          }
         }
+
 
     </style>
 </head>
