@@ -565,9 +565,6 @@
             .sidebar #roundDate,
             .sidebar #roundStrokes,
             .sidebar #courseName {
-              width: 70% !important;
-              max-width: 300px !important;
-              margin: 10px auto 10px !important;
               display: block !important;
               text-align: center !important;
             }
@@ -577,7 +574,7 @@
               .sidebar #roundDate,
               .sidebar #roundStrokes,
               .sidebar #courseName {
-                width: 90% !important;
+                text-align: center !important;
               }
             }
 
@@ -641,7 +638,7 @@
                     </label>
                 </div>
                 <div style="text-align: center;">
-                  <input id="courseName" placeholder="Platzname angeben" style="width: 70%; max-width: 300px;">
+                      <input id="courseName" placeholder="Platznamen angeben">
                 </div>
                 <div style="display: flex; gap: 8px; margin-bottom: 10px;">
                     <input id="coursePar" type="number" inputmode="numeric" placeholder="Par" style="flex: 1; min-width: 0; text-align: center;">
@@ -930,74 +927,34 @@
             }
         }
 
-         function filterCoursesByHoles() {
-              const selectedHoles = parseInt(document.querySelector('input[name="roundHoles"]:checked').value);
-              const select = document.getElementById('roundCourse');
-            
-              // Zähle Häufigkeit (bleibt gleich)
-              const courseCounts = {};
-              if (myGolfer && myGolfer.rounds) {
-                myGolfer.rounds.forEach(round => {
-                  const course = courses.find(c => c.name === round.course && c.holes === round.holes);
-                  if (course) {
-                    courseCounts[course.id] = (courseCounts[course.id] || 0) + 1;
-                  }
-                });
-              }
-            
-              // Immer leere Option zuerst
-              let options = '<option value="">-- Platz auswählen --</option>';
-            
-              // Filtere und sortiere nach Häufigkeit
-              const filteredCourses = courses.filter(c => c.holes === selectedHoles);
-              if (filteredCourses.length === 0) {
-                options += `<option value="" disabled>Kein ${selectedHoles}-Loch-Platz angelegt</option>`;
-              } else {
-                const sortedCourses = [...filteredCourses].sort((a, b) => {
-                  const countA = courseCounts[a.id] || 0;
-                  const countB = courseCounts[b.id] || 0;
-                  return countB - countA;
-                });
-                sortedCourses.forEach(c => {
-                  const playCount = courseCounts[c.id] || 0;
-                  const countText = playCount > 0 ? ` (${playCount}x)` : '';
-                  const par = c.par * (c.holes === 9 ? 2 : 1);
-                  const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, c.sr, c.cr, par);
-                  options += `<option value="${c.id}">${c.name} Vorgabe: ${courseHcp}${countText}</option>`;
-                });
-              }
-            
-              select.innerHTML = options;
-            
-              // Event-Listener und Update (bleibt gleich)
-              document.getElementById('roundCourse').addEventListener('change', updateStrokesPlaceholder);
-              updateStrokesPlaceholder();
-            }
-
-            
-            // Sortiere nach Häufigkeit
-            const sortedCourses = [...filteredCourses].sort((a, b) => {
-                const countA = courseCounts[a.id] || 0;
-                const countB = courseCounts[b.id] || 0;
-                return countB - countA;
+        function filterCoursesByHoles() {
+          const selectedHoles = parseInt(document.querySelector('input[name="roundHoles"]:checked').value);
+          const select = document.getElementById('roundCourse');
+          const courseCounts = {};
+          if (myGolfer && myGolfer.rounds) {
+            myGolfer.rounds.forEach(round => {
+              const course = courses.find(c => c.name === round.course && c.holes === round.holes);
+              if (course) courseCounts[course.id] = (courseCounts[course.id] || 0) + 1;
             });
-            
-            select.innerHTML = sortedCourses.map(c => {
-                const playCount = courseCounts[c.id] || 0;
-                const countText = playCount > 0 ? ` • ${playCount}x` : '';
-                
-                // Berechne Spielvorgabe
-                const par = c.par || (c.holes === 9 ? 36 : 72);
-                const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, c.sr, c.cr, par);
-                
-                return `<option value="${c.id}">${c.name} • Vorgabe: ${courseHcp}${countText}</option>`;
-            }).join('');
-
-             // Update placeholder wenn Kurs ausgewählt wird
-            document.getElementById('roundCourse').addEventListener('change', updateStrokesPlaceholder);
-            updateStrokesPlaceholder(); // Initialer Aufruf
-
-            }
+          }
+          let html = '<option value="">-- Platz auswählen --</option>';
+          const filteredCourses = courses.filter(c => c.holes === selectedHoles);
+          if (filteredCourses.length === 0) {
+            html += `<option value="" disabled>Kein ${selectedHoles}-Loch-Platz angelegt</option>`;
+          } else {
+            const sortedCourses = [...filteredCourses].sort((a,b)=>(courseCounts[b.id]||0)-(courseCounts[a.id]||0));
+            sortedCourses.forEach(c => {
+              const playCount = courseCounts[c.id] || 0;
+              const countText = playCount > 0 ? ` (${playCount}x)` : '';
+              const par = c.par || (c.holes === 9 ? 36 : 72);
+              const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, c.sr, c.cr, par);
+              html += `<option value="${c.id}">${c.name} Vorgabe: ${courseHcp}${countText}</option>`;
+            });
+          }
+          select.innerHTML = html;
+          document.getElementById('roundCourse').addEventListener('change', updateStrokesPlaceholder);
+          updateStrokesPlaceholder();
+        }
 
         function updateStrokesPlaceholder() {
                 const courseId = document.getElementById('roundCourse').value;
