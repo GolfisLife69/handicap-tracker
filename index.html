@@ -703,7 +703,13 @@
                 <div id="courseManageList" style="margin-top:15px;"></div>
                 <button id="showAllCoursesBtn" class="show-all-rounds-btn" onclick="toggleAllCourses()" style="display: none; margin-top: 10px; font-size: 12px; padding: 8px;">Alle Plätze anzeigen</button>
                 
-                <h2 style="margin-top: 30px;">🔄 Daten-Verwaltung</h2>
+                <h2 style="margin-top: 30px;">Daten-Verwaltung</h2>
+                <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
+    <input type="checkbox" id="autoFocusToggle" onchange="toggleAutoFocus()" 
+           style="width: 20px; height: 20px; margin: 0; accent-color: var(--color-primary);">
+    <span style="font-weight: 500; font-size: 14px;">Auto-Fokus "Schläge eingeben"</span>
+</label>
+
                 <button onclick="exportData()">💾 Daten exportieren (JSON)</button>
                 <div class="file-input-wrapper" style="margin-bottom: 0;">
                 
@@ -712,6 +718,7 @@
                 </div>
                 
                 <button class="secondary" onclick="showEditProfile()">👤 Profil bearbeiten</button>
+
                 <button class="danger" onclick="clearData()">🗑️ Alles löschen</button>
                 </div>
             
@@ -991,6 +998,7 @@ const DEFAULT_COURSES = [
             courses = []; 
             loadData();
             checkSetup();
+            loadAutoFocusSetting();
         }
 
         function setupComplete() {
@@ -1274,10 +1282,18 @@ function loadData() {
             });
 
           }
-          select.innerHTML = html;
-          document.getElementById('roundCourse').addEventListener('change', updateStrokesPlaceholder);
-          updateStrokesPlaceholder();
-        }
+    select.innerHTML = html;
+
+    const roundCourseSelect = document.getElementById('roundCourse');
+    roundCourseSelect.onchange = function () {
+        updateStrokesPlaceholder();
+        autoFocusStrokesField();
+    };
+
+    if (roundCourseSelect.value) {
+        updateStrokesPlaceholder();
+    }
+}
 
 function updateStrokesPlaceholder() {
     const courseId = document.getElementById('roundCourse').value;
@@ -2165,7 +2181,6 @@ courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:
         </div>
     `;
 }
-
 
         function getPlayingCourseHandicap(round, course, handicapIndex) {
             if (!course) return 0;
@@ -3065,6 +3080,38 @@ courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:
             alert(msg);
         }
 
+// Auto-Focus Einstellung laden
+function loadAutoFocusSetting() {
+    const autoFocus = localStorage.getItem('autoFocusStrokes');
+    const toggle = document.getElementById('autoFocusToggle');
+    if (toggle) {
+        toggle.checked = autoFocus === 'true' || autoFocus === null; // Standard: AN
+    }
+}
+
+// Auto-Focus Einstellung speichern
+function toggleAutoFocus() {
+    const toggle = document.getElementById('autoFocusToggle');
+    localStorage.setItem('autoFocusStrokes', toggle.checked);
+}
+
+// Fokus auf Schläge-Feld setzen (wenn Kurs ausgewählt und aktiviert)
+function autoFocusStrokesField() {
+    const autoFocus = localStorage.getItem('autoFocusStrokes');
+    const shouldFocus = autoFocus === 'true' || autoFocus === null; // Standard: AN
+    
+    if (shouldFocus) {
+        const courseId = document.getElementById('roundCourse').value;
+        const strokesInput = document.getElementById('roundStrokes');
+        
+        if (courseId && strokesInput) {
+            // Kleiner Timeout damit der Browser Zeit hat
+            setTimeout(() => {
+                strokesInput.focus();
+            }, 100);
+        }
+    }
+}
 
         
         function clearData() {
