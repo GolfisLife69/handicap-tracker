@@ -1246,8 +1246,9 @@ function loadData() {
                                 
                             </div>
                         <div style="display:flex;gap:6px;">
-                            <button onclick="editCourse('${c.id}')" class="small" style="background:var(--color-border);color:var(--color-text-secondary);" title="Bearbeiten">✏️</button>
-                            <button onclick="deleteCourse('${c.id}')" class="small" style="background:var(--color-border);color:var(--color-text-secondary);" title="Löschen">🗑️</button>
+                            <button onclick="editCourse('${c.id}')" class="small" style="background:var(--color-border);color:var(--color-text-secondary);font-size:7px;" title="Bearbeiten">✏️</button>
+                            <button onclick="deleteCourse('${c.id}')" class="small" style="background:var(--color-border);color:var(--color-text-secondary);font-size:7px;" title="Löschen">🗑️</button>
+
                         </div>
                     </div>
                 `).join('');
@@ -2280,8 +2281,9 @@ courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:
                                     ${diffToParText} zu Par
                                 </div>
                             </div>
-                            <button onclick="editRound('${r.id}')" class="small" style="background:var(--color-border);color:var(--color-text-secondary);" title="Bearbeiten">✏️</button>
-                            <button onclick="deleteRound('${r.id}')" class="small" style="background:var(--color-border);color:var(--color-text-secondary);" title="Runde löschen">🗑️</button>
+                           <button onclick="editRound('${r.id}')" class="small" style="background:var(--color-border);color:var(--color-text-secondary);font-size:7px;" title="Bearbeiten">✏️</button>
+                            <button onclick="deleteRound('${r.id}')" class="small" style="background:var(--color-border);color:var(--color-text-secondary);font-size:7px;" title="Runde löschen">🗑️</button>
+
                         </div>
                     </div>
                 `;
@@ -2829,18 +2831,25 @@ courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:
                 myGolfer.club = newClub.trim();
             }
             
-        const newHcp = prompt('Handicap manuell setzen:', myGolfer.handicapIndex);
-                if (newHcp !== null && !isNaN(newHcp)) {
-                    const hcpValue = parseFloat(newHcp.replace(',', '.'));
-                    
-                    myGolfer.handicapIndex = hcpValue;
-                    myGolfer.unofficialHandicap = hcpValue;
-                    if (typeof myGolfer.lowestHandicapIndex === 'number') {
-                        myGolfer.lowestHandicapIndex = Math.min(myGolfer.lowestHandicapIndex, hcpValue);
-                    } else {
-                        myGolfer.lowestHandicapIndex = hcpValue;
-                    }
-                }
+const newHcp = prompt('Handicap manuell setzen:', myGolfer.handicapIndex.toFixed(1));
+if (newHcp !== null) {
+    // Komma → Punkt für internationale parseFloat-Kompatibilität
+    const normalizedHcp = newHcp.toString().trim().replace(',', '.');
+    const hcpValue = parseFloat(normalizedHcp);
+    
+    if (!isNaN(hcpValue) && hcpValue >= -5 && hcpValue <= 54) {
+        myGolfer.handicapIndex = hcpValue;
+        myGolfer.unofficialHandicap = hcpValue;
+        if (typeof myGolfer.lowestHandicapIndex === 'number') {
+            myGolfer.lowestHandicapIndex = Math.min(myGolfer.lowestHandicapIndex, hcpValue);
+        } else {
+            myGolfer.lowestHandicapIndex = hcpValue;
+        }
+    } else {
+        alert('❌ Ungültiger Handicap-Wert! (-5 - 54, z.B. 23.4 oder 23,4)');
+        return;
+    }
+}
             
             localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
             updateUI();
