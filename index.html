@@ -2829,10 +2829,12 @@ courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:
                 myGolfer.club = newClub.trim();
             }
             
-        const newHcp = prompt('Handicap manuell setzen:', myGolfer.handicapIndex);
-                if (newHcp !== null && !isNaN(newHcp)) {
-                    const hcpValue = parseFloat(newHcp);
-                    
+            const newHcp = prompt('Handicap manuell setzen:', myGolfer.handicapIndex);
+            if (newHcp !== null) {
+                // Komma durch Punkt ersetzen (wichtig für deutsche Eingabe!)
+                const hcpValue = parseFloat(newHcp.replace(',', '.'));
+                
+                if (!isNaN(hcpValue)) {
                     myGolfer.handicapIndex = hcpValue;
                     myGolfer.unofficialHandicap = hcpValue;
                     if (typeof myGolfer.lowestHandicapIndex === 'number') {
@@ -2841,6 +2843,8 @@ courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:
                         myGolfer.lowestHandicapIndex = hcpValue;
                     }
                 }
+            }
+
             
             localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
             updateUI();
