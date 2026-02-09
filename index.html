@@ -583,6 +583,28 @@
           }
         }
 
+/* Pfeile bei Number-Input entfernen */
+#roundStrokes::-webkit-outer-spin-button,
+#roundStrokes::-webkit-inner-spin-button,
+#coursePar::-webkit-outer-spin-button,
+#coursePar::-webkit-inner-spin-button,
+#courseCR::-webkit-outer-spin-button,
+#courseCR::-webkit-inner-spin-button,
+#courseSR::-webkit-outer-spin-button,
+#courseSR::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Für Firefox */
+#roundStrokes,
+#coursePar,
+#courseCR,
+#courseSR {
+    -moz-appearance: textfield;
+}
+
+
 
     </style>
 </head>
@@ -622,7 +644,28 @@
 
                 <input id="roundDate" type="date" style="height: 46px; margin-bottom: 10px; text-align: center !important; padding: 12px;">
                 <select id="roundCourse" style="height: 46px; margin-bottom: 10px;"></select>
-                <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge eingeben" style="height: 46px; margin-bottom: 10px;">
+                
+ <div style="position: relative; margin-bottom: 10px;">
+    <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge eingeben" 
+           style="height: 46px; 
+                  width: 100%; 
+                  text-align: center; 
+                  padding: 12px;
+                  -moz-appearance: textfield;">
+    <span id="strokesSuffix" 
+          style="position: absolute; 
+                 left: 50%; 
+                 top: 50%; 
+                 transform: translate(-50%, -50%); 
+                 color: var(--color-text-primary); 
+                 font-size: 16px; 
+                 pointer-events: none; 
+                 display: none; 
+                 white-space: nowrap;">
+    </span>
+</div>
+
+
                 
                 <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
                     <input type="checkbox" id="roundOfficial" style="width: 20px; height: 20px; margin: 0; accent-color: var(--color-primary);">
@@ -777,7 +820,171 @@
     
     <script>
         let myGolfer = null;
-        let courses = [];
+let courses = [];
+
+// Standardkurse für neue Installationen
+const DEFAULT_COURSES = [
+  {
+    "id": "1770302839387",
+    "name": "GolfRange Frankfurt",
+    "cr": 30,
+    "sr": 111,
+    "holes": 9,
+    "par": 31
+  },
+  {
+    "id": "1770303312187",
+    "name": "GolfRange Frankfurt",
+    "cr": 60,
+    "sr": 112,
+    "holes": 18,
+    "par": 62
+  },
+  {
+    "id": "1770468971064",
+    "name": "Bachgrund - Nessie",
+    "cr": 71.6,
+    "sr": 136,
+    "holes": 18,
+    "par": 72
+  },
+  {
+    "id": "1770469087435",
+    "name": "Bachgrund - Happy Luck",
+    "cr": 68.6,
+    "sr": 123,
+    "holes": 18,
+    "par": 70
+  },
+  {
+    "id": "1770469105548",
+    "name": "Bachgrund - Happy Luck",
+    "cr": 34.4,
+    "sr": 121,
+    "holes": 9,
+    "par": 35
+  },
+  {
+    "id": "1770469150963",
+    "name": "Gernsheim - Parkland",
+    "cr": 68.9,
+    "sr": 120,
+    "holes": 18,
+    "par": 72
+  },
+  {
+    "id": "1770469188250",
+    "name": "Gernsheim - Lufthansa",
+    "cr": 65.6,
+    "sr": 115,
+    "holes": 18,
+    "par": 70
+  },
+  {
+    "id": "1770469209565",
+    "name": "Kiawah Riedstadt",
+    "cr": 71.3,
+    "sr": 124,
+    "holes": 18,
+    "par": 72
+  },
+  {
+    "id": "1770469236167",
+    "name": "Golfpark Trages",
+    "cr": 70.4,
+    "sr": 135,
+    "holes": 18,
+    "par": 72
+  },
+  {
+    "id": "1770469253847",
+    "name": "Golfpark Biblis - B+C",
+    "cr": 72.9,
+    "sr": 139,
+    "holes": 18,
+    "par": 75
+  },
+  {
+    "id": "1770469276987",
+    "name": "Golfpark Biblis - A+C",
+    "cr": 71.9,
+    "sr": 136,
+    "holes": 18,
+    "par": 74
+  },
+  {
+    "id": "1770469295114",
+    "name": "Golfpark Biblis - A+B",
+    "cr": 71.8,
+    "sr": 136,
+    "holes": 18,
+    "par": 73
+  },
+  {
+    "id": "1770469322698",
+    "name": "Friedberg - Südkurs",
+    "cr": 72,
+    "sr": 127,
+    "holes": 18,
+    "par": 72
+  },
+  {
+    "id": "1770469346562",
+    "name": "Friedberg - Nordkurs",
+    "cr": 30.9,
+    "sr": 109,
+    "holes": 9,
+    "par": 32
+  },
+  {
+    "id": "1770469374980",
+    "name": "Altenstadt A/B",
+    "cr": 71,
+    "sr": 127,
+    "holes": 18,
+    "par": 71
+  },
+  {
+    "id": "1770469483078",
+    "name": "Altenstadt C",
+    "cr": 34.2,
+    "sr": 129,
+    "holes": 9,
+    "par": 35
+  },
+  {
+    "id": "1770469512596",
+    "name": "Bad Vilbel - Lindenhof",
+    "cr": 71.6,
+    "sr": 127,
+    "holes": 18,
+    "par": 72
+  },
+  {
+    "id": "1770469527746",
+    "name": "GC Neuhof - Parkland",
+    "cr": 71.8,
+    "sr": 138,
+    "holes": 18,
+    "par": 72
+  },
+  {
+    "id": "1770469593446",
+    "name": "GC Neuhof - Skyline",
+    "cr": 36.5,
+    "sr": 126,
+    "holes": 9,
+    "par": 36
+  },
+  {
+    "id": "1770469614562",
+    "name": "Licher GC",
+    "cr": 71.8,
+    "sr": 130,
+    "holes": 18,
+    "par": 72
+  }
+];
         
         function init() {
             myGolfer = null;
@@ -972,15 +1179,22 @@ if (last5.length > 0) {
 
         }
         
-        function loadData() {
-            try {
-                const data = localStorage.getItem('courses');
-                courses = data ? JSON.parse(data) : [];
-            } catch (err) {
-                console.error('Fehler beim Laden der Plätze:', err);
-                courses = []; // Bei Fehler: Leeres Array
-            }
+function loadData() {
+    try {
+        const data = localStorage.getItem('courses');
+        if (data) {
+            courses = JSON.parse(data);
+        } else {
+            // Erste Installation: Lade Standardkurse
+            courses = [...DEFAULT_COURSES];
+            saveCourses(); // Speichere sie im localStorage
         }
+    } catch (err) {
+        console.error('Fehler beim Laden der Plätze:', err);
+        courses = [...DEFAULT_COURSES]; // Bei Fehler: Standardkurse
+    }
+}
+
         
         function saveCourses() {
             localStorage.setItem('courses', JSON.stringify(courses));
@@ -1036,6 +1250,8 @@ if (last5.length > 0) {
         function filterCoursesByHoles() {
           const selectedHoles = parseInt(document.querySelector('input[name="roundHoles"]:checked').value);
           const select = document.getElementById('roundCourse');
+          document.getElementById('roundStrokes').value = '';
+          updateStrokesSuffix();
           const courseCounts = {};
           if (myGolfer && myGolfer.rounds) {
             myGolfer.rounds.forEach(round => {
@@ -1087,6 +1303,26 @@ function updateStrokesPlaceholder() {
         strokesInput.placeholder = 'Schläge eingeben';
     }
 }
+
+function updateStrokesSuffix() {
+    const strokesInput = document.getElementById('roundStrokes');
+    const suffix = document.getElementById('strokesSuffix');
+    
+    if (strokesInput.value && strokesInput.value > 0) {
+        suffix.textContent = strokesInput.value + ' Schläge';
+        suffix.style.display = 'block';
+        strokesInput.style.color = 'transparent';
+    } else {
+        suffix.style.display = 'none';
+        strokesInput.style.color = '';
+    }
+}
+
+document.getElementById('roundStrokes').addEventListener('input', updateStrokesSuffix);
+
+
+// Event Listener für das Schläge-Feld
+document.getElementById('roundStrokes').addEventListener('input', updateStrokesSuffix);
 
 
         function validateRoundData(strokes, holes, date) {
@@ -1204,6 +1440,7 @@ function updateStrokesPlaceholder() {
             
             document.getElementById('roundStrokes').value = '';
             document.getElementById('roundOfficial').checked = false;
+            updateStrokesSuffix();
             
             alert(`Runde gespeichert!\nDifferential: ${round.scoreDifferential}\n${isOfficial ? 'Offizielles' : 'Inoffizielles'} HCP: ${myGolfer[isOfficial ? 'handicapIndex' : 'unofficialHandicap'].toFixed(1)}`);
         }
