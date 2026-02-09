@@ -618,7 +618,7 @@
 .strokes-suffix {
   position: absolute;
   top: 50%;
-  transform: translateY(-80%);
+  transform: translateY(-83%);
   font-size: 14px;                   /* gleiche Größe */
   font-family: inherit;
   color: var(--color-text-secondary);
@@ -630,6 +630,7 @@
 
 #roundOfficialLabel {
   font-size: 14px;
+    font-weight: 500; 
   display: flex;
   align-items: center;
   justify-content: center;
@@ -693,7 +694,7 @@
   <span id="strokesMeasure" class="strokes-measure"></span>
 
   <!-- Sichtbares Suffix direkt hinter der Zahl -->
-  <span id="strokesSuffix" class="strokes-suffix">Schläge</span>
+  <span id="strokesSuffix" class="strokes-suffix">&nbsp;Schläge</span>
 </div>
 
 
@@ -3011,7 +3012,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Mess-Span bekommt denselben Text wie das Input
       measure.textContent = value;
 
-      const gap        = 0;  // Abstand zwischen Zahl und "Schläge"
+      const gap        = 4;  // Abstand zwischen Zahl und "Schläge"
       const fieldWidth = strokesInput.clientWidth;
       const valueWidth = measure.offsetWidth;
 
