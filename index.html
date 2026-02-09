@@ -582,7 +582,31 @@
             text-align: center !important;
           }
         }
+#roundStrokes {
+  margin-bottom: 2px; /* vorher z.B. 10px */
+}
 
+.input-hint {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+  text-align: center;
+  margin-top: -4px;
+  margin-bottom: -10px;  /* wichtig: klein halten */
+  min-height: 11px;    /* kleiner Wert reicht, Platz bleibt reserviert */
+  visibility: hidden;  /* wird per JS auf visible gesetzt */
+}
+
+#roundOfficialLabel {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap:6px;
+  cursor: pointer;
+  margin-top: 0px;      /* neu: kleiner Abstand nach oben */
+  margin-bottom: 1px;  /* kannst du bei Bedarf auch reduzieren */
+}
 
     </style>
 </head>
@@ -622,11 +646,22 @@
 
                 <input id="roundDate" type="date" style="height: 46px; margin-bottom: 10px; text-align: center !important; padding: 12px;">
                 <select id="roundCourse" style="height: 46px; margin-bottom: 10px;"></select>
-                <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge eingeben" style="height: 46px; margin-bottom: 10px;">
+                <input
+  id="roundStrokes"
+  type="number"
+  inputmode="numeric"
+  placeholder="Schläge eingeben"
+  style="height: 46px;"
+>
+
+<div id="roundStrokesHint" class="input-hint">
+  ▴ Schläge eingeben ▴
+</div>
+
                 
-                <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
+                <label id="roundOfficialLabel">
                     <input type="checkbox" id="roundOfficial" style="width: 20px; height: 20px; margin: 0; accent-color: var(--color-primary);">
-                    <span style="font-weight: 500; font-size: 14px;">HCPI wirksam</span>
+                    <span>HCPI wirksam</span>
                 </label>
                 
                 <button onclick="saveRound()">Runde speichern</button>
@@ -1064,29 +1099,36 @@ if (last5.length > 0) {
         }
 
 function updateStrokesPlaceholder() {
-    const courseId = document.getElementById('roundCourse').value;
-    const course = courses.find(c => c.id === courseId);
-    const strokesInput = document.getElementById('roundStrokes');
-    const is9HoleRound = course?.holes === 9 || course?.is9Hole; // Flag oder Löcher prüfen
+  const courseId = document.getElementById('roundCourse').value;
+  const course = courses.find(c => c.id === courseId);
+  const strokesInput = document.getElementById('roundStrokes');
+  const hint = document.getElementById('roundStrokesHint');
+  const is9HoleRound = course?.holes === 9;
 
-    if (course) {
-        // Par und CR/SR je Rundenlänge aus Course-Objekt (z. B. course.par9, course.cr9)
-        const par = is9HoleRound ? (course.par9 || course.par) : course.par;
-        const cr = is9HoleRound ? (course.cr9 || course.cr) : course.cr;
-        const sr = is9HoleRound ? (course.sr9 || course.sr) : course.sr;
+  if (!strokesInput || !hint) return;
 
-        let adjustedIndex = myGolfer.handicapIndex;
-        if (is9HoleRound) {
-            adjustedIndex /= 2; // Halbes Index für 9-Loch [web:81]
-        }
+  if (course) {
+    // deine vorhandene Par/Vorgabe-Logik
+    const par = is9HoleRound ? (course.par9 ?? course.par) : course.par;
+    const cr  = is9HoleRound ? (course.cr9  ?? course.cr) : course.cr;
+    const sr  = is9HoleRound ? (course.sr9  ?? course.sr) : course.sr;
 
-        const courseHcp = calculateCourseHandicap(adjustedIndex, sr, cr, par);
-        const vorgabeText = courseHcp >= 0 ? `+${courseHcp}` : courseHcp;
-        strokesInput.placeholder = `Par ${par} • Vorgabe ${vorgabeText}`;
-    } else {
-        strokesInput.placeholder = 'Schläge eingeben';
-    }
+    let adjustedIndex = myGolfer.handicapIndex;
+    if (is9HoleRound) adjustedIndex = adjustedIndex / 2;
+
+    const courseHcp = calculateCourseHandicap(adjustedIndex, sr, cr, par);
+    const vorgabeText = courseHcp;
+
+    strokesInput.placeholder = `Par ${par} · Vorgabe ${vorgabeText}`;
+
+    // Nur Sichtbarkeit ändern – kein Layout-Sprung
+    hint.style.visibility = 'visible';
+  } else {
+    strokesInput.placeholder = 'Schläge eingeben';
+    hint.style.visibility = 'hidden';
+  }
 }
+
 
 
         function validateRoundData(strokes, holes, date) {
