@@ -667,11 +667,11 @@
                 <!-- 9/18 Löcher -->
                 <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                     <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="roundHoles9Label">
-                        <input type="radio" name="roundHoles" id="roundHoles9" value="9" style="width: auto; margin: 0;" onchange="filterCoursesByHoles()">
+                        <input type="radio" name="roundHoles" id="roundHoles9" value="9" style="width: auto; margin: 0;">
                         <span style="font-weight: 500;">9 Löcher</span>
                     </label>
                     <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="roundHoles18Label">
-                        <input type="radio" name="roundHoles" id="roundHoles18" value="18" checked style="width: auto; margin: 0;" onchange="filterCoursesByHoles()">
+                        <input type="radio" name="roundHoles" id="roundHoles18" value="18" checked style="width: auto; margin: 0;">
                         <span style="font-weight: 500;">18 Löcher</span>
                     </label>
                 </div>
@@ -2948,16 +2948,18 @@ courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:
             }
         }
         
-        window.addEventListener('DOMContentLoaded', () => {
-            init();
-            
-            // iOS Safari Installationshinweis
-            if (isIOS() && !isInStandaloneMode()) {
-                setTimeout(() => {
-                    showIOSInstallPrompt();
-                }, 2000);
-            }
-        });
+window.addEventListener('DOMContentLoaded', () => {
+  init();
+
+  // 9/18-Loch Umschalten: Schläge-Feld zurücksetzen + Kurse filtern
+  const holeRadios = document.querySelectorAll('input[name="roundHoles"]');
+  holeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      resetStrokesField();      // Wert + Hint + "Schläge" löschen
+      filterCoursesByHoles();   // Plätze für 9/18 neu filtern
+      updateStrokesPlaceholder();
+    });
+  });
         
         function isIOS() {
             return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -3014,6 +3016,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!strokesInput || !hint || !suffix || !measure || !courseSelect) return;
 
+function resetStrokesField() {
+  const strokesInput = document.getElementById('roundStrokes');
+  const hint         = document.getElementById('roundStrokesHint');
+  const suffix       = document.getElementById('strokesSuffix');
+
+  if (strokesInput) {
+    strokesInput.value = '';
+    strokesInput.placeholder = 'Schläge eingeben';
+  }
+  if (hint)   hint.style.visibility   = 'hidden';
+  if (suffix) suffix.style.visibility = 'hidden';
+}
+    
   function updateHintAndSuffix() {
     const value     = strokesInput.value.trim();
     const hasValue  = value !== '';
