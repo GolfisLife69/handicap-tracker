@@ -2818,52 +2818,34 @@ courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:
             alert('✅ Platz wurde gelöscht!');
         }
         
-function showEditProfile() {
-    const newName = prompt('Name ändern:', myGolfer.name);
-    if (newName && newName.trim()) {
-        myGolfer.name = newName.trim();
-    }
-    
-    const newClub = prompt('Club ändern:', myGolfer.club);
-    if (newClub !== null) {
-        myGolfer.club = newClub.trim();
-    }
-    
-    const newHcp = prompt('Handicap manuell setzen:', myGolfer.handicapIndex);
-    if (newHcp !== null) {
-        // Komma durch Punkt ersetzen (wichtig für deutsche Eingabe!)
-        let hcpValue = parseFloat(newHcp.replace(',', '.'));
-        
-        if (!isNaN(hcpValue)) {
-            // Fangnetz: Handicap-Grenzen prüfen
-            if (hcpValue < -5.0) {
-                alert('❌ Minimum -5.0! Handicap wurde auf -5.0 gesetzt.');
-                hcpValue = -5.0;
-            } else if (hcpValue > 54.0) {
-                alert('❌ Maximum 54.0! Handicap wurde auf 54.0 gesetzt.');
-                hcpValue = 54.0;
+        function showEditProfile() {
+            const newName = prompt('Name ändern:', myGolfer.name);
+            if (newName && newName.trim()) {
+                myGolfer.name = newName.trim();
             }
             
-            myGolfer.handicapIndex = hcpValue;
-            myGolfer.unofficialHandicap = hcpValue;
-            if (typeof myGolfer.lowestHandicapIndex === 'number') {
-                myGolfer.lowestHandicapIndex = Math.min(myGolfer.lowestHandicapIndex, hcpValue);
-            } else {
-                myGolfer.lowestHandicapIndex = hcpValue;
+            const newClub = prompt('Club ändern:', myGolfer.club);
+            if (newClub !== null) {
+                myGolfer.club = newClub.trim();
             }
-        } else {
-            alert('❌ Ungültige Zahl! Bitte z.B. 19.5 oder 19,5 eingeben.');
+            
+        const newHcp = prompt('Handicap manuell setzen:', myGolfer.handicapIndex);
+                if (newHcp !== null && !isNaN(newHcp)) {
+                    const hcpValue = parseFloat(newHcp.replace(',', '.'));
+                    
+                    myGolfer.handicapIndex = hcpValue;
+                    myGolfer.unofficialHandicap = hcpValue;
+                    if (typeof myGolfer.lowestHandicapIndex === 'number') {
+                        myGolfer.lowestHandicapIndex = Math.min(myGolfer.lowestHandicapIndex, hcpValue);
+                    } else {
+                        myGolfer.lowestHandicapIndex = hcpValue;
+                    }
+                }
+            
+            localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+            updateUI();
+            alert('✅ Profil aktualisiert!');
         }
-    }
-    
-    localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
-    updateUI();
-    alert('✅ Profil aktualisiert!');
-}
-// ← HIER ENDET DIE FUNKTION, keine Duplikate mehr!
-
-function exportData() {
-
         
         function exportData() {
             const data = {
