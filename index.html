@@ -731,16 +731,21 @@
                 
                 <div id="advancedStats" class="advanced-stats">
                     <h3 style="color: var(--color-primary); margin-bottom: 15px;">📊 Erweiterte Statistiken</h3>
-                    
+                        
+                        <div style="background: linear-gradient(135deg, var(--color-primary), #20c997); color: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+        <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">🎯 NÄCHSTES ZIEL</div>
+        <div id="nextGoal" style="font-size: 1.1em; font-weight: 600;">-</div>
+                </div>
+                
                     <div style="margin-bottom: 20px;">
                         <h4 style="color: var(--color-text-secondary); font-size: 0.9em; margin-bottom: 10px;">ALLGEMEINE STATISTIK</h4>
                         <div id="generalStats"></div>
                     </div>
                     
-                    <div style="margin-bottom: 20px;">
-                        <h4 style="color: var(--color-text-secondary); font-size: 0.9em; margin-bottom: 10px;">PLATZ-STATISTIK</h4>
-                        <div id="courseStats"></div>
-                    </div>
+                <h4 style="color: var(--color-text-secondary); font-size: 0.9em; margin-bottom: 10px">PLATZ-STATISTIK</h4>
+                    <div id="courseStats"></div>
+                <button id="showAllCoursesStatsBtn" class="show-all-rounds-btn" onclick="toggleAllCoursesStats()" style="display: none; margin-top: 10px;">Alle Plätze anzeigen</button>
+
                     
                     <div>
                         <h4 style="color: var(--color-text-secondary); font-size: 0.9em; margin-bottom: 10px;">TREND-ANALYSE</h4>
@@ -1365,71 +1370,317 @@ function updateStrokesPlaceholder() {
              }
         }
      
-        function renderAdvancedStats() {
-            const rounds = myGolfer.rounds || [];
-            if (rounds.length === 0) return;
-            
-            const generalStats = document.getElementById('generalStats');
-            const courseStats = document.getElementById('courseStats');
-            const trendStats = document.getElementById('trendStats');
-            
-            const rounds18 = rounds.filter(r => r.holes === 18);
-            const rounds9 = rounds.filter(r => r.holes === 9);
-            const last10 = rounds.slice(-10);
-            const last5 = rounds.slice(-5);
-            
-            const avgLast10 = last10.length > 0 ? (last10.map(r => r.strokes).reduce((a,b) => a + b, 0) / last10.length).toFixed(1) : '-';
-            const avgLast5 = last5.length > 0 ? (last5.map(r => r.strokes).reduce((a,b) => a + b, 0) / last5.length).toFixed(1) : '-';
-            
-            const sdValues = rounds.map(r => r.scoreDifferential);
-            const bestSD = Math.min(...sdValues).toFixed(1);
-            const worstSD = Math.max(...sdValues).toFixed(1);
-            const avgSD = (sdValues.reduce((a,b) => a + b, 0) / sdValues.length).toFixed(1);
-            
-            const underPar = rounds.filter(r => r.scoreDifferential < r.playingHcp).length;
-            const overPar = rounds.filter(r => r.scoreDifferential > r.playingHcp + 3).length;
-            
-            generalStats.innerHTML = `
-                <div class="stat-row">
-                    <span class="stat-label">⌀ Score Differential</span>
-                    <span class="stat-data">${avgSD}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Bester Score Diff.</span>
-                    <span class="stat-data">${bestSD}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Schlechtester Score Diff.</span>
-                    <span class="stat-data">${worstSD}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">18-Loch Runden</span>
-                    <span class="stat-data">${rounds18.length}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">9-Loch Runden</span>
-                    <span class="stat-data">${rounds9.length}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Unter HCP gespielt</span>
-                    <span class="stat-data">${underPar} (${((underPar/rounds.length)*100).toFixed(0)}%)</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Stark über HCP</span>
-                    <span class="stat-data">${overPar} (${((overPar/rounds.length)*100).toFixed(0)}%)</span>
-                </div>
-            `;
-            
- const coursesPlayed = {};
+ function renderAdvancedStats() {
+    const rounds = myGolfer.rounds;
+    if (rounds.length === 0) return;
+    
+    const generalStats = document.getElementById('generalStats');
+    const courseStats = document.getElementById('courseStats');
+    const trendStats = document.getElementById('trendStats');
+    const nextGoalEl = document.getElementById('nextGoal');
+    
+    const rounds18 = rounds.filter(r => r.holes === 18);
+    const rounds9 = rounds.filter(r => r.holes === 9);
+    const last10 = rounds.slice(-10);
+    const last5 = rounds.slice(-5);
+    
+  // === NÄCHSTES ZIEL ===
+
+let goalText = 'Weiter so! 💪';
+let goalPriority = 0; // Höhere Zahl = höhere Priorität
+
+const officialRounds = rounds.filter(r => r.official !== false);
+
+// PRIORITÄT 100: Weniger als 20 offizielle Runden
+if (officialRounds.length < 20) {
+    const remaining = 20 - officialRounds.length;
+    goalText = `Noch ${remaining} offizielle Runde${remaining > 1 ? 'n' : ''} bis stabiles HCP (20 Runden)`;
+    goalPriority = 100;
+}
+
+// PRIORITÄT 95: Single-Handicap Ziel
+if (goalPriority < 95 && myGolfer.handicapIndex > 9.5 && myGolfer.handicapIndex < 54) {
+    const toSingle = (myGolfer.handicapIndex - 9.4).toFixed(1);
+    goalText = `Noch ${toSingle} Schläge bis Single-Handicap! 🏌️`;
+    goalPriority = 95;
+}
+
+// PRIORITÄT 94: Plus-Handicap Ziel
+if (goalPriority < 94 && myGolfer.handicapIndex <= 9.5 && myGolfer.handicapIndex > 0) {
+    const toPlus = myGolfer.handicapIndex.toFixed(1);
+    goalText = `Single-Handicap erreicht! Noch ${toPlus} bis Plus-Handicap 🔥`;
+    goalPriority = 94;
+}
+
+// === NEUE 12 ZIELE ===
+
+// ZIEL 24: Comeback-Kid (erstmals unter Start-HCP)
+if (goalPriority < 90 && hcpCurrent < hcpStart && rounds.length >= 5) {
+    goalText = `📉➡️📈 Von ${hcpStart.toFixed(1)} auf ${hcpCurrent.toFixed(1)} – du hast dein Start-HCP unterboten! Weiter runter!`;
+    goalPriority = 90;
+}
+
+// ZIEL 22: Handicap-Halbierung
+if (goalPriority < 85 && hcpStart > 10) {
+    const halfTarget = hcpStart / 2;
+    const toHalf = (hcpCurrent - halfTarget).toFixed(1);
+    if (parseFloat(toHalf) > 0 && parseFloat(toHalf) <= 10) {
+        goalText = `🎊 Von ${hcpStart.toFixed(1)} auf ${hcpCurrent.toFixed(1)} – Noch ${toHalf} Schläge bis zur Halbierung deines Start-HCP!`;
+        goalPriority = 85;
+    }
+}
+
+// ZIEL 1: Serie-Jäger (aktive Serie)
+if (goalPriority < 80 && currentStreakActive && currentStreak >= 2) {
+    const nextTarget = currentStreak >= 5 ? 10 : 5;
+    goalText = `🔥 Aktuelle Serie: ${currentStreak} Runden unter HCP – Ziel: ${nextTarget}er-Serie!`;
+    goalPriority = 80;
+}
+
+// ZIEL 19: Verbesserungs-Turbo
+if (goalPriority < 75 && rounds.length >= 2) {
+    const firstRound = rounds[0];
+    const lastRound = rounds[rounds.length - 1];
+    const monthsDiff = (new Date(lastRound.date) - new Date(firstRound.date)) / (1000 * 60 * 60 * 24 * 30.44);
+    if (monthsDiff >= 1) {
+        const improvementRate = ((hcpCurrent - hcpStart) / monthsDiff);
+        if (improvementRate < -0.4) {
+            goalText = `🚀 ${improvementRate.toFixed(1)} HCP in ${Math.round(monthsDiff)} Monaten – Auf Rekordjagd! Weiter so!`;
+            goalPriority = 75;
+        }
+    }
+}
+
+// ZIEL 15: Milestone-Countdown
+if (goalPriority < 70) {
+    const milestones = [25, 50, 75, 100, 150, 200, 250, 300];
+    for (let milestone of milestones) {
+        if (rounds.length < milestone && rounds.length >= milestone - 5) {
+            const remaining = milestone - rounds.length;
+            goalText = `🎉 Noch ${remaining} Runde${remaining > 1 ? 'n' : ''} bis zur magischen ${milestone}! Keep going!`;
+            goalPriority = 70;
+            break;
+        }
+    }
+}
+
+// ZIEL 5: Persönlicher Rekord in Sicht
+if (goalPriority < 65 && last5.length > 0) {
+    const recentBestSD = Math.min(...last5.map(r => r.scoreDifferential));
+    const allTimeBestSD = parseFloat(bestSD);
+    const gapToBest = recentBestSD - allTimeBestSD;
+    if (gapToBest > 0 && gapToBest <= 1.0) {
+        goalText = `⭐ Beste Runde: SD ${allTimeBestSD} – Noch ${gapToBest.toFixed(1)} Schläge bis neuer Rekord!`;
+        goalPriority = 65;
+    }
+}
+
+// ZIEL 17: Handicap-Zwilling
+if (goalPriority < 60) {
+    const roundTargets = [0, 5, 10, 15, 18, 20, 25, 30, 36, 40, 45, 50, 54];
+    for (let target of roundTargets) {
+        const diff = Math.abs(hcpCurrent - target);
+        if (diff > 0 && diff <= 0.3) {
+            goalText = `🎯 HCP ${hcpCurrent.toFixed(1)} – Nur noch ${diff.toFixed(1)} bis zur runden ${target.toFixed(1)}!`;
+            goalPriority = 60;
+            break;
+        }
+    }
+}
+
+// ZIEL 3: Monatsziel (nur offizielle Runden)
+if (goalPriority < 55) {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const thisMonthOfficial = officialRounds.filter(r => {
+        const rDate = new Date(r.date);
+        return rDate.getMonth() === currentMonth && rDate.getFullYear() === currentYear;
+    }).length;
+    
+    // Berechne durchschnittliche offizielle Runden/Monat
+    if (officialRounds.length >= 3) {
+        const firstOfficial = officialRounds[0];
+        const lastOfficial = officialRounds[officialRounds.length - 1];
+        const monthsActive = (new Date(lastOfficial.date) - new Date(firstOfficial.date)) / (1000 * 60 * 60 * 24 * 30.44);
+        if (monthsActive >= 1) {
+            const avgPerMonth = Math.round(officialRounds.length / monthsActive);
+            const target = Math.max(3, avgPerMonth);
+            if (thisMonthOfficial < target) {
+                const remaining = target - thisMonthOfficial;
+                goalText = `📅 Diesen Monat: ${thisMonthOfficial}/${target} offizielle Runden – noch ${remaining} für dein HCP-Monatsziel!`;
+                goalPriority = 55;
+            }
+        }
+    }
+}
+
+// ZIEL 7: Turnier-Readiness
+if (goalPriority < 50 && unofficialRounds.length > 0 && officialRounds.length > 0) {
+    const pressureDiff = parseFloat(avgSDOfficial) - parseFloat(avgSDUnofficial);
+    if (pressureDiff > 0.5) {
+        goalText = `🏆 Performance unter Druck: +${pressureDiff.toFixed(1)} SD – Ziel: Auf ±0,5 verbessern!`;
+        goalPriority = 50;
+    }
+}
+
+// ZIEL 11: Konstanz-Meister
+if (goalPriority < 45) {
+    const consistencyVal = parseFloat(consistency);
+    if (consistencyVal >= 2.5 && consistencyVal <= 3.5) {
+        goalText = `🎯 SD-Streuung: ${consistency} – Ziel: Unter 2,5 für Elite-Konstanz!`;
+        goalPriority = 45;
+    }
+}
+
+// ZIEL 13: Netto-Dominant
+if (goalPriority < 40 && last5.length >= 5) {
+    const nettoLast5 = last5.map(r => r.playingHcp - r.scoreDifferential);
+    const avgNettoLast5 = (nettoLast5.reduce((a,b) => a + b, 0) / 5).toFixed(1);
+    if (parseFloat(avgNettoLast5) >= -0.5 && parseFloat(avgNettoLast5) <= 1.5) {
+        goalText = `💪 Ø Netto letzte 5: ${avgNettoLast5 >= 0 ? '+' : ''}${avgNettoLast5} HCP – Ziel: Konstant über HCP spielen!`;
+        goalPriority = 40;
+    }
+}
+
+// ZIEL 2: Konsistenz-Challenge
+if (goalPriority < 35 && rounds.length >= 3) {
+    const last3 = rounds.slice(-3);
+    const consistentRounds = last3.filter(r => r.scoreDifferential < 5.0).length;
+    if (consistentRounds > 0 && consistentRounds < 3) {
+        goalText = `💎 Ziel: 3 Runden hintereinander mit SD < 5,0 (aktuell: ${consistentRounds}/3)`;
+        goalPriority = 35;
+    }
+}
+
+// PRIORITÄT 20: Plateau-Erkennung
+if (goalPriority < 20 && rounds.length >= 10) {
+    const last10Official = officialRounds.slice(-10);
+    if (last10Official.length >= 10) {
+        // Vereinfachte Plateau-Prüfung
+        if (Math.abs(parseFloat(monthChange)) < 0.5) {
+            goalText = `Seit 10 Runden ohne große Änderung – Zeit für neuen Impuls? 📚`;
+            goalPriority = 20;
+        }
+    }
+}
+
+if (nextGoalEl) nextGoalEl.textContent = goalText;
+    
+    // === ALLGEMEINE STATISTIK ===
+    
+    // Score Differential Werte
+    const sdValues = rounds.map(r => r.scoreDifferential);
+    const bestSD = Math.min(...sdValues).toFixed(1);
+    const worstSD = Math.max(...sdValues).toFixed(1);
+    const avgSD = (sdValues.reduce((a,b) => a + b, 0) / sdValues.length).toFixed(1);
+    
+    // Konstanz
+    const variance = sdValues.reduce((sum, sd) => sum + Math.pow(sd - parseFloat(avgSD), 2), 0) / sdValues.length;
+    const consistency = Math.sqrt(variance).toFixed(1);
+    
+    // Unter HCP gespielt
+    const underPar = rounds.filter(r => r.scoreDifferential <= r.playingHcp).length;
+    
+    // Beste Serie
+    let currentStreak = 0;
+    let bestStreak = 0;
+    let currentStreakActive = false;
+    
+    rounds.forEach((r, i) => {
+        if (r.scoreDifferential <= r.playingHcp) {
+            currentStreak++;
+            if (i === rounds.length - 1) currentStreakActive = true;
+        } else {
+            bestStreak = Math.max(bestStreak, currentStreak);
+            currentStreak = 0;
+            currentStreakActive = false;
+        }
+    });
+    bestStreak = Math.max(bestStreak, currentStreak);
+    
+    const seriesText = bestStreak > 0 
+        ? `${bestStreak} Runden${currentStreakActive && currentStreak > 0 ? ` (aktuell: ${currentStreak})` : ''}`
+        : 'Noch keine';
+    
+    // NEU: Performance unter Druck
+    const unofficialRounds = rounds.filter(r => r.official === false);
+    
+    const avgSDOfficial = officialRounds.length > 0 
+        ? (officialRounds.map(r => r.scoreDifferential).reduce((a,b) => a + b, 0) / officialRounds.length).toFixed(1)
+        : '-';
+        
+    const avgSDUnofficial = unofficialRounds.length > 0
+        ? (unofficialRounds.map(r => r.scoreDifferential).reduce((a,b) => a + b, 0) / unofficialRounds.length).toFixed(1)
+        : '-';
+    
+    let pressureText = 'Nur offizielle Runden';
+    let pressureColor = 'var(--color-text-secondary)';
+    
+    if (unofficialRounds.length > 0 && officialRounds.length > 0) {
+        const pressureDiff = (parseFloat(avgSDOfficial) - parseFloat(avgSDUnofficial)).toFixed(1);
+        
+        if (parseFloat(pressureDiff) > 0.5) {
+            pressureText = `+${pressureDiff} SD schlechter unter Druck`;
+            pressureColor = 'var(--color-danger)';
+        } else if (parseFloat(pressureDiff) < -0.5) {
+            pressureText = `${pressureDiff} SD besser unter Druck 💪`;
+            pressureColor = 'var(--color-primary)';
+        } else {
+            pressureText = 'Konstant (±0,5 SD)';
+            pressureColor = 'var(--color-text-secondary)';
+        }
+    }
+    
+    generalStats.innerHTML = `
+        <div class="stat-row">
+            <span class="stat-label">Ø Score Differential</span>
+            <span class="stat-data">${avgSD}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Bester Score Diff.</span>
+            <span class="stat-data">${bestSD}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Schlechtester Score Diff.</span>
+            <span class="stat-data">${worstSD}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Konstanz (SD-Streuung)</span>
+            <span class="stat-data">${consistency}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">18-Loch Runden</span>
+            <span class="stat-data">${rounds18.length}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">9-Loch Runden</span>
+            <span class="stat-data">${rounds9.length}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Unter HCP gespielt</span>
+            <span class="stat-data">${underPar} (${((underPar/rounds.length)*100).toFixed(0)}%)</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Beste Serie</span>
+            <span class="stat-data">${seriesText}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Performance unter Druck</span>
+            <span class="stat-data" style="color: ${pressureColor}">${pressureText}</span>
+        </div>
+    `;
+    
+    // === PLATZ-STATISTIK ===
+
+const coursesPlayed = {};
 rounds.forEach(r => {
-    // Gruppiere nach Platzname + Lochzahl
     const key = `${r.course}-${r.holes}L`;
     if (!coursesPlayed[key]) {
-        coursesPlayed[key] = { 
+        coursesPlayed[key] = {
             name: r.course,
             holes: r.holes,
-            count: 0, 
-            strokes: [], 
+            count: 0,
+            strokes: [],
             scoreDiffs: [],
             rounds: []
         };
@@ -1439,118 +1690,245 @@ rounds.forEach(r => {
     coursesPlayed[key].scoreDiffs.push(r.scoreDifferential);
     coursesPlayed[key].rounds.push(r);
 });
-            
- const courseStatsHtml = Object.entries(coursesPlayed)
-    .sort((a,b) => b[1].count - a[1].count)
-    .slice(0, 5)
-    .map(([key, data]) => {
-        // Berechne den besten SD
-        const bestSD = Math.min(...data.scoreDiffs);
-        
-        // Finde die beste Runde aus den gespeicherten Runden
-        const bestRound = data.rounds.find(r => r.scoreDifferential === bestSD);
-        
-        // Anzeigename mit Lochzahl
-        const displayName = `${data.name} (${data.holes}L)`;
 
-        const avgStrokes = (data.strokes.reduce((a,b) => a + b, 0) / data.count).toFixed(1);
+const allCourseEntries = Object.entries(coursesPlayed).sort((a,b) => b[1].count - a[1].count);
+const showAllCourses = window.showAllCoursesStats || false;
+
+// Button-Logik
+const showAllCoursesBtn = document.getElementById('showAllCoursesStatsBtn');
+if (showAllCoursesBtn) {
+    if (allCourseEntries.length > 5) {
+        showAllCoursesBtn.style.display = 'block';
+        showAllCoursesBtn.textContent = showAllCourses ? 'Weniger anzeigen' : 'Alle Plätze anzeigen';
+    } else {
+        showAllCoursesBtn.style.display = 'none';
+    }
+}
+
+// Zeige Top 5 oder alle
+const displayCourses = showAllCourses ? allCourseEntries : allCourseEntries.slice(0, 5);
+
+const courseStatsHtml = displayCourses
+    .map(([key, data]) => {
         const avgSD = (data.scoreDiffs.reduce((a,b) => a + b, 0) / data.count).toFixed(1);
         
-        // Par-Wert aus dem Kurs holen (mit korrekter Lochzahl)
+        const nettoValues = data.rounds.map(r => r.playingHcp - r.scoreDifferential);
+        const avgNetto = (nettoValues.reduce((a,b) => a + b, 0) / data.count).toFixed(1);
+        const nettoText = parseFloat(avgNetto) >= 0 
+            ? `+${avgNetto} HCP` 
+            : `${avgNetto} HCP`;
+        
         const courseInfo = courses.find(c => c.name === data.name && c.holes === data.holes);
-        const coursePar = courseInfo ? (courseInfo.par || (data.holes === 9 ? 36 : 72)) : (data.holes === 9 ? 36 : 72);
-
-        // Beste Runde relativ zu Par berechnen
-        const bestStrokes = Math.min(...data.strokes);
+        const coursePar = courseInfo ? courseInfo.par : (data.holes === 9 ? 36 : 72);
+        
+        const bestSD = Math.min(...data.scoreDiffs);
+        const bestRound = data.rounds.find(r => r.scoreDifferential === bestSD);
+        const bestStrokes = bestRound ? bestRound.strokes : Math.min(...data.strokes);
         const bestToPar = bestStrokes - coursePar;
         const bestToParText = bestToPar > 0 ? `+${bestToPar}` : bestToPar.toString();
-
+        
+        const displayName = `${data.name} (${data.holes}L)`;
+        
         return `
             <div class="course-stats-item">
-                <div style="font-weight: 600; margin-bottom: 5px;">${displayName}</div>
-                <div style="font-size: 0.85em; color: var(--color-text-secondary);">
-                    ${data.count}x gespielt • ⌀ ${avgStrokes} Schläge • ⌀ SD ${avgSD}<br>
-                    <strong>Beste:</strong> ${bestStrokes} Schläge (${bestToParText} zum Par) • SD: ${bestSD.toFixed(1)}
+                <div style="font-weight: 600; margin-bottom: 5px">${displayName}</div>
+                <div style="font-size: 0.85em; color: var(--color-text-secondary)">
+                    ${data.count}x gespielt • Ø SD ${avgSD} • Ø Netto ${nettoText}<br>
+                    <strong>Beste:</strong> ${bestToParText} zu Par • SD ${bestSD.toFixed(1)}
                 </div>
             </div>
         `;
-    }).join('');
-                    
-            courseStats.innerHTML = courseStatsHtml || '<div style="text-align:center;color:var(--color-text-secondary);padding:20px;">Keine Platzdaten</div>';
-            
-            const hcpStart = myGolfer.startHcp;
-            const hcpCurrent = myGolfer.handicapIndex;
-            const hcpChange = (hcpCurrent - hcpStart).toFixed(1);
-            const hcpChangePercent = hcpStart !== 0 ? ((hcpChange / hcpStart) * 100).toFixed(1) : '0.0';
-            
-            const trendEmoji = hcpChange < 0 ? '📈' : hcpChange > 0 ? '📉' : '➡️';
-            const trendText = hcpChange < 0 ? 'Verbesserung' : hcpChange > 0 ? 'Verschlechterung' : 'Stabil';
+    })
+    .join('');
 
-            // Berechne HCP vor 30 Tagen
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            
-            const rounds30DaysAgo = myGolfer.rounds.filter(r => new Date(r.date) <= thirtyDaysAgo);
-            let hcp30DaysAgo = myGolfer.startHcp;
-            
-            if (rounds30DaysAgo.length >= 3) {
-                const officialRounds30 = rounds30DaysAgo
-                    .filter(r => r.official !== false)
-                    .slice(-20)
-                    .map(r => ({ id: r.id, sd: r.scoreDifferential }))
-                    .sort((a, b) => a.sd - b.sd);
-                
-            if (officialRounds30.length >= 3) {
-                            const { numCounted, adjustment } = getWHSParameters(officialRounds30.length);
-                            const bestRounds = officialRounds30.slice(0, numCounted);
-                            let avgHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
-                            const lowestHcp = (typeof myGolfer.lowestHandicapIndex === 'number') ? myGolfer.lowestHandicapIndex : myGolfer.startHcp;
-                            avgHcp = Math.min(avgHcp, lowestHcp + 3.0);
-                            avgHcp += adjustment;
-                            hcp30DaysAgo = Math.round(avgHcp * 10) / 10;
-                    }
-            }
-            
-            const monthChange = (myGolfer.handicapIndex - hcp30DaysAgo).toFixed(1);
-            const monthEmoji = monthChange < 0 ? '📈' : monthChange > 0 ? '📉' : '➡️';
-            const monthText = monthChange < 0 ? 'Verbesserung' : monthChange > 0 ? 'Verschlechterung' : 'Stabil';
+courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:var(--color-text-secondary);padding:20px">Keine Platzdaten</div>`;
 
+    
+    // === TREND-ANALYSE ===
+    
+    const hcpStart = myGolfer.startHcp;
+    const hcpCurrent = myGolfer.handicapIndex;
+    const hcpChange = (hcpCurrent - hcpStart).toFixed(1);
+    const hcpChangePercent = hcpStart !== 0 ? ((hcpChange / hcpStart) * 100).toFixed(1) : '0.0';
+    
+    const trendEmoji = hcpChange < 0 ? '📈' : (hcpChange > 0 ? '📉' : '➡️');
+    const trendText = hcpChange < 0 ? 'Verbesserung' : (hcpChange > 0 ? 'Verschlechterung' : 'Stabil');
+    
+    // HCP vor 30 Tagen
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const rounds30DaysAgo = myGolfer.rounds.filter(r => new Date(r.date) <= thirtyDaysAgo);
+    
+    let hcp30DaysAgo = myGolfer.startHcp;
+    if (rounds30DaysAgo.length >= 3) {
+        const officialRounds30 = rounds30DaysAgo
+            .filter(r => r.official !== false)
+            .slice(-20)
+            .map(r => ({ id: r.id, sd: r.scoreDifferential }))
+            .sort((a, b) => a.sd - b.sd);
             
-            trendStats.innerHTML = `
-                <div class="stat-row">
-                    <span class="stat-label">Start-Handicap</span>
-                    <span class="stat-data">${hcpStart.toFixed(1)}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">📅 Letzter Monat</span>
-                    <span class="stat-data" style="color: ${monthChange < 0 ? 'var(--color-primary)' : monthChange > 0 ? 'var(--color-danger)' : 'var(--color-warning)'}">
-                        ${monthEmoji} ${monthChange > 0 ? '+' : ''}${monthChange} (${monthText})
-                    </span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Aktuelles Handicap</span>
-                    <span class="stat-data">${hcpCurrent.toFixed(1)}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">${trendEmoji} Entwicklung</span>
-                    <span class="stat-data" style="color: ${hcpChange < 0 ? 'var(--color-primary)' : hcpChange > 0 ? 'var(--color-danger)' : 'var(--color-warning)'}">
-                        ${hcpChange > 0 ? '+' : ''}${hcpChange} (${hcpChangePercent > 0 ? '+' : ''}${hcpChangePercent}%)
-                    </span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Trend</span>
-                    <span class="stat-data">${trendText}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">⌀ Schläge (letzte 10)</span>
-                    <span class="stat-data">${avgLast10}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">⌀ Schläge (letzte 5)</span>
-                    <span class="stat-data">${avgLast5}</span>
-                </div>
-            `;
+        if (officialRounds30.length >= 3) {
+            const [numCounted, adjustment] = getWHSParameters(officialRounds30.length);
+            const bestRounds = officialRounds30.slice(0, numCounted);
+            let avgHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
+            
+            const lowestHcp = typeof myGolfer.lowestHandicapIndex === 'number' 
+                ? myGolfer.lowestHandicapIndex 
+                : myGolfer.startHcp;
+            avgHcp = Math.min(avgHcp, lowestHcp + 3.0);
+            avgHcp += adjustment;
+            hcp30DaysAgo = Math.round(avgHcp * 10) / 10;
         }
+    }
+    
+    const monthChange = (myGolfer.handicapIndex - hcp30DaysAgo).toFixed(1);
+    const monthEmoji = monthChange < 0 ? '📈' : (monthChange > 0 ? '📉' : '➡️');
+    const monthText = monthChange < 0 ? 'Verbesserung' : (monthChange > 0 ? 'Verschlechterung' : 'Stabil');
+    
+    // Ø SD letzte 10
+    const avgSDLast10 = last10.length > 0 
+        ? (last10.map(r => r.scoreDifferential).reduce((a,b) => a + b, 0) / last10.length).toFixed(1)
+        : '-';
+    
+    const sdLast10Better = parseFloat(avgSDLast10) < parseFloat(avgSD);
+    const sdLast10Color = sdLast10Better ? 'var(--color-primary)' : 'var(--color-danger)';
+    
+    // Form-Momentum
+    let momentumText = '-';
+    let momentumColor = 'var(--color-text-secondary)';
+    
+    if (rounds.length >= 15) {
+        const previous10 = rounds.slice(-15, -5);
+        if (last5.length >= 5 && previous10.length >= 5) {
+            const avgLast5SD = last5.map(r => r.scoreDifferential).reduce((a,b) => a + b, 0) / 5;
+            const avgPrev10SD = previous10.map(r => r.scoreDifferential).reduce((a,b) => a + b, 0) / previous10.length;
+            const momentum = avgLast5SD - avgPrev10SD;
+            
+            if (momentum <= -1.0) {
+                momentumText = `📈 Aufwärtstrend (${momentum.toFixed(1)} SD)`;
+                momentumColor = 'var(--color-primary)';
+            } else if (momentum >= 1.0) {
+                momentumText = `📉 Abwärtstrend (+${momentum.toFixed(1)} SD)`;
+                momentumColor = 'var(--color-danger)';
+            } else {
+                momentumText = '➡️ Stabil';
+                momentumColor = 'var(--color-text-secondary)';
+            }
+        }
+    }
+    
+    // NEU: Verbesserungsrate
+    let improvementText = '-';
+    let improvementColor = 'var(--color-text-secondary)';
+    
+    if (rounds.length >= 2) {
+        const firstRound = rounds[0];
+        const lastRound = rounds[rounds.length - 1];
+        const monthsDiff = (new Date(lastRound.date) - new Date(firstRound.date)) / (1000 * 60 * 60 * 24 * 30.44);
+        
+        if (monthsDiff >= 1) {
+            const improvementRate = ((hcpCurrent - hcpStart) / monthsDiff).toFixed(2);
+            
+            if (parseFloat(improvementRate) < -0.1) {
+                improvementText = `${improvementRate} HCP/Monat 📈`;
+                improvementColor = 'var(--color-primary)';
+            } else if (parseFloat(improvementRate) > 0.1) {
+                improvementText = `+${improvementRate} HCP/Monat 📉`;
+                improvementColor = 'var(--color-danger)';
+            } else {
+                improvementText = 'Stabil (±0,1 HCP/Monat)';
+            }
+        }
+    }
+    
+    // NEU: Saisonale Performance
+    const monthlyStats = {};
+    const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+    
+    rounds.forEach(r => {
+        const month = new Date(r.date).getMonth();
+        if (!monthlyStats[month]) {
+            monthlyStats[month] = { scoreDiffs: [], count: 0 };
+        }
+        monthlyStats[month].scoreDiffs.push(r.scoreDifferential);
+        monthlyStats[month].count++;
+    });
+    
+    let bestMonth = null;
+    let worstMonth = null;
+    let bestAvg = Infinity;
+    let worstAvg = -Infinity;
+    
+    Object.entries(monthlyStats).forEach(([month, data]) => {
+        if (data.count >= 2) {
+            const avg = data.scoreDiffs.reduce((a,b) => a + b, 0) / data.count;
+            if (avg < bestAvg) {
+                bestAvg = avg;
+                bestMonth = month;
+            }
+            if (avg > worstAvg) {
+                worstAvg = avg;
+                worstMonth = month;
+            }
+        }
+    });
+    
+    const bestMonthText = bestMonth !== null 
+        ? `${monthNames[bestMonth]} (Ø SD ${bestAvg.toFixed(1)})` 
+        : 'Zu wenig Daten';
+        
+    const worstMonthText = worstMonth !== null 
+        ? `${monthNames[worstMonth]} (Ø SD ${worstAvg.toFixed(1)})` 
+        : 'Zu wenig Daten';
+    
+    trendStats.innerHTML = `
+        <div class="stat-row">
+            <span class="stat-label">Start-Handicap</span>
+            <span class="stat-data">${hcpStart.toFixed(1)}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">📅 Letzter Monat</span>
+            <span class="stat-data" style="color: ${monthChange < 0 ? 'var(--color-primary)' : monthChange > 0 ? 'var(--color-danger)' : 'var(--color-warning)'}">
+                ${monthEmoji} ${monthChange > 0 ? '+' : ''}${monthChange} • ${monthText}
+            </span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Aktuelles Handicap</span>
+            <span class="stat-data">${hcpCurrent.toFixed(1)}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">${trendEmoji} Entwicklung</span>
+            <span class="stat-data" style="color: ${hcpChange < 0 ? 'var(--color-primary)' : hcpChange > 0 ? 'var(--color-danger)' : 'var(--color-warning)'}">
+                ${hcpChange > 0 ? '+' : ''}${hcpChange} (${hcpChangePercent > 0 ? '+' : ''}${hcpChangePercent}%)
+            </span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Trend</span>
+            <span class="stat-data">${trendText}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Verbesserungsrate</span>
+            <span class="stat-data" style="color: ${improvementColor}">${improvementText}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Ø SD (letzte 10)</span>
+            <span class="stat-data" style="color: ${sdLast10Color}">${avgSDLast10}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Form-Momentum</span>
+            <span class="stat-data" style="color: ${momentumColor}">${momentumText}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">🌞 Bester Monat</span>
+            <span class="stat-data">${bestMonthText}</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">❄️ Schwächster Monat</span>
+            <span class="stat-data">${worstMonthText}</span>
+        </div>
+    `;
+}
+
 
         function getPlayingCourseHandicap(round, course, handicapIndex) {
             if (!course) return 0;
@@ -1670,6 +2048,12 @@ rounds.forEach(r => {
                 }
             }
         }
+        
+        function toggleAllCoursesStats() {
+            window.showAllCoursesStats = !window.showAllCoursesStats;
+                renderAdvancedStats();
+        }
+
 
         function toggleAllCourses() {
             window.showAllCourses = !window.showAllCourses;
