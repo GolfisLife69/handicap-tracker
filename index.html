@@ -597,6 +597,37 @@
   visibility: hidden;  /* wird per JS auf visible gesetzt */
 }
 
+.strokes-wrapper {
+  position: relative;
+}
+
+/* Unsichtbare Mess-Zahl, zentriert wie der Input-Text */
+.strokes-measure {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);  /* exakt mittig */
+  font-size: 14px;                   /* wie dein Input */
+  font-family: inherit;
+  white-space: pre;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Suffix, das rechts neben der Zahl sitzt */
+.strokes-suffix {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-80%);
+  font-size: 14px;                   /* gleiche Größe */
+  font-family: inherit;
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+
 #roundOfficialLabel {
   font-size: 14px;
   display: flex;
@@ -605,7 +636,7 @@
   gap:6px;
   cursor: pointer;
   margin-top: 0px;      /* neu: kleiner Abstand nach oben */
-  margin-bottom: 3px;  /* kannst du bei Bedarf auch reduzieren */
+  margin-bottom: 2px;  /* kannst du bei Bedarf auch reduzieren */
 }
 
     </style>
@@ -646,17 +677,26 @@
 
                 <input id="roundDate" type="date" style="height: 46px; margin-bottom: 10px; text-align: center !important; padding: 12px;">
                 <select id="roundCourse" style="height: 46px; margin-bottom: 10px;"></select>
-                <input
-  id="roundStrokes"
-  type="number"
-  inputmode="numeric"
-  placeholder="Schläge eingeben"
-  style="height: 46px;"
->
+<div class="strokes-wrapper">
+  <input
+    id="roundStrokes"
+    type="number"
+    inputmode="numeric"
+    placeholder="Schläge eingeben"
+  >
 
-<div id="roundStrokesHint" class="input-hint">
-  ▴ Schläge eingeben ▴
+  <div id="roundStrokesHint" class="input-hint">
+    ▴ Schläge eingeben ▴
+  </div>
+
+  <!-- Unsichtbarer Mess-Text -->
+  <span id="strokesMeasure" class="strokes-measure"></span>
+
+  <!-- Sichtbares Suffix direkt hinter der Zahl -->
+  <span id="strokesSuffix" class="strokes-suffix">Schläge</span>
 </div>
+
+
 
                 
                 <label id="roundOfficialLabel">
@@ -1099,16 +1139,18 @@ if (last5.length > 0) {
         }
 
 function updateStrokesPlaceholder() {
-  const courseId = document.getElementById('roundCourse').value;
-  const course = courses.find(c => c.id === courseId);
-  const strokesInput = document.getElementById('roundStrokes');
-  const hint = document.getElementById('roundStrokesHint');
-  const is9HoleRound = course?.holes === 9;
+  const courseSelect  = document.getElementById('roundCourse');
+  const strokesInput  = document.getElementById('roundStrokes');
+  const hint          = document.getElementById('roundStrokesHint');
 
-  if (!strokesInput || !hint) return;
+  if (!courseSelect || !strokesInput) return;
+
+  const courseId = courseSelect.value;
+  const course   = courses.find(c => c.id === courseId);
+  const is9HoleRound = course && course.holes === 9; // deine 9‑Loch-Logik
 
   if (course) {
-    // deine vorhandene Par/Vorgabe-Logik
+    // Par / CR / SR wie bisher
     const par = is9HoleRound ? (course.par9 ?? course.par) : course.par;
     const cr  = is9HoleRound ? (course.cr9  ?? course.cr) : course.cr;
     const sr  = is9HoleRound ? (course.sr9  ?? course.sr) : course.sr;
@@ -1116,19 +1158,23 @@ function updateStrokesPlaceholder() {
     let adjustedIndex = myGolfer.handicapIndex;
     if (is9HoleRound) adjustedIndex = adjustedIndex / 2;
 
-    const courseHcp = calculateCourseHandicap(adjustedIndex, sr, cr, par);
-    const vorgabeText = courseHcp;
+    const courseHcp   = calculateCourseHandicap(adjustedIndex, sr, cr, par);
 
-    strokesInput.placeholder = `Par ${par} · Vorgabe ${vorgabeText}`;
+    // Placeholder wie bisher
+    strokesInput.placeholder = `Par ${par} · Vorgabe ${courseHcp}`;
 
-    // Nur Sichtbarkeit ändern – kein Layout-Sprung
-    hint.style.visibility = 'visible';
+    // Hint nur zeigen, wenn Feld noch leer ist
+    if (hint) {
+      hint.style.visibility = strokesInput.value.trim() ? 'hidden' : 'visible';
+    }
   } else {
+    // Kein Platz gewählt
     strokesInput.placeholder = 'Schläge eingeben';
-    hint.style.visibility = 'hidden';
+    if (hint) {
+      hint.style.visibility = 'hidden';
+    }
   }
 }
-
 
 
         function validateRoundData(strokes, holes, date) {
@@ -2937,6 +2983,60 @@ courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:
                 renderChart();
             }
         });
+
+document.addEventListener('DOMContentLoaded', () => {
+  const strokesInput = document.getElementById('roundStrokes');
+  const hint         = document.getElementById('roundStrokesHint');
+  const suffix       = document.getElementById('strokesSuffix');
+  const measure      = document.getElementById('strokesMeasure');
+  const courseSelect = document.getElementById('roundCourse');
+
+  if (!strokesInput || !hint || !suffix || !measure || !courseSelect) return;
+
+  function updateHintAndSuffix() {
+    const value     = strokesInput.value.trim();
+    const hasValue  = value !== '';
+    const numVal    = parseInt(value, 10);
+    const hasCourse = !!courseSelect.value;
+
+    // Hint: nur wenn Platz gewählt UND Feld leer
+    if (!hasValue && hasCourse) {
+      hint.style.visibility = 'visible';
+    } else {
+      hint.style.visibility = 'hidden';
+    }
+
+    // Suffix "Schläge": z.B. ab 2-stelliger Zahl
+    if (!isNaN(numVal) && value.length >= 2) {
+      // Mess-Span bekommt denselben Text wie das Input
+      measure.textContent = value;
+
+      const gap        = 0;  // Abstand zwischen Zahl und "Schläge"
+      const fieldWidth = strokesInput.clientWidth;
+      const valueWidth = measure.offsetWidth;
+
+      // Mitte des Feldes
+      const centerX = fieldWidth / 2;
+
+      // Zahl läuft von (centerX - valueWidth/2) bis (centerX + valueWidth/2)
+      const left = centerX + valueWidth / 2 + gap;
+
+      suffix.style.left = left + 'px';
+      suffix.style.visibility = 'visible';
+    } else {
+      suffix.style.visibility = 'hidden';
+    }
+  }
+
+  // Events: bei Tippen, Wertänderung oder Platzwechsel neu berechnen
+  strokesInput.addEventListener('input',  updateHintAndSuffix);
+  strokesInput.addEventListener('change', updateHintAndSuffix);
+  courseSelect.addEventListener('change', updateHintAndSuffix);
+
+  // Initialer Aufruf beim Laden
+  updateHintAndSuffix();
+});
+
 
     </script>
 </body>
