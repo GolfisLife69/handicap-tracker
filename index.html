@@ -1109,35 +1109,55 @@ if (last5.length > 0) {
             }
         }
 
-        function filterCoursesByHoles() {
-          const selectedHoles = parseInt(document.querySelector('input[name="roundHoles"]:checked').value);
-          const select = document.getElementById('roundCourse');
-          const courseCounts = {};
-          if (myGolfer && myGolfer.rounds) {
-            myGolfer.rounds.forEach(round => {
-              const course = courses.find(c => c.name === round.course && c.holes === round.holes);
-              if (course) courseCounts[course.id] = (courseCounts[course.id] || 0) + 1;
-            });
-          }
-          let html = '<option value="">Platz auswählen</option>';
-          const filteredCourses = courses.filter(c => c.holes === selectedHoles);
-          if (filteredCourses.length === 0) {
-            html += `<option value="" disabled>Kein ${selectedHoles}-Loch-Platz angelegt</option>`;
-          } else {
-            const sortedCourses = [...filteredCourses].sort((a,b)=>(courseCounts[b.id]||0)-(courseCounts[a.id]||0));
-            sortedCourses.forEach(c => {
-              const playCount = courseCounts[c.id] || 0;
-              const countText = playCount > 0 ? ` • ${playCount}x` : '';
-              const par = c.par || (c.holes === 9 ? 36 : 72);
-              const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, c.sr, c.cr, par);
-              html += `<option value="${c.id}">${c.name}${countText}</option>`;
-            });
+            function filterCoursesByHoles() {
+              const selectedHoles = parseInt(document.querySelector('input[name="roundHoles"]:checked').value);
+              const select = document.getElementById('roundCourse');
+              const courseCounts = {};
+            
+              if (myGolfer && myGolfer.rounds) {
+                myGolfer.rounds.forEach(round => {
+                  const course = courses.find(c => c.name === round.course && c.holes === round.holes);
+                  if (course) courseCounts[course.id] = (courseCounts[course.id] || 0) + 1;
+                });
+              }
+            
+              let html = '<option value="">Platz auswählen</option>';
+              const filteredCourses = courses.filter(c => c.holes === selectedHoles);
+            
+              if (filteredCourses.length === 0) {
+                html += `<option value="" disabled>Kein ${selectedHoles}-Loch-Platz angelegt</option>`;
+              } else {
+                const sortedCourses = [...filteredCourses].sort(
+                  (a, b) => (courseCounts[b.id] || 0) - (courseCounts[a.id] || 0)
+                );
+            
+                sortedCourses.forEach(c => {
+                  const playCount = courseCounts[c.id] || 0;
+                  const countText = playCount > 0 ? ` • ${playCount}x` : '';
+                  const par = c.par || (c.holes === 9 ? 36 : 72);
+                  const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, c.sr, c.cr, par);
+                  html += `<option value="${c.id}">${c.name}${countText}</option>`;
+                });
+              }
+            
+              select.innerHTML = html;
+            
+              // NEU: Schläge-Feld + Hint + Suffix zurücksetzen
+              const strokesInput = document.getElementById('roundStrokes');
+              const hint   = document.getElementById('roundStrokesHint');
+              const suffix = document.getElementById('strokesSuffix');
+            
+              if (strokesInput) {
+                strokesInput.value = '';
+                strokesInput.placeholder = 'Schläge eingeben';
+              }
+              if (hint)   hint.style.visibility   = 'hidden';
+              if (suffix) suffix.style.visibility = 'hidden';
+            
+              // Placeholder/Hints anhand des (noch nicht gewählten) Platzes updaten
+              updateStrokesPlaceholder();
+            }
 
-          }
-          select.innerHTML = html;
-          document.getElementById('roundCourse').addEventListener('change', updateStrokesPlaceholder);
-          updateStrokesPlaceholder();
-        }
 
 function updateStrokesPlaceholder() {
   const courseSelect  = document.getElementById('roundCourse');
