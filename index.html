@@ -302,6 +302,7 @@
         .advanced-stats {
             display: none;
             margin-top: 20px;
+            margin-bottom: 25px;
             padding: 20px;
             background: var(--color-bg-primary);
             border-radius: 12px;
@@ -2114,7 +2115,7 @@ courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:
             .sort((a, b) => a.sd - b.sd);
             
         if (officialRounds30.length >= 3) {
-            const [numCounted, adjustment] = getWHSParameters(officialRounds30.length);
+            const { numCounted, adjustment } = getWHSParameters(officialRounds30.length);
             const bestRounds = officialRounds30.slice(0, numCounted);
             let avgHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
             
@@ -2453,10 +2454,8 @@ container.innerHTML = displayRounds.map((r) => {
                 }
             }
         
-            updateMyHandicap();
-            updateUnofficialHandicap();
-            localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
-            updateUI();
+        recalculateHistory();
+        updateUI();
             alert('✅ Runde aktualisiert!');
         }
 
