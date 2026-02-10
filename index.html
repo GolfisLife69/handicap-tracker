@@ -1419,18 +1419,24 @@ document.getElementById('roundStrokes').addEventListener('input', updateStrokesS
             
             const isOfficial = document.getElementById('roundOfficial').checked;
             
-            const round = {
-                id: Date.now().toString(),
-                date: date,
-                course: course.name,
-                holes: holes,
-                strokes: strokes,
-                cr: cr.toFixed(1),
-                sr: sr.toFixed(0),
-                scoreDifferential: parseFloat(scoreDifferential),
-                playingHcp: myGolfer.handicapIndex,
-                official: isOfficial
-            };
+// Spielvorgabe zum Zeitpunkt der Runde berechnen und einfrieren
+const courseHandicap = getPlayingCourseHandicap(
+    { holes: holes }, course, myGolfer.handicapIndex
+);
+
+const round = {
+    id: Date.now().toString(),
+    date: date,
+    course: course.name,
+    holes: holes,
+    strokes: strokes,
+    cr: cr.toFixed(1),
+    sr: sr.toFixed(0),
+    scoreDifferential: parseFloat(scoreDifferential),
+    playingHcp: myGolfer.handicapIndex,
+    courseHandicap: courseHandicap,  // NEU: Eingefrorene Spielvorgabe
+    official: isOfficial
+};
             
             myGolfer.rounds.push(round);
             
@@ -2208,93 +2214,106 @@ courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:
             return calculateCourseHandicap(adjustedIndex, sr, cr, par);
         }
         
-        function renderRounds() {
-            const rounds = [...myGolfer.rounds]
-            .sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            const container = document.getElementById('roundList');
-            
-            if (rounds.length === 0) {
-                container.innerHTML = `<div style="text-align:center;color:var(--color-text-secondary);padding:40px;">Noch keine Runden erfasst</div>`;
-                document.getElementById('showAllRoundsBtn').style.display = 'none';
-                return;
-            }
-        
-            // Hole die IDs der gewerteten Runden aus dem Golfer-Objekt
-            const countedRoundIds = myGolfer.countedRoundIds || [];
-            
-            // Zeige Button nur wenn mehr als 5 Runden vorhanden
-            const showAllBtn = document.getElementById('showAllRoundsBtn');
-            const showAll = window.showAllRounds || false;
-            
-            if (rounds.length > 5) {
-                showAllBtn.style.display = 'block';
-                showAllBtn.textContent = showAll ? '📋 Weniger anzeigen' : '📋 Alle Runden anzeigen';
-            } else {
-                showAllBtn.style.display = 'none';
-            }
-            
-            // Entscheide wie viele Runden angezeigt werden
-            const displayRounds = (showAll || rounds.length <= 5) ? rounds : rounds.slice(0, 5);
-        
-            container.innerHTML = displayRounds.map((r, index) => {
-                // Platz finden für Par-Wert
-                const course = courses.find(c => c.name === r.course && c.holes === r.holes);
-                const coursePar = course ? course.par : (r.holes === 9 ? 36 : 72);
-                
-                // Differenz zu Par berechnen
-                const diffToPar = r.strokes - coursePar;
-                const diffToParText = diffToPar > 0 ? `+${diffToPar}` : `${diffToPar}`;
-                
-                // Differenz zur Spielvorgabe (Nettoanzeige)
-                let diffToVorgabe = 0;
-                let diffToVorgabeText = '0';
-                let color = 'var(--color-text-secondary)';
-                
-                if (course) {
-                    const playingHcp = getPlayingCourseHandicap(r, course, myGolfer.handicapIndex);
-                    const allowedStrokes = coursePar + playingHcp;      // Par + Vorgabe
-                    diffToVorgabe = r.strokes - allowedStrokes;         // gespielte Schläge - erlaubte Schläge
-                    diffToVorgabeText = diffToVorgabe > 0 ? `+${diffToVorgabe}` : `${diffToVorgabe}`;
-                
-                    // Farb-Logik wie bisher
-                    color = diffToVorgabe < 0
-                        ? 'var(--color-primary)'
-                        : diffToVorgabe > 3
-                            ? 'var(--color-danger)'
-                            : 'var(--color-warning)';
-                }
+function renderRounds() {
+    const rounds = [...myGolfer.rounds]
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
 
+    const container = document.getElementById('roundList');
 
-            
-                const isCounted = countedRoundIds.includes(r.id);
-                const officialBadge = isCounted ? '  ☆' : '';
-                const officialLabel = r.official !== false ? 'Offiziell' : 'Inoffiziell';
-            
-                return `
-                    <div class="round-item">
-                        <div style="flex: 1;">
-                            <div style="font-size: 13px; color: var(--color-text-secondary);">${r.date} • ${r.holes}L${officialBadge}</div>
-                            <div style="font-weight: 600; font-size: 16px; margin: 2px 0;">${r.course}</div>
-                            <div style="font-size: 13px; color: var(--color-text-secondary);">${r.strokes} Schläge • ${officialLabel}</div>
-                        </div>
-                        <div style="text-align: right; display: flex; align-items: center; gap: 10px;">
-                            <div>
-                                    <div style="font-size: 20px; font-weight: bold; color: ${color};">
-                                        ${diffToVorgabeText} <span style="font-size: 11px; font-weight: 400; color: var(--color-text-secondary);">Netto</span>
-                                    </div>
-                                <div style="font-size: 12px; color: var(--color-text-secondary);">
-                                    ${diffToParText} zu Par
-                                </div>
-                            </div>
-                           <button onclick="editRound('${r.id}')" class="small" style="background:var(--color-border);color:var(--color-text-secondary);font-size:8px;" title="Bearbeiten">✏️</button>
-                            <button onclick="deleteRound('${r.id}')" class="small" style="background:var(--color-border);color:var(--color-text-secondary);font-size:8px;" title="Runde löschen">🗑️</button>
+    if (rounds.length === 0) {
+        container.innerHTML = `<div style="text-align:center;color:var(--color-text-secondary);padding:40px;">Noch keine Runden erfasst</div>`;
+        document.getElementById('showAllRoundsBtn').style.display = 'none';
+        return;
+    }
 
-                        </div>
-                    </div>
-                `;
-            }).join('');
+    const countedRoundIds = myGolfer.countedRoundIds || [];
+
+    const showAllBtn = document.getElementById('showAllRoundsBtn');
+    const showAll = window.showAllRounds || false;
+
+    if (rounds.length > 5) {
+        showAllBtn.style.display = 'block';
+        showAllBtn.textContent = showAll ? '📋 Weniger anzeigen' : '📋 Alle Runden anzeigen';
+    } else {
+        showAllBtn.style.display = 'none';
+    }
+
+    const displayRounds = (showAll || rounds.length <= 5) ? rounds : rounds.slice(0, 5);
+
+container.innerHTML = displayRounds.map((r) => {
+    const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+    const coursePar = course ? course.par : (r.holes === 9 ? 36 : 72);
+
+    // Brutto: Differenz zu Par
+    const diffToPar = r.strokes - coursePar;
+    let diffToParText;
+    let parColor = 'var(--color-text-secondary)';
+    if (diffToPar === 0) {
+        diffToParText = 'Even Par';
+        parColor = 'var(--color-primary)'; // Even Par = gut
+    } else if (diffToPar > 0) {
+        diffToParText = `+${diffToPar} über Par`;
+        parColor = 'var(--color-danger)'; // über Par = schlecht
+    } else {
+        diffToParText = `${Math.abs(diffToPar)} unter Par`;
+        parColor = 'var(--color-primary)'; // unter Par = gut
+    }
+
+    // Netto: Historisches HCP verwenden
+    let diffToVorgabe = 0;
+    let diffToVorgabeText = '-';
+    let color = 'var(--color-text-secondary)';
+    if (course) {
+        let playingHcp;
+        if (r.courseHandicap !== undefined) {
+            playingHcp = r.courseHandicap;
+        } else {
+            playingHcp = getPlayingCourseHandicap(r, course, r.playingHcp);
         }
+        const allowedStrokes = coursePar + playingHcp;
+        diffToVorgabe = r.strokes - allowedStrokes;
+        diffToVorgabeText = diffToVorgabe > 0 ? `+${diffToVorgabe}` : `${diffToVorgabe}`;
+        color = diffToVorgabe < 0 ? 'var(--color-primary)' : diffToVorgabe > 3 ? 'var(--color-danger)' : 'var(--color-warning)';
+    }
+
+    const isCounted = countedRoundIds.includes(r.id);
+    const countedBadge = isCounted ? ' ☆' : '';
+    const isOfficial = r.official !== false;
+    const historicHcp = r.playingHcp !== undefined ? r.playingHcp.toFixed(1) : '-';
+    const hcpiLabel = isOfficial ? '<span style="color: var(--color-text-secondary); font-weight: 600;"> • HCPI</span>' : '';
+
+    return `
+            <div class="round-item">
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 13px; color: var(--color-text-secondary);">
+                        ${r.date} • HCP ${historicHcp}${countedBadge}
+                    </div>
+                    <div style="font-weight: 600; font-size: 16px; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        ${r.course}
+                    </div>
+                    <div style="font-size: 13px; color: var(--color-text-secondary);">
+                        ${r.holes}L • ${r.strokes} Schläge${hcpiLabel}
+                    </div>
+                </div>
+                <div style="text-align: right; display: flex; align-items: center; gap: 10px;">
+                    <div>
+                        <div style="font-size: 18px; font-weight: bold; color: ${color};">
+                            ${diffToVorgabeText}
+                            <span style="font-size: 12px; font-weight: 400; color: var(--color-text-secondary);">Netto</span>
+                        </div>
+                        <div style="font-size: 14px; color: ${parColor};">${diffToParText}</div>
+                    </div>
+                    <button onclick="editRound('${r.id}')" class="small" 
+                        style="background:var(--color-border);color:var(--color-text-secondary);font-size:8px;" 
+                        title="Bearbeiten">✏️</button>
+                    <button onclick="deleteRound('${r.id}')" class="small" 
+                        style="background:var(--color-border);color:var(--color-text-secondary);font-size:8px;" 
+                        title="Runde löschen">🗑️</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
 
         function toggleAllRounds() {
             window.showAllRounds = !window.showAllRounds;
