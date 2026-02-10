@@ -1372,6 +1372,100 @@ document.getElementById('roundStrokes').addEventListener('input', updateStrokesS
             
             return errors;
         }
+
+        function saveRound() {
+    const courseId = document.getElementById('roundCourse').value;
+    const course = courses.find(c => c.id === courseId);
+    if (!course) {
+        return alert('Bitte zuerst einen Platz anlegen oder auswählen!');
+    }
+
+    const strokes = parseInt(document.getElementById('roundStrokes').value);
+    const holes = parseInt(document.querySelector('input[name="roundHoles"]:checked').value);
+    const date = document.getElementById('roundDate').value;
+
+    const validationErrors = validateRoundData(strokes, holes, date);
+    if (validationErrors.length > 0) {
+        return alert('❌ Eingabefehler:\n\n' + validationErrors.join('\n'));
+    }
+
+    let scoreDifferential;
+    let cr, sr;
+    if (holes === 9) {
+        cr = course.cr;
+        sr = course.sr;
+        const sd_9_played = ((strokes - cr) * (113 / sr));
+        const currentHCPI = myGolfer.handicapIndex;
+        const sd_9_expected = ((currentHCPI * 1.04) + 2.4) / 2;
+        scoreDifferential = (sd_9_played + sd_9_expected).toFixed(1);
+    } else {
+        cr = course.cr;
+        sr = course.sr;
+        scoreDifferential = ((strokes - cr) * (113 / sr)).toFixed(1);
+    }
+
+    const isOfficial = document.getElementById('roundOfficial').checked;
+
+    const courseHandicap = getPlayingCourseHandicap(
+        { holes: holes }, course, myGolfer.handicapIndex
+    );
+
+    const round = {
+        id: Date.now().toString(),
+        date: date,
+        course: course.name,
+        holes: holes,
+        strokes: strokes,
+        cr: cr.toFixed(1),
+        sr: sr.toFixed(0),
+        scoreDifferential: parseFloat(scoreDifferential),
+        playingHcp: myGolfer.handicapIndex,
+        courseHandicap: courseHandicap,
+        official: isOfficial
+    };
+
+    myGolfer.rounds.push(round);
+
+    // Prüfe ob historische Runde
+    const existingDates = myGolfer.rounds.slice(0, -1).map(r => new Date(r.date));
+    const isHistorical = existingDates.length > 0 &&
+        new Date(date) < new Date(Math.max(...existingDates));
+
+    if (isHistorical) {
+        recalculateHistory();
+    } else {
+        updateMyHandicap();
+        updateUnofficialHandicap();
+    }
+
+    // WHS: Exceptional Score Reduction (ESR)
+    const sdDiff = round.playingHcp - parseFloat(scoreDifferential);
+    if (isOfficial && sdDiff >= 10.0) {
+        myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 2.0);
+        myGolfer.lowestHandicapIndex = Math.min(myGolfer.lowestHandicapIndex, myGolfer.handicapIndex);
+        alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -2.0 reduziert!');
+    } else if (isOfficial && sdDiff >= 7.0) {
+        myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 1.0);
+        myGolfer.lowestHandicapIndex = Math.min(myGolfer.lowestHandicapIndex, myGolfer.handicapIndex);
+        alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -1.0 reduziert!');
+    }
+
+    localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+
+    if (myGolfer.rounds.length % 5 === 0) {
+        setTimeout(() => {
+            if (confirm(`Du hast ${myGolfer.rounds.length} Runden erfasst! Automatisches Backup jetzt erstellen?`)) {
+                exportData();
+            }
+        }, 500);
+    }
+
+    updateUI();
+    document.getElementById('roundStrokes').value = '';
+    document.getElementById('roundOfficial').checked = false;
+    updateStrokesSuffix();
+    alert(`Runde gespeichert!\nDifferential: ${round.scoreDifferential}\n${isOfficial ? 'Offizielles' : 'Inoffizielles'} HCP: ${myGolfer[isOfficial ? 'handicapIndex' : 'unofficialHandicap'].toFixed(1)}`);
+}
         
 function recalculateHistory() {
     if (!myGolfer || !myGolfer.rounds || myGolfer.rounds.length === 0) return;
