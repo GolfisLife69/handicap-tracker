@@ -2703,13 +2703,7 @@ courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:
                 const oldName = course.name;
                 const newName = prompt('Platzname ändern:', course.name);
                 if (newName === null) return;
-            
-                const newCR = prompt('Course Rating ändern:', course.cr);
-                if (newCR === null) return;
-            
-                const newSR = prompt('Slope Rating ändern:', course.sr);
-                if (newSR === null) return;
-            
+
                 const newHoles = prompt('Lochzahl ändern (9 oder 18):', course.holes || 18);
                 if (newHoles === null) return;
             
@@ -2725,6 +2719,12 @@ courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:
                 if (isNaN(par) || par < 27 || par > 90) {
                     return alert('Par muss zwischen 27 und 90 liegen!');
                 }
+            
+                const newCR = prompt('Course Rating ändern:', course.cr);
+                if (newCR === null) return;
+            
+                const newSR = prompt('Slope Rating ändern:', course.sr);
+                if (newSR === null) return;
                   
                 const cr = parseFloat(newCR);
                 const sr = parseInt(newSR);
@@ -2733,15 +2733,16 @@ courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:
                     return alert('Ungültige Eingaben! (CR min. 20, SR 55-155)');
                 }
             
-                const oldCR = course.cr;
+                        const oldCR = course.cr;
                         const oldSR = course.sr;
                         const oldHoles = course.holes || 18;
                 
                         course.name = newName.trim();
-                        course.cr = cr;
-                        course.sr = sr;
                         course.holes = holes;
                         course.par = par;
+                        course.cr = cr;
+                        course.sr = sr;
+
                 
                         const usedInRounds = myGolfer.rounds.filter(r => r.course === oldName && r.holes === oldHoles);
                   
