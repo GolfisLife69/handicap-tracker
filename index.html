@@ -1246,19 +1246,20 @@ function loadData() {
                     // Zeige nur 3 oder alle
                     const displayCourses = (showAll || sortedCourses.length <= 3) ? sortedCourses : sortedCourses.slice(0, 3);
                 manageList.innerHTML = displayCourses.map(c => `
-                    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
-                        <div style="flex:1;">
-                            <div style="font-weight:600;font-size:14px;">${c.name}</div>
-                            <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)}
-                            <span class="mobile-bullet"> • </span>${c.holes || 18} Löcher</div>
-                                
-                            </div>
-                        <div style="display:flex;gap:6px;">
-                            <button onclick="editCourse('${c.id}')" class="small" style="background:var(--color-border);color:var(--color-text-secondary);font-size:8px;" title="Bearbeiten">✏️</button>
-                            <button onclick="deleteCourse('${c.id}')" class="small" style="background:var(--color-border);color:var(--color-text-secondary);font-size:8px;" title="Löschen">🗑️</button>
-
-                        </div>
-                    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
+        <div style="flex:1;">
+            <div style="font-weight:600;font-size:14px;">${c.name}</div>
+            <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)} <span class="mobile-bullet"> • </span>${c.holes || 18} Löcher</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <button onclick="editCourse('${c.id}')" class="small" 
+                style="background:var(--color-border);color:var(--color-text-secondary);font-size:10px;padding:4px 6px;line-height:1;" 
+                title="Bearbeiten">✏️</button>
+            <button onclick="deleteCourse('${c.id}')" class="small" 
+                style="background:var(--color-border);color:var(--color-text-secondary);font-size:10px;padding:4px 6px;line-height:1;" 
+                title="Löschen">🗑️</button>
+        </div>
+    </div>
                 `).join('');
                 }
             }
@@ -2268,34 +2269,36 @@ container.innerHTML = displayRounds.map((r) => {
     const hcpiLabel = isOfficial ? '<span style="color: var(--color-text-secondary); font-weight: 600;"> • HCPI</span>' : '';
 
     return `
-            <div class="round-item">
-                <div style="flex: 1; min-width: 0;">
-                    <div style="font-size: 13px; color: var(--color-text-secondary);">
-                        ${r.date} • HCP ${historicHcp}${countedBadge}
-                    </div>
-                    <div style="font-weight: 600; font-size: 16px; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        ${r.course}
-                    </div>
-                    <div style="font-size: 13px; color: var(--color-text-secondary);">
-                        ${r.holes}L • ${r.strokes} Schläge${hcpiLabel}
-                    </div>
-                </div>
-                <div style="text-align: right; display: flex; align-items: center; gap: 10px;">
-                    <div>
-                        <div style="font-size: 18px; font-weight: bold; color: ${color};">
-                            ${diffToVorgabeText}
-                            <span style="font-size: 12px; font-weight: 400; color: var(--color-text-secondary);">Netto</span>
-                        </div>
-                        <div style="font-size: 14px; color: ${parColor};">${diffToParText}</div>
-                    </div>
-                    <button onclick="editRound('${r.id}')" class="small" 
-                        style="background:var(--color-border);color:var(--color-text-secondary);font-size:8px;" 
-                        title="Bearbeiten">✏️</button>
-                    <button onclick="deleteRound('${r.id}')" class="small" 
-                        style="background:var(--color-border);color:var(--color-text-secondary);font-size:8px;" 
-                        title="Runde löschen">🗑️</button>
-                </div>
+<div class="round-item">
+        <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 13px; color: var(--color-text-secondary);">
+                ${r.date} • HCP ${historicHcp}${countedBadge}
             </div>
+            <div style="font-weight: 600; font-size: 16px; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                ${r.course}
+            </div>
+            <div style="font-size: 13px; color: var(--color-text-secondary);">
+                ${r.holes}L • ${r.strokes} Schläge${hcpiLabel}
+            </div>
+        </div>
+        <div style="text-align: right; display: flex; align-items: center; gap: 10px;">
+            <div>
+                <div style="font-size: 18px; font-weight: bold; color: ${color};">
+                    ${diffToVorgabeText}
+                    <span style="font-size: 12px; font-weight: 400; color: var(--color-text-secondary);">Netto</span>
+                </div>
+                <div style="font-size: 14px; color: ${parColor};">${diffToParText}</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button onclick="editRound('${r.id}')" class="small" 
+                    style="background:var(--color-border);color:var(--color-text-secondary);font-size:10px;padding:4px 6px;line-height:1;" 
+                    title="Bearbeiten">✏️</button>
+                <button onclick="deleteRound('${r.id}')" class="small" 
+                    style="background:var(--color-border);color:var(--color-text-secondary);font-size:10px;padding:4px 6px;line-height:1;" 
+                    title="Runde löschen">🗑️</button>
+            </div>
+        </div>
+    </div>
         `;
     }).join('');
 }
