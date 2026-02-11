@@ -543,6 +543,24 @@ transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
             }
         }
 
+        @media (min-width: 769px) {
+    .desktop-break {
+        display: block; /* Desktop: erzwingt Zeilenumbruch */
+    }
+    .mobile-bullet {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .desktop-break {
+        display: none; /* Mobile: kein Umbruch */
+    }
+    .mobile-bullet {
+        display: inline;
+    }
+}
+
         #hcpButtonUnderGraph {
             display: block !important;
             margin: 15px auto 0 auto;
@@ -1340,7 +1358,7 @@ function loadData() {
        style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
 <div style="flex:1;">
     <div style="font-weight:600;font-size:14px;line-height:1.4;">${c.name}</div>
-    <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);margin-top:2px;">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)}<span class="mobile-bullet"> • </span>${c.holes} Löcher</div>
+    <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);margin-top:2px;">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)}<span class="mobile-bullet"> • </span><span class="desktop-break"></span>${c.holes} Löcher</div>
 </div>
     <div class="course-actions" style="flex-direction: column; gap: 6px;">
       <button onclick="editCourse('${c.id}')" class="small" 
