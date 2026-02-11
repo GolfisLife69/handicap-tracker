@@ -1277,7 +1277,7 @@ function loadData() {
         <span class="mobile-bullet"> • </span>${c.holes}×18 Löcher
       </div>
     </div>
-    <div class="course-actions" style="display: flex; flex-direction: column; gap: 6px;">
+    <div class="course-actions" style="flex-direction: column; gap: 6px;">
       <button onclick="editCourse('${c.id}')" class="small" 
         style="background:var(--color-border);color:var(--color-text-secondary);font-size:10px;padding:4px 6px;line-height:1;" 
         title="Bearbeiten">✏️</button>
@@ -2420,7 +2420,7 @@ parColor = color;
             </div>
             <div style="font-size: 14px; color: ${parColor};">${diffToParText}</div>
         </div>
-        <div class="round-actions" style="display: flex; flex-direction: column; gap: 8px;">
+        <div class="round-actions" style="flex-direction: column; gap: 8px;">
             <button onclick="editRound('${r.id}')" class="small" 
                 style="background:var(--color-border);color:var(--color-text-secondary);font-size:10px;padding:4px 6px;line-height:1;" 
                 title="Bearbeiten">✏️</button>
