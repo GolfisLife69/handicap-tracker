@@ -2511,15 +2511,26 @@ parColor = color;
                 }
             }
         
-        recalculateHistory();
-        updateUI();
-            alert('✅ Runde aktualisiert!');
-        }
+recalculateHistory();
+    localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+    updateUI();
+    alert('✅ Runde aktualisiert!');
+}
+        
 function deleteRound(roundId) {
     if (!confirm('Diese Runde wirklich löschen?\n\nDein Handicap wird neu berechnet.')) return;
-
     myGolfer.rounds = myGolfer.rounds.filter(r => r.id !== roundId);
-    recalculateHistory();
+
+    if (myGolfer.rounds.length === 0) {
+        myGolfer.handicapIndex = myGolfer.startHcp;
+        myGolfer.unofficialHandicap = myGolfer.startHcp;
+        myGolfer.lowestHandicapIndex = myGolfer.startHcp;
+        myGolfer.countedRoundIds = [];
+    } else {
+        recalculateHistory();
+    }
+
+    localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
     updateUI();
     alert('✅ Runde gelöscht und Handicap neu berechnet!');
 }
