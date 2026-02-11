@@ -636,12 +636,23 @@
     display: flex;
   }
   
+  /* NEU: Par/Netto-Container nach links verschieben wenn aktiv */
+  .round-item > div:nth-child(2) {
+    transition: margin-right 0.2s ease;
+    margin-right: 0;
+  }
+  
+  .round-item.active > div:nth-child(2) {
+    margin-right: 70px;
+  }
+  
   /* Course-Item auch anklickbar */
   .course-item {
     cursor: pointer;
     position: relative;
   }
 }
+
 
 </style>
 
