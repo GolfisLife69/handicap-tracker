@@ -593,10 +593,6 @@ transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
             text-align: center !important;
           }
         }
-
-.course-item > div > div:first-child {
-  margin-bottom: 2px;
-}
         
 /* Pfeile bei Number-Input entfernen */
 #roundStrokes::-webkit-outer-spin-button,
@@ -1268,7 +1264,7 @@ if (last5.length > 0) {
     document.getElementById('percentInHcpLast10').textContent = '-';
 }
             
-                renderCourses();
+                ();
                 renderRounds();
                 const chartWrapper = document.getElementById('handicapChartWrapper');
                 if (rounds.length >= 2) {
@@ -1343,8 +1339,7 @@ function loadData() {
   <div class="course-item" onclick="this.classList.toggle('active'); event.stopPropagation();" 
        style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
     <div style="flex:1;">
-      <div style="font-weight:600;font-size:14px;">${c.name}</div>
-      <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);">
+<div style="font-weight:600;font-size:14px;margin-bottom:0;">${c.name}</div>
         CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)} 
         <span class="mobile-bullet"> • </span>${c.holes} Löcher
       </div>
