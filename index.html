@@ -2339,23 +2339,30 @@ container.innerHTML = displayRounds.map((r) => {
         diffToParText = `${Math.abs(diffToPar)} unter Par`;
         parColor = 'var(--color-primary)'; // unter Par = gut
     }
-
-    // Netto: Historisches HCP verwenden
-    let diffToVorgabe = 0;
-    let diffToVorgabeText = '-';
-    let color = 'var(--color-text-secondary)';
-    if (course) {
-        let playingHcp;
-        if (r.courseHandicap !== undefined) {
-            playingHcp = r.courseHandicap;
-        } else {
-            playingHcp = getPlayingCourseHandicap(r, course, r.playingHcp);
-        }
-        const allowedStrokes = coursePar + playingHcp;
-        diffToVorgabe = r.strokes - allowedStrokes;
-        diffToVorgabeText = diffToVorgabe > 0 ? `+${diffToVorgabe}` : `${diffToVorgabe}`;
-        color = diffToVorgabe < 0 ? 'var(--color-primary)' : diffToVorgabe > 3 ? 'var(--color-danger)' : 'var(--color-warning)';
+// Netto: Historisches HCP verwenden
+let diffToVorgabe = 0;
+let diffToVorgabeText = '-';
+let color = 'var(--color-text-secondary)';
+if (course) {
+    let playingHcp;
+    if (r.courseHandicap !== undefined) {
+        playingHcp = r.courseHandicap;
+    } else {
+        playingHcp = getPlayingCourseHandicap(r, course, r.playingHcp);
     }
+    const allowedStrokes = coursePar + playingHcp;
+    diffToVorgabe = r.strokes - allowedStrokes;
+    diffToVorgabeText = diffToVorgabe > 0 ? `+${diffToVorgabe}` : `${diffToVorgabe}`;
+
+    // === AMPEL-SYSTEM ===
+    if (diffToVorgabe <= 0) {
+        color = 'var(--color-primary)';   // Grün: besser oder gleich Vorgabe
+    } else if (diffToVorgabe <= 2) {
+        color = 'var(--color-warning)';  // Gelb: +1 oder +2 über Vorgabe
+    } else {
+        color = 'var(--color-danger)';   // Rot: +3 oder schlechter
+    }
+}
 
     const isCounted = countedRoundIds.includes(r.id);
     const countedBadge = isCounted ? ' ☆' : '';
@@ -2458,17 +2465,14 @@ container.innerHTML = displayRounds.map((r) => {
         updateUI();
             alert('✅ Runde aktualisiert!');
         }
+function deleteRound(roundId) {
+    if (!confirm('Diese Runde wirklich löschen?\n\nDein Handicap wird neu berechnet.')) return;
 
-        function deleteRound(roundId) {
-            if (!confirm('Diese Runde wirklich löschen?\n\nDein Handicap wird neu berechnet.')) return;
-            
-            myGolfer.rounds = myGolfer.rounds.filter(r => r.id !== roundId);
-            updateMyHandicap();
-            updateUnofficialHandicap();
-            localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
-            updateUI();
-            alert('✅ Runde gelöscht und Handicap neu berechnet!');
-        }
+    myGolfer.rounds = myGolfer.rounds.filter(r => r.id !== roundId);
+    recalculateHistory();
+    updateUI();
+    alert('✅ Runde gelöscht und Handicap neu berechnet!');
+}
         
         function renderChart() {
             const rounds = myGolfer.rounds.slice(-10).sort((a, b) => new Date(a.date) - new Date(b.date));
