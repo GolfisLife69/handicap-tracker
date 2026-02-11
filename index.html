@@ -608,20 +608,35 @@
     -moz-appearance: textfield;
 }
 
-/* Mobile: Buttons standardmäßig komplett versteckt */
+/* Mobile: Buttons ausblenden und absolut positionieren */
 @media (max-width: 768px) {
+  /* Round-Item bekommt relative Position */
+  .round-item {
+    cursor: pointer;
+    position: relative;
+    padding-right: 12px !important;
+  }
+  
+  /* Buttons absolut positionieren - rechts außen */
   .round-item .round-actions,
   .course-item .course-actions {
-    display: none !important;
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 10;
   }
   
+  /* Buttons sichtbar machen bei .active */
   .round-item.active .round-actions,
   .course-item.active .course-actions {
-    display: flex !important;
+    display: flex;
   }
   
-  /* Ganzes Item anklickbar machen */
-  .round-item,
+  /* Course-Item auch anklickbar */
   .course-item {
     cursor: pointer;
     position: relative;
@@ -2412,7 +2427,7 @@ parColor = color;
             ${r.holes}L • ${r.strokes} Schläge${hcpiLabel}
         </div>
     </div>
-    <div style="text-align: right; display: flex; align-items: center; gap: 15px;">
+    <div style="text-align: right; padding-right: 0;">
         <div>
             <div style="font-size: 18px; font-weight: bold; color: ${color};">
                 ${diffToVorgabeText}
@@ -2420,7 +2435,7 @@ parColor = color;
             </div>
             <div style="font-size: 14px; color: ${parColor};">${diffToParText}</div>
         </div>
-        <div class="round-actions" style="flex-direction: column; gap: 8px;">
+        <div class="round-actions">
             <button onclick="editRound('${r.id}')" class="small" 
                 style="background:var(--color-border);color:var(--color-text-secondary);font-size:10px;padding:4px 6px;line-height:1;" 
                 title="Bearbeiten">✏️</button>
