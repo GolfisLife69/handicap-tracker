@@ -608,6 +608,26 @@
     -moz-appearance: textfield;
 }
 
+/* Mobile: Buttons standardmäßig ausblenden */
+@media (max-width: 768px) {
+  .round-item .round-actions {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  
+  .round-item.active .round-actions {
+    display: flex;
+    opacity: 1;
+  }
+  
+  /* Ganzes Item anklickbar machen */
+  .round-item {
+    cursor: pointer;
+    position: relative;
+  }
+}
+
     </style>
 </head>
 <body tabindex="-1">
@@ -2374,36 +2394,37 @@ parColor = color;
     const hcpiLabel = isOfficial ? '<span style="color: var(--color-text-secondary); font-weight: 600;"> • HCPI</span>' : '';
 
     return `
-<div class="round-item">
-        <div style="flex: 1; min-width: 0;">
-            <div style="font-size: 13px; color: var(--color-text-secondary);">
-                ${r.date} • HCP ${historicHcp}${countedBadge}
-            </div>
-            <div style="font-weight: 600; font-size: 16px; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                ${r.course}
-            </div>
-            <div style="font-size: 13px; color: var(--color-text-secondary);">
-                ${r.holes}L • ${r.strokes} Schläge${hcpiLabel}
-            </div>
+<div class="round-item" onclick="this.classList.toggle('active'); event.stopPropagation();">
+    <div style="flex: 1; min-width: 0;">
+        <div style="font-size: 13px; color: var(--color-text-secondary);">
+            ${r.date} • HCP ${historicHcp}${countedBadge}
         </div>
-        <div style="text-align: right; display: flex; align-items: center; gap: 25px;">
-            <div>
-                <div style="font-size: 18px; font-weight: bold; color: ${color};">
-                    ${diffToVorgabeText}
-                    <span style="font-size: 12px; font-weight: 400; color: var(--color-text-secondary);">Netto</span>
-                </div>
-                <div style="font-size: 14px; color: ${parColor};">${diffToParText}</div>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-                <button onclick="editRound('${r.id}')" class="small" 
-                    style="background:var(--color-border);color:var(--color-text-secondary);font-size:10px;padding:4px 6px;line-height:1;" 
-                    title="Bearbeiten">✏️</button>
-                <button onclick="deleteRound('${r.id}')" class="small" 
-                    style="background:var(--color-border);color:var(--color-text-secondary);font-size:10px;padding:4px 6px;line-height:1;" 
-                    title="Runde löschen">🗑️</button>
-            </div>
+        <div style="font-weight: 600; font-size: 16px; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            ${r.course}
+        </div>
+        <div style="font-size: 13px; color: var(--color-text-secondary);">
+            ${r.holes}L • ${r.strokes} Schläge${hcpiLabel}
         </div>
     </div>
+    <div style="text-align: right; display: flex; align-items: center; gap: 25px;">
+        <div>
+            <div style="font-size: 18px; font-weight: bold; color: ${color};">
+                ${diffToVorgabeText}
+                <span style="font-size: 12px; font-weight: 400; color: var(--color-text-secondary);">Netto</span>
+            </div>
+            <div style="font-size: 14px; color: ${parColor};">${diffToParText}</div>
+        </div>
+        <div class="round-actions" style="display: flex; flex-direction: column; gap: 8px;">
+            <button onclick="editRound('${r.id}')" class="small" 
+                style="background:var(--color-border);color:var(--color-text-secondary);font-size:10px;padding:4px 6px;line-height:1;" 
+                title="Bearbeiten">✏️</button>
+            <button onclick="deleteRound('${r.id}')" class="small" 
+                style="background:var(--color-border);color:var(--color-text-secondary);font-size:10px;padding:4px 6px;line-height:1;" 
+                title="Runde löschen">🗑️</button>
+        </div>
+    </div>
+</div>
+
         `;
     }).join('');
 }
