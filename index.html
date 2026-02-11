@@ -608,25 +608,31 @@
     -moz-appearance: textfield;
 }
 
-/* Mobile: Buttons standardmäßig ausblenden */
+/* Mobile: Buttons standardmäßig ausgeblendet */
 @media (max-width: 768px) {
-  .round-item .round-actions {
+  .round-item .round-actions,
+  .course-item .course-actions {
+    position: absolute;
+    right: 12px;
     display: none;
     opacity: 0;
     transition: opacity 0.2s;
   }
   
-  .round-item.active .round-actions {
+  .round-item.active .round-actions,
+  .course-item.active .course-actions {
     display: flex;
     opacity: 1;
   }
   
   /* Ganzes Item anklickbar machen */
-  .round-item {
+  .round-item,
+  .course-item {
     cursor: pointer;
     position: relative;
   }
 }
+
 
         /* Buttons standardmäßig ausgeblendet */
 @media (max-width: 768px) {
