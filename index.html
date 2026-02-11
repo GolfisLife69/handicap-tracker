@@ -524,42 +524,30 @@ transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
             }
         }
 
-
-        @media (min-width: 769px) {
-            .course-info {
-                white-space: pre-line;
-            }
-            .mobile-bullet {
-                display: none; /* Desktop: kein • */
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .course-info {
-                white-space: nowrap; /* Mobile: keine Umbrüche */
-            }
-            .mobile-bullet {
-                display: inline; /* Mobile: zeige • */
-            }
-        }
-
-        @media (min-width: 769px) {
+@media (min-width: 769px) {
     .desktop-break {
-        display: block; /* Desktop: erzwingt Zeilenumbruch */
+        display: block;
     }
     .mobile-bullet {
         display: none;
+    }
+    .course-info {
+        white-space: pre-line;
     }
 }
 
 @media (max-width: 768px) {
     .desktop-break {
-        display: none; /* Mobile: kein Umbruch */
+        display: none;
     }
     .mobile-bullet {
         display: inline;
     }
+    .course-info {
+        white-space: nowrap;
+    }
 }
+ 
 
         #hcpButtonUnderGraph {
             display: block !important;
@@ -1361,10 +1349,10 @@ function loadData() {
     <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);margin-top:2px;">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)}<span class="mobile-bullet"> • </span><span class="desktop-break"></span>${c.holes} Löcher</div>
 </div>
     <div class="course-actions" style="flex-direction: column; gap: 6px;">
-      <button onclick="editCourse('${c.id}')" class="small" 
+      <button onclick="event.stopPropagation(); editCourse('${c.id}')" class="small"
         style="background:var(--color-border);color:var(--color-text-secondary);font-size:14px;padding:4px 6px;line-height:1;" 
         title="Bearbeiten">✏️</button>
-      <button onclick="deleteCourse('${c.id}')" class="small" 
+      <button onclick="event.stopPropagation(); deleteCourse('${c.id}')" class="small"
         style="background:var(--color-border);color:var(--color-text-secondary);font-size:14px;padding:4px 6px;line-height:1;" 
         title="Löschen">🗑️</button>
     </div>
@@ -1452,10 +1440,6 @@ function updateStrokesSuffix() {
     }
 }
 
-document.getElementById('roundStrokes').addEventListener('input', updateStrokesSuffix);
-
-
-// Event Listener für das Schläge-Feld
 document.getElementById('roundStrokes').addEventListener('input', updateStrokesSuffix);
 
 
@@ -1548,8 +1532,8 @@ document.getElementById('roundStrokes').addEventListener('input', updateStrokesS
         updateUnofficialHandicap();
     }
 
-    // WHS: Exceptional Score Reduction (ESR)
-    const sdDiff = round.playingHcp - parseFloat(scoreDifferential);
+// WHS: Exceptional Score Reduction (ESR)
+    const sdDiff = round.playingHcp - round.scoreDifferential;
     if (isOfficial && sdDiff >= 10.0) {
         myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 2.0);
         myGolfer.lowestHandicapIndex = Math.min(myGolfer.lowestHandicapIndex, myGolfer.handicapIndex);
@@ -1575,93 +1559,6 @@ document.getElementById('roundStrokes').addEventListener('input', updateStrokesS
     document.getElementById('roundOfficial').checked = false;
     updateStrokesSuffix();
     alert(`Runde gespeichert!\nDifferential: ${round.scoreDifferential}\n${isOfficial ? 'Offizielles' : 'Inoffizielles'} HCP: ${myGolfer[isOfficial ? 'handicapIndex' : 'unofficialHandicap'].toFixed(1)}`);
-}
-        
-function recalculateHistory() {
-    if (!myGolfer || !myGolfer.rounds || myGolfer.rounds.length === 0) return;
-
-    // 1. Alle Runden nach Datum sortieren
-    myGolfer.rounds.sort((a, b) => {
-        const dateCompare = new Date(a.date) - new Date(b.date);
-        if (dateCompare !== 0) return dateCompare;
-        // Bei gleichem Datum: nach Erfassungs-ID (ältere zuerst)
-        return parseInt(a.id) - parseInt(b.id);
-    });
-
-    // 2. Vom Start-HCP aus chronologisch durchrechnen
-    let runningHcp = myGolfer.startHcp;
-    let lowestHcp = myGolfer.startHcp;
-
-    for (let i = 0; i < myGolfer.rounds.length; i++) {
-        const round = myGolfer.rounds[i];
-        const course = courses.find(c => c.name === round.course && c.holes === round.holes);
-
-        // A) Setze das damalige HCPI
-        round.playingHcp = runningHcp;
-
-        // B) Berechne Course Handicap mit damaligem HCPI
-        if (course) {
-            round.courseHandicap = getPlayingCourseHandicap(round, course, runningHcp);
-        }
-
-        // C) Score Differential neu berechnen (wichtig für 9-Loch!)
-        if (course) {
-            if (round.holes === 9) {
-                const sd_9_played = ((round.strokes - course.cr) * (113 / course.sr));
-                const sd_9_expected = ((runningHcp * 1.04) + 2.4) / 2;
-                round.scoreDifferential = parseFloat((sd_9_played + sd_9_expected).toFixed(1));
-            } else {
-                round.scoreDifferential = parseFloat(
-                    ((round.strokes - course.cr) * (113 / course.sr)).toFixed(1)
-                );
-            }
-            round.cr = course.cr.toFixed(1);
-            round.sr = course.sr.toFixed(0);
-        }
-
-        // D) HCP nach dieser Runde neu berechnen
-        const roundsSoFar = myGolfer.rounds.slice(0, i + 1);
-
-        const officialSoFar = roundsSoFar
-            .filter(r => r.official !== false)
-            .slice(-20)
-            .map(r => ({ id: r.id, sd: r.scoreDifferential }))
-            .sort((a, b) => a.sd - b.sd);
-
-        if (officialSoFar.length >= 3) {
-            const { numCounted, adjustment } = getWHSParameters(officialSoFar.length);
-            const bestRounds = officialSoFar.slice(0, numCounted);
-            let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
-
-            newHcp = Math.min(newHcp, lowestHcp + 3.0);
-            newHcp += adjustment;
-            newHcp = Math.round(newHcp * 10) / 10;
-
-            lowestHcp = Math.min(lowestHcp, newHcp);
-            newHcp = Math.min(newHcp, lowestHcp + 5.0);
-
-            runningHcp = newHcp;
-        }
-    }
-
-    myGolfer.handicapIndex = runningHcp;
-    myGolfer.lowestHandicapIndex = lowestHcp;
-    updateUnofficialHandicap();
-
-    const finalOfficial = myGolfer.rounds
-        .filter(r => r.official !== false)
-        .slice(-20)
-        .map(r => ({ id: r.id, sd: r.scoreDifferential }))
-        .sort((a, b) => a.sd - b.sd);
-
-    if (finalOfficial.length >= 3) {
-        const { numCounted } = getWHSParameters(finalOfficial.length);
-        myGolfer.countedRoundIds = finalOfficial.slice(0, numCounted).map(r => r.id);
-    } else {
-        myGolfer.countedRoundIds = [];
-    }
-
-    localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
 }
         
         function updateMyHandicap() {
@@ -2441,10 +2338,10 @@ parColor = color;
             <div style="font-size: 14px; color: ${parColor};">${diffToParText}</div>
         </div>
         <div class="round-actions">
-            <button onclick="editRound('${r.id}')" class="small" 
+            <button onclick="event.stopPropagation(); editRound('${r.id}')" class="small" 
                 style="background:var(--color-border);color:var(--color-text-secondary);font-size:14px;padding:4px 6px;line-height:1;" 
                 title="Bearbeiten">✏️</button>
-            <button onclick="deleteRound('${r.id}')" class="small" 
+            <button onclick="event.stopPropagation(); deleteRound('${r.id}')" class="small"
                 style="background:var(--color-border);color:var(--color-text-secondary);font-size:14px;padding:4px 6px;line-height:1;" 
                 title="Runde löschen">🗑️</button>
         </div>
@@ -2598,44 +2495,10 @@ function deleteRound(roundId) {
                 // Bei <3 Runden: Start-HCP
                 unofficialHistory.push(myGolfer.startHcp);
             } else {
-                // WHS-Regeln anwenden
-                const count = tempAllRounds.length;
-                let numCounted, adjustment;
-                
-                // WHS-Parameter bestimmen
-                if (count >= 3 && count <= 4) {
-                    numCounted = 1;
-                    adjustment = count === 3 ? -2.0 : -1.0;
-                } else if (count === 5) {
-                    numCounted = 1;
-                    adjustment = 0;
-                } else if (count === 6) {
-                    numCounted = 2;
-                    adjustment = -1.0;
-                } else if (count >= 7 && count <= 8) {
-                    numCounted = 2;
-                    adjustment = 0;
-                } else if (count >= 9 && count <= 11) {
-                    numCounted = 3;
-                    adjustment = 0;
-                } else if (count >= 12 && count <= 14) {
-                    numCounted = 4;
-                    adjustment = 0;
-                } else if (count >= 15 && count <= 16) {
-                    numCounted = 5;
-                    adjustment = 0;
-                } else if (count >= 17 && count <= 18) {
-                    numCounted = 6;
-                    adjustment = 0;
-                } else if (count === 19) {
-                    numCounted = 7;
-                    adjustment = 0;
-                } else {
-                    numCounted = 8;
-                    adjustment = 0;
-                }
-                
-                const bestRounds = tempAllRounds.slice(0, numCounted);
+            const count = tempAllRounds.length;
+            const { numCounted, adjustment } = getWHSParameters(count);
+
+            const bestRounds = tempAllRounds.slice(0, numCounted);
                 let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
                 
                 // Soft Cap anwenden
@@ -2661,44 +2524,10 @@ function deleteRound(roundId) {
                 // Bei <3 Runden: Start-HCP
                 officialHistory.push(myGolfer.startHcp);
             } else {
-                // WHS-Regeln anwenden
-                const count = tempOfficialRounds.length;
-                let numCounted, adjustment;
-                
-                // WHS-Parameter direkt berechnen
-                if (count >= 3 && count <= 4) {
-                    numCounted = 1;
-                    adjustment = count === 3 ? -2.0 : -1.0;
-                } else if (count === 5) {
-                    numCounted = 1;
-                    adjustment = 0;
-                } else if (count === 6) {
-                    numCounted = 2;
-                    adjustment = -1.0;
-                } else if (count >= 7 && count <= 8) {
-                    numCounted = 2;
-                    adjustment = 0;
-                } else if (count >= 9 && count <= 11) {
-                    numCounted = 3;
-                    adjustment = 0;
-                } else if (count >= 12 && count <= 14) {
-                    numCounted = 4;
-                    adjustment = 0;
-                } else if (count >= 15 && count <= 16) {
-                    numCounted = 5;
-                    adjustment = 0;
-                } else if (count >= 17 && count <= 18) {
-                    numCounted = 6;
-                    adjustment = 0;
-                } else if (count === 19) {
-                    numCounted = 7;
-                    adjustment = 0;
-                } else {
-                    numCounted = 8;
-                    adjustment = 0;
-                }
-                
-                const bestRounds = tempOfficialRounds.slice(0, numCounted);
+            const count = tempOfficialRounds.length;
+            const { numCounted, adjustment } = getWHSParameters(count);
+
+            const bestRounds = tempOfficialRounds.slice(0, numCounted);
                 let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
 
                 // Soft Cap anwenden
@@ -2728,9 +2557,10 @@ function deleteRound(roundId) {
             ctx.clearRect(0, 0, cssW, cssH);
             
             // Zeichne Hintergrund-Gitter und Y-Achsen-Labels
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)';
             ctx.lineWidth = 1;
-            ctx.fillStyle = '#666';
+            ctx.fillStyle = isDark ? '#adb5bd' : '#666';
             ctx.font = '12px Arial';
             ctx.textAlign = 'right';
             
