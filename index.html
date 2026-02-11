@@ -618,15 +618,51 @@ transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
     -moz-appearance: textfield;
 }
 
-/* Mobile: Buttons ausblenden und absolut positionieren */
+/* Desktop: Hover zeigt Buttons */
+@media (min-width: 769px) {
+  .round-item .round-actions,
+  .course-item .course-actions {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  
+  /* Buttons bei Hover anzeigen */
+  .round-item:hover .round-actions,
+  .course-item:hover .course-actions {
+    display: flex;
+    opacity: 1;
+  }
+  
+  /* Par/Netto nach links schieben bei Hover */
+  .round-scores {
+    transition: margin-right 0.2s ease;
+  }
+  
+  .round-item:hover .round-scores {
+    margin-right: 70px;
+  }
+  
+  .round-item,
+  .course-item {
+    position: relative;
+  }
+}
+
+/* Mobile: Click/Tap zeigt Buttons */
 @media (max-width: 768px) {
-  /* Round-Item bekommt relative Position */
   .round-item {
     cursor: pointer;
     position: relative;
   }
   
-  /* Buttons absolut positionieren - rechts außen */
   .round-item .round-actions,
   .course-item .course-actions {
     position: absolute;
@@ -639,29 +675,26 @@ transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
     z-index: 10;
   }
   
-  /* Buttons sichtbar machen bei .active */
   .round-item.active .round-actions,
   .course-item.active .course-actions {
     display: flex;
   }
   
-  /* Par/Netto-Container mit Transition */
   .round-scores {
-    transition: transform 0.2s ease, margin-right 0.2s ease;
+    transition: margin-right 0.2s ease;
     margin-right: 0;
   }
   
-  /* Par/Netto nach links verschieben wenn aktiv */
   .round-item.active .round-scores {
     margin-right: 70px;
   }
   
-  /* Course-Item auch anklickbar */
   .course-item {
     cursor: pointer;
     position: relative;
   }
 }
+
 
 </style>
 
@@ -1309,7 +1342,7 @@ function loadData() {
       <div style="font-weight:600;font-size:14px;">${c.name}</div>
       <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);">
         CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)} 
-        <span class="mobile-bullet"> • </span>${c.holes}×18 Löcher
+        <span class="mobile-bullet"> • </span>${c.holes} Löcher
       </div>
     </div>
     <div class="course-actions" style="flex-direction: column; gap: 6px;">
