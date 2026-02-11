@@ -2342,7 +2342,7 @@ container.innerHTML = displayRounds.map((r) => {
 // Netto: Historisches HCP verwenden
 let diffToVorgabe = 0;
 let diffToVorgabeText = '-';
-let nettoColor = 'var(--color-text-secondary)';  // Neue Variable für Netto-Farbe
+let color = 'var(--color-text-secondary)';
 if (course) {
     let playingHcp;
     if (r.courseHandicap !== undefined) {
@@ -2354,29 +2354,17 @@ if (course) {
     diffToVorgabe = r.strokes - allowedStrokes;
     diffToVorgabeText = diffToVorgabe > 0 ? `+${diffToVorgabe}` : `${diffToVorgabe}`;
 
-    // === AMPEL-SYSTEM FÜR NETTO ===
-    if (diffToVorgabe <= 0) {
-        nettoColor = 'var(--color-primary)';   // Grün: besser oder gleich Vorgabe
-    } else if (diffToVorgabe <= 2) {
-        nettoColor = 'var(--color-warning)';  // Gelb: +1 oder +2 über Vorgabe
-    } else {
-        nettoColor = 'var(--color-danger)';   // Rot: +3 oder schlechter
-    }
+// === AMPEL-SYSTEM ===
+if (diffToVorgabe < 0) {
+    color = 'var(--color-primary)';   // Grün: besser als Vorgabe
+} else if (diffToVorgabe <= 2) {
+    color = 'var(--color-warning)';   // Gelb: 0, +1, +2
+} else {
+    color = 'var(--color-danger)';    // Rot: +3 oder schlechter
 }
 
-// Par-Farbe bleibt wie vorher (Brutto)
-let diffToPar = r.strokes - coursePar;
-let diffToParText;
-let parColor = 'var(--color-text-secondary)';
-if (diffToPar === 0) {
-    diffToParText = 'Even Par';
-    parColor = 'var(--color-primary)'; // Even Par = gut
-} else if (diffToPar > 0) {
-    diffToParText = `+${diffToPar} über Par`;
-    parColor = 'var(--color-danger)'; // über Par = schlecht
-} else {
-    diffToParText = `${Math.abs(diffToPar)} unter Par`;
-    parColor = 'var(--color-primary)'; // unter Par = gut
+// Par-Farbe folgt dem Ampel-System
+parColor = color;
 }
 
     const isCounted = countedRoundIds.includes(r.id);
@@ -2400,11 +2388,11 @@ if (diffToPar === 0) {
         </div>
         <div style="text-align: right; display: flex; align-items: center; gap: 10px;">
             <div>
-<div style="font-size: 18px; font-weight: bold; color: ${nettoColor};">  <!-- hier nettoColor -->
-    ${diffToVorgabeText}
-    <span style="font-size: 12px; font-weight: 400; color: var(--color-text-secondary);">Netto</span>
-</div>
-<div style="font-size: 14px; color: ${parColor};">${diffToParText}</div>  <!-- hier bleibt parColor -->
+                <div style="font-size: 18px; font-weight: bold; color: ${color};">
+                    ${diffToVorgabeText}
+                    <span style="font-size: 12px; font-weight: 400; color: var(--color-text-secondary);">Netto</span>
+                </div>
+                <div style="font-size: 14px; color: ${parColor};">${diffToParText}</div>
             </div>
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 <button onclick="editRound('${r.id}')" class="small" 
