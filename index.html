@@ -653,6 +653,25 @@
   }
 }
 
+/* Smooth Animation für erweiterte Statistiken */
+.advanced-stats {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: 0 20px;
+}
+
+.advanced-stats.active {
+  max-height: 5000px; /* Groß genug für alle Inhalte */
+  opacity: 1;
+  margin-top: 20px;
+  margin-bottom: 25px;
+  padding: 20px;
+}
+
 
 </style>
 
@@ -1743,31 +1762,34 @@ function recalculateHistory() {
         }
         
         function toggleAdvancedStats() {
-            const stats = document.getElementById('advancedStats');
-            const btn = document.querySelector('.toggle-stats-btn');
-            const isVisible = stats.style.display === 'block';
+  const stats = document.getElementById('advancedStats');
+  const btn = document.querySelector('.toggle-stats-btn');
+  const isVisible = stats.classList.contains('active');
+  
+  if (!isVisible) {
+    // NEU: Statistiken berechnen bevor sie angezeigt werden
+    renderAdvancedStats();
+  }
+  
+  // Toggle die Klasse statt display zu ändern
+  stats.classList.toggle('active');
+  btn.textContent = isVisible ? 'Erweiterte Statistiken' : 'Statistiken ausblenden';
+  
+  // Mobile Force Blur
+  if (window.matchMedia("(hover: none)").matches) {
+    btn.blur();
+    document.body.focus();
     
-            // NEU: Statistiken berechnen bevor sie angezeigt werden
-            if (!isVisible) {
-              renderAdvancedStats();
-            }
-    
-             stats.style.display = isVisible ? 'none' : 'block';
-             btn.textContent = isVisible ? '📊 Erweiterte Statistiken' : '✖ Statistiken ausblenden';
-    
-             // Mobile Force Blur
-                if (window.matchMedia('(hover: none)').matches) {
-                   btn.blur();
-                  document.body.focus();
-                  // Trigger Repaint
-                  requestAnimationFrame(() => {
-                      btn.style.pointerEvents = 'none';
-                     setTimeout(() => {
-                         btn.style.pointerEvents = '';
-                     }, 50);
-                  });
-             }
-        }
+    // Trigger Repaint
+    requestAnimationFrame(() => {
+      btn.style.pointerEvents = 'none';
+      setTimeout(() => {
+        btn.style.pointerEvents = '';
+      }, 50);
+    });
+  }
+}
+
      
  function renderAdvancedStats() {
     const rounds = myGolfer.rounds;
