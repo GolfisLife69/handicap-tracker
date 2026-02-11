@@ -628,6 +628,34 @@
   }
 }
 
+        /* Buttons standardmäßig ausgeblendet */
+@media (max-width: 768px) {
+  .round-item .round-actions,
+  .course-item .course-actions {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  
+  .round-item.active .round-actions,
+  .course-item.active .course-actions {
+    display: flex;
+    opacity: 1;
+  }
+  
+  /* Ganzes Item anklickbar machen */
+  .round-item,
+  .course-item {
+    cursor: pointer;
+    position: relative;
+  }
+  
+  /* Par/Netto nach rechts schieben wenn Buttons NICHT aktiv sind */
+  .round-item:not(.active) > div:last-child {
+    margin-right: 60px;
+  }
+}
+
     </style>
 </head>
 <body tabindex="-1">
@@ -1266,22 +1294,27 @@ function loadData() {
                     const sortedCourses = [...courses].sort((a, b) => b.id - a.id);
                     // Zeige nur 3 oder alle
                     const displayCourses = (showAll || sortedCourses.length <= 3) ? sortedCourses : sortedCourses.slice(0, 3);
-                manageList.innerHTML = displayCourses.map(c => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
-        <div style="flex:1;">
-            <div style="font-weight:600;font-size:14px;">${c.name}</div>
-            <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)} <span class="mobile-bullet"> • </span>${c.holes || 18} Löcher</div>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-            <button onclick="editCourse('${c.id}')" class="small" 
-                style="background:var(--color-border);color:var(--color-text-secondary);font-size:10px;padding:4px 6px;line-height:1;" 
-                title="Bearbeiten">✏️</button>
-            <button onclick="deleteCourse('${c.id}')" class="small" 
-                style="background:var(--color-border);color:var(--color-text-secondary);font-size:10px;padding:4px 6px;line-height:1;" 
-                title="Löschen">🗑️</button>
-        </div>
+ manageList.innerHTML = displayCourses.map(c => `
+  <div class="course-item" onclick="this.classList.toggle('active'); event.stopPropagation();" 
+       style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
+    <div style="flex:1;">
+      <div style="font-weight:600;font-size:14px;">${c.name}</div>
+      <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);">
+        CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)} 
+        <span class="mobile-bullet"> • </span>${c.holes}×18 Löcher
+      </div>
     </div>
-                `).join('');
+    <div class="course-actions" style="display: flex; flex-direction: column; gap: 6px;">
+      <button onclick="editCourse('${c.id}')" class="small" 
+        style="background:var(--color-border);color:var(--color-text-secondary);font-size:10px;padding:4px 6px;line-height:1;" 
+        title="Bearbeiten">✏️</button>
+      <button onclick="deleteCourse('${c.id}')" class="small" 
+        style="background:var(--color-border);color:var(--color-text-secondary);font-size:10px;padding:4px 6px;line-height:1;" 
+        title="Löschen">🗑️</button>
+    </div>
+  </div>
+`).join('');
+
                 }
             }
         }
