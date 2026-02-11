@@ -614,7 +614,6 @@
   .round-item {
     cursor: pointer;
     position: relative;
-    padding-right: 12px !important;
   }
   
   /* Buttons absolut positionieren - rechts außen */
@@ -636,13 +635,14 @@
     display: flex;
   }
   
-  /* NEU: Par/Netto-Container nach links verschieben wenn aktiv */
-  .round-item > div:nth-child(2) {
-    transition: margin-right 0.2s ease;
+  /* Par/Netto-Container mit Transition */
+  .round-scores {
+    transition: transform 0.2s ease, margin-right 0.2s ease;
     margin-right: 0;
   }
   
-  .round-item.active > div:nth-child(2) {
+  /* Par/Netto nach links verschieben wenn aktiv */
+  .round-item.active .round-scores {
     margin-right: 70px;
   }
   
@@ -2438,7 +2438,7 @@ parColor = color;
             ${r.holes}L • ${r.strokes} Schläge${hcpiLabel}
         </div>
     </div>
-    <div style="text-align: right; padding-right: 0;">
+   <div class="round-scores" style="text-align: right;">
         <div>
             <div style="font-size: 18px; font-weight: bold; color: ${color};">
                 ${diffToVorgabeText}
