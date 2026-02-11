@@ -608,21 +608,16 @@
     -moz-appearance: textfield;
 }
 
-/* Mobile: Buttons standardmäßig ausgeblendet */
+/* Mobile: Buttons standardmäßig komplett versteckt */
 @media (max-width: 768px) {
   .round-item .round-actions,
   .course-item .course-actions {
-    position: absolute;
-    right: 12px;
-    display: none;
-    opacity: 0;
-    transition: opacity 0.2s;
+    display: none !important;
   }
   
   .round-item.active .round-actions,
   .course-item.active .course-actions {
-    display: flex;
-    opacity: 1;
+    display: flex !important;
   }
   
   /* Ganzes Item anklickbar machen */
@@ -633,36 +628,8 @@
   }
 }
 
+</style>
 
-        /* Buttons standardmäßig ausgeblendet */
-@media (max-width: 768px) {
-  .round-item .round-actions,
-  .course-item .course-actions {
-    display: none;
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-  
-  .round-item.active .round-actions,
-  .course-item.active .course-actions {
-    display: flex;
-    opacity: 1;
-  }
-  
-  /* Ganzes Item anklickbar machen */
-  .round-item,
-  .course-item {
-    cursor: pointer;
-    position: relative;
-  }
-  
-  /* Par/Netto nach rechts schieben wenn Buttons NICHT aktiv sind */
-  .round-item:not(.active) > div:last-child {
-    margin-right: 60px;
-  }
-}
-
-    </style>
 </head>
 <body tabindex="-1">
     <div id="setupScreen" class="setup-form">
