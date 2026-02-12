@@ -1400,8 +1400,10 @@ function loadData() {
                         collapseBtn.style.display = 'none';
                     }
                     
-                    // 🎲 Zufällige Sortierung - jedes Mal andere 3 Plätze!
-                    const sortedCourses = [...courses].sort(() => Math.random() - 0.5);
+                    // 🎲📋 Hybrid-Sortierung: Random wenn collapsed, alphabetisch wenn expanded
+                    const sortedCourses = showAll 
+                        ? [...courses].sort((a, b) => a.name.localeCompare(b.name))  // Alphabetisch
+                        : [...courses].sort(() => Math.random() - 0.5);              // Random
                     
                     // Zeige nur 3 oder alle
                     const displayCourses = (showAll || sortedCourses.length <= 3) ? sortedCourses : sortedCourses.slice(0, 3);
@@ -1425,7 +1427,6 @@ function loadData() {
                 }
             }
         }
-
 
         function filterCoursesByHoles() {
             const selectedHoles = parseInt(document.querySelector('input[name="roundHoles"]:checked').value);
