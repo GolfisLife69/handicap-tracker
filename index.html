@@ -1580,20 +1580,11 @@ document.getElementById('roundStrokes').addEventListener('input', updateStrokesS
         return alert('❌ Eingabefehler:\n\n' + validationErrors.join('\n'));
     }
 
-    let scoreDifferential;
-    let cr, sr;
-    if (holes === 9) {
-        cr = course.cr;
-        sr = course.sr;
-        const sd_9_played = ((strokes - cr) * (113 / sr));
-        const currentHCPI = myGolfer.handicapIndex;
-        const sd_9_expected = ((currentHCPI * 1.04) + 2.4) / 2;
-        scoreDifferential = (sd_9_played + sd_9_expected).toFixed(1);
-    } else {
-        cr = course.cr;
-        sr = course.sr;
-        scoreDifferential = ((strokes - cr) * (113 / sr)).toFixed(1);
-    }
+// WHS Score Differential Berechnung (gleich für 9 und 18 Loch)
+const cr = course.cr;
+const sr = course.sr;
+const scoreDifferential = ((strokes - cr) * (113 / sr)).toFixed(1);
+
 
     const isOfficial = document.getElementById('roundOfficial').checked;
 
@@ -2862,15 +2853,8 @@ function deleteRound(roundId) {
                     (r.course === oldName && r.holes === oldHoles)
                 );
                 roundsToRecalc.forEach(round => {
-                    let newSD;
-                    if (round.holes === 9) {
-                        const sd_9_played = ((round.strokes - cr) * (113 / sr));
-                        const currentHCPI = myGolfer.handicapIndex !== undefined ? myGolfer.handicapIndex : myGolfer.startHcp;
-                        const sd_9_expected = ((currentHCPI * 1.04) + 2.4) / 2;
-                        newSD = parseFloat((sd_9_played + sd_9_expected).toFixed(1));
-                    } else {
-                        newSD = parseFloat(((round.strokes - cr) * (113 / sr)).toFixed(1));
-                    }
+                    // WHS-Standardformel für 9 und 18 Loch
+                    const newSD = parseFloat(((round.strokes - cr) * (113 / sr)).toFixed(1));
                     round.cr = cr.toFixed(1);
                     round.sr = sr.toFixed(0);
                     round.scoreDifferential = newSD;
@@ -3240,20 +3224,15 @@ function recalculateHistory() {
             round.courseHandicap = getPlayingCourseHandicap(round, course, runningHcp);
         }
 
-        // C) Score Differential neu berechnen (wichtig für 9-Loch!)
+        // C) Score Differential neu berechnen (WHS-Standard für 9 und 18 Loch)
         if (course) {
-            if (round.holes === 9) {
-                const sd_9_played = ((round.strokes - course.cr) * (113 / course.sr));
-                const sd_9_expected = ((runningHcp * 1.04) + 2.4) / 2;
-                round.scoreDifferential = parseFloat((sd_9_played + sd_9_expected).toFixed(1));
-            } else {
-                round.scoreDifferential = parseFloat(
-                    ((round.strokes - course.cr) * (113 / course.sr)).toFixed(1)
-                );
-            }
+            round.scoreDifferential = parseFloat(
+                ((round.strokes - course.cr) * (113 / course.sr)).toFixed(1)
+            );
             round.cr = course.cr.toFixed(1);
             round.sr = course.sr.toFixed(0);
         }
+        
 
         // D) HCP nach dieser Runde neu berechnen
         const roundsSoFar = myGolfer.rounds.slice(0, i + 1);
