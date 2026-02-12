@@ -925,7 +925,20 @@ transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
     
     <script>
         let myGolfer = null;
-let courses = [];
+        let courses = [];
+
+            // ID-Generator verhindert Kollisionen bei schnellem Speichern
+    let lastGeneratedId = 0;
+    
+    function generateUniqueId() {
+        const timestamp = Date.now();
+        if (timestamp <= lastGeneratedId) {
+            lastGeneratedId++;
+        } else {
+            lastGeneratedId = timestamp;
+        }
+        return lastGeneratedId.toString();
+    }
 
 // Standardkurse für neue Installationen
 const DEFAULT_COURSES = [
@@ -1149,7 +1162,37 @@ const DEFAULT_COURSES = [
                 myGolfer = stored ? JSON.parse(stored) : null;
             } catch (err) {
                 console.error('Fehler beim Laden der Daten:', err);
-                myGolfer = null; // Bei Fehler: Neu starten
+                myGolfer = null;
+            }
+            
+            if (myGolfer) {
+                try {
+                    // Sicherstellen dass rounds Array existiert
+                    if (!myGolfer.rounds) {
+                        myGolfer.rounds = [];
+                    }
+                    
+                    // 🔧 NEU: Prüfe dass rounds wirklich ein Array ist
+                    if (!Array.isArray(myGolfer.rounds)) {
+                        console.warn('rounds ist kein Array, korrigiere...');
+                        myGolfer.rounds = [];
+                    }
+                    
+                    // Normalisiere nur wenn nötig UND Runden vorhanden
+                    if (myGolfer.rounds.length > 0) {
+                        const needsNormalization = myGolfer.rounds.some(r => typeof r.id !== 'string');
+                        
+                        if (needsNormalization) {
+                            myGolfer.rounds = myGolfer.rounds.map(r => ({
+                                ...r,
+                                id: String(r.id)
+                            }));
+                            localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+                        }
+                    }
+                } catch (normErr) {
+                    console.error('Warnung: ID-Normalisierung fehlgeschlagen', normErr);
+                }
             }
             
             if (!myGolfer) {
@@ -1293,11 +1336,30 @@ function loadData() {
         } else {
             // Erste Installation: Lade Standardkurse
             courses = [...DEFAULT_COURSES];
-            saveCourses(); // Speichere sie im localStorage
         }
+        
+        // 🔧 Prüfe ob Normalisierung nötig ist
+        const needsNormalization = courses.some(c => typeof c.id !== 'string');
+        
+        if (needsNormalization) {
+            courses = courses.map(c => ({
+                ...c,
+                id: String(c.id)
+            }));
+            saveCourses(); // Nur speichern wenn geändert
+        }
+        
     } catch (err) {
         console.error('Fehler beim Laden der Plätze:', err);
-        courses = [...DEFAULT_COURSES]; // Bei Fehler: Standardkurse
+        
+        // 🔧 Notfall: Lade DEFAULT_COURSES und normalisiere
+        courses = [...DEFAULT_COURSES].map(c => ({
+            ...c,
+            id: String(c.id)
+        }));
+        
+        // 🔧 WICHTIG: Speichere die korrekten Daten, um die Fehler-Schleife zu brechen!
+        saveCourses();
     }
 }
 
@@ -1313,93 +1375,127 @@ function loadData() {
         
         function renderCourses() {
             filterCoursesByHoles();
-
+        
             const title = document.getElementById('courseManageTitle');
-                if (title) {
-                    title.textContent = `Plätze verwalten (${courses.length})`;
-                }
+            if (title) {
+                title.textContent = `Plätze verwalten (${courses.length})`;
+            }
             
             const manageList = document.getElementById('courseManageList');
             if (manageList) {
-            if (courses.length === 0) {
-                        manageList.innerHTML = '<div style="text-align:center;color:var(--color-text-secondary);padding:20px;font-size:14px;">Keine Plätze angelegt</div>';
-                        document.getElementById('showAllCoursesBtn').style.display = 'none';
-                    } else {
+                if (courses.length === 0) {
+                    manageList.innerHTML = '<div style="text-align:center;color:var(--color-text-secondary);padding:20px;font-size:14px;">Keine Plätze angelegt</div>';
+                    document.getElementById('showAllCoursesBtn').style.display = 'none';
+                } else {
                     // Button nur anzeigen wenn mehr als 3 Plätze
                     const showAllCoursesBtn = document.getElementById('showAllCoursesBtn');
                     const showAll = window.showAllCourses || false;
                     const collapseBtn = document.getElementById('collapseCoursesBtn');
-                                if (courses.length > 3) {
-                                    showAllCoursesBtn.style.display = 'block';
-                                       showAllCoursesBtn.textContent = showAll ? 'Weniger anzeigen' : 'Alle Plätze anzeigen';
-                                    collapseBtn.style.display = showAll ? 'inline-block' : 'none';
-                                } else {
-                                    showAllCoursesBtn.style.display = 'none';
-                                    collapseBtn.style.display = 'none';
-                                }
-                    // Sortiere nach Neuheit (neueste zuerst) für VERWALTUNG
-                    const sortedCourses = [...courses].sort((a, b) => b.id - a.id);
+                    if (courses.length > 3) {
+                        showAllCoursesBtn.style.display = 'block';
+                        showAllCoursesBtn.textContent = showAll ? 'Weniger anzeigen' : 'Alle Plätze anzeigen';
+                        collapseBtn.style.display = showAll ? 'inline-block' : 'none';
+                    } else {
+                        showAllCoursesBtn.style.display = 'none';
+                        collapseBtn.style.display = 'none';
+                    }
+                    
+                    // 🎲 Zufällige Sortierung - jedes Mal andere 3 Plätze!
+                    const sortedCourses = [...courses].sort(() => Math.random() - 0.5);
+                    
                     // Zeige nur 3 oder alle
                     const displayCourses = (showAll || sortedCourses.length <= 3) ? sortedCourses : sortedCourses.slice(0, 3);
                     manageList.innerHTML = displayCourses.map(c => `
-  <div class="course-item" onclick="this.classList.toggle('active'); event.stopPropagation();" 
-       style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
-<div style="flex:1;">
-    <div style="font-weight:600;font-size:14px;line-height:1.4;">${c.name}</div>
-    <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);margin-top:2px;">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)}<span class="mobile-bullet"> • </span><span class="desktop-break"></span>${c.holes} Löcher</div>
-</div>
-    <div class="course-actions" style="flex-direction: column; gap: 6px;">
-      <button onclick="event.stopPropagation(); editCourse('${c.id}')" class="small"
-        style="background:var(--color-border);color:var(--color-text-secondary);font-size:14px;padding:4px 6px;line-height:1;" 
-        title="Bearbeiten">✏️</button>
-      <button onclick="event.stopPropagation(); deleteCourse('${c.id}')" class="small"
-        style="background:var(--color-border);color:var(--color-text-secondary);font-size:14px;padding:4px 6px;line-height:1;" 
-        title="Löschen">🗑️</button>
-    </div>
-  </div>
-`).join('');
-
+          <div class="course-item" onclick="this.classList.toggle('active'); event.stopPropagation();" 
+               style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
+        <div style="flex:1;">
+            <div style="font-weight:600;font-size:14px;line-height:1.4;">${c.name}</div>
+            <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);margin-top:2px;">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)}<span class="mobile-bullet"> • </span><span class="desktop-break"></span>${c.holes} Löcher</div>
+        </div>
+            <div class="course-actions" style="flex-direction: column; gap: 6px;">
+              <button onclick="event.stopPropagation(); editCourse('${c.id}')" class="small"
+                style="background:var(--color-border);color:var(--color-text-secondary);font-size:14px;padding:4px 6px;line-height:1;" 
+                title="Bearbeiten">✏️</button>
+              <button onclick="event.stopPropagation(); deleteCourse('${c.id}')" class="small"
+                style="background:var(--color-border);color:var(--color-text-secondary);font-size:14px;padding:4px 6px;line-height:1;" 
+                title="Löschen">🗑️</button>
+            </div>
+          </div>
+        `).join('');
                 }
             }
         }
 
+
         function filterCoursesByHoles() {
-          const selectedHoles = parseInt(document.querySelector('input[name="roundHoles"]:checked').value);
-          const select = document.getElementById('roundCourse');
-          document.getElementById('roundStrokes').value = '';
-          updateStrokesSuffix();
-          const courseCounts = {};
-          if (myGolfer && myGolfer.rounds) {
-            myGolfer.rounds.forEach(round => {
-              const course = courses.find(c => c.name === round.course && c.holes === round.holes);
-              if (course) courseCounts[course.id] = (courseCounts[course.id] || 0) + 1;
-            });
-          }
-          let html = '<option value="">Platz auswählen</option>';
-          const filteredCourses = courses.filter(c => c.holes === selectedHoles);
-          if (filteredCourses.length === 0) {
-            html += `<option value="" disabled>Kein ${selectedHoles}-Loch-Platz angelegt</option>`;
-          } else {
-            const sortedCourses = [...filteredCourses].sort((a,b)=>(courseCounts[b.id]||0)-(courseCounts[a.id]||0));
-            sortedCourses.forEach(c => {
-              const playCount = courseCounts[c.id] || 0;
-              const countText = playCount > 0 ? ` • ${playCount}x` : '';
-              const par = c.par || (c.holes === 9 ? 36 : 72);
-              const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, c.sr, c.cr, par);
-              html += `<option value="${c.id}">${c.name}${countText}</option>`;
-            });
+            const selectedHoles = parseInt(document.querySelector('input[name="roundHoles"]:checked').value);
+            const select = document.getElementById('roundCourse');
+            document.getElementById('roundStrokes').value = '';
+            updateStrokesSuffix();
+            
+            const courseCounts = {};
+            const lastPlayedDates = {}; // 🔧 NEU: Tracke letztes Spieldatum
+            
+            if (myGolfer && myGolfer.rounds) {
+                myGolfer.rounds.forEach(round => {
+                    const course = courses.find(c => c.name === round.course && c.holes === round.holes);
+                    if (course) {
+                        courseCounts[course.id] = (courseCounts[course.id] || 0) + 1;
+                        
+                        // 🔧 NEU: Speichere das neueste Datum
+                        const roundDate = new Date(round.date);
+                        if (!lastPlayedDates[course.id] || roundDate > lastPlayedDates[course.id]) {
+                            lastPlayedDates[course.id] = roundDate;
+                        }
+                    }
+                });
+            }
+            
+            let html = '<option value="">Platz auswählen</option>';
+            const filteredCourses = courses.filter(c => c.holes === selectedHoles);
+            
+            if (filteredCourses.length === 0) {
+                html += `<option value="" disabled>Kein ${selectedHoles}-Loch-Platz angelegt</option>`;
+            } else {
+                // 🔧 3-Level Sortierung: 1. Play Count, 2. Letztes Datum, 3. Alphabetisch
+                const sortedCourses = [...filteredCourses].sort((a, b) => {
+                    // 1. Primär: Play Count (absteigend)
+                    const countDiff = (courseCounts[b.id]||0) - (courseCounts[a.id]||0);
+                    if (countDiff !== 0) return countDiff;
+                    
+                    // 2. Sekundär: Letztes Datum (neuestes zuerst)
+                    const dateA = lastPlayedDates[a.id];
+                    const dateB = lastPlayedDates[b.id];
+                    if (dateA && dateB) {
+                        return dateB - dateA; // Neueres Datum zuerst
+                    }
+                    if (dateA) return -1; // A gespielt, B nicht
+                    if (dateB) return 1;  // B gespielt, A nicht
+                    
+                    // 3. Tertiär: Alphabetisch (falls beide nie gespielt)
+                    return a.name.localeCompare(b.name);
+                });
+                
+                sortedCourses.forEach(c => {
+                    const playCount = courseCounts[c.id] || 0;
+                    const countText = playCount > 0 ? ` • ${playCount}x` : '';
+                    const par = c.par || (c.holes === 9 ? 36 : 72);
+                    const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, c.sr, c.cr, par);
+                    html += `<option value="${c.id}">${c.name}${countText}</option>`;
+                });
+            }
+            
+            select.innerHTML = html;
+            select.value = '';
+        
+            const roundCourseSelect = document.getElementById('roundCourse');
+            roundCourseSelect.onchange = function () {
+                updateStrokesPlaceholder();
+                autoFocusStrokesField();
+            };
+            updateStrokesPlaceholder();
+        }
 
-          }
-    select.innerHTML = html;
-    select.value = '';
-
-    const roundCourseSelect = document.getElementById('roundCourse');
-    roundCourseSelect.onchange = function () {
-        updateStrokesPlaceholder();
-        autoFocusStrokesField();
-    };
-        updateStrokesPlaceholder();
-}
 
 function updateStrokesPlaceholder() {
     const courseId = document.getElementById('roundCourse').value;
@@ -1505,7 +1601,7 @@ document.getElementById('roundStrokes').addEventListener('input', updateStrokesS
     );
 
     const round = {
-        id: Date.now().toString(),
+        id: generateUniqueId(),
         date: date,
         course: course.name,
         holes: holes,
@@ -2376,39 +2472,30 @@ parColor = color;
             renderCourses();
         }
 
-        function editRound(roundId) {
-            const round = myGolfer.rounds.find(r => r.id === roundId);
-            if (!round) return;
-        
-            const newStrokes = prompt('Schläge ändern:', round.strokes);
-            if (newStrokes === null) return;
-        
-            const newDate = prompt('Datum ändern (YYYY-MM-DD):', round.date);
-            if (newDate === null) return;
-        
-            const strokes = parseInt(newStrokes);
-            if (isNaN(strokes) || strokes < 18) {
-                return alert('Ungültige Schlagzahl!');
-            }
-        
-            // Finde den Platz für Neuberechnung
-            const course = courses.find(c => c.name === round.course && c.holes === round.holes);
-            
-            round.strokes = strokes;
-            round.date = newDate;
-            
-            // Score Differential neu berechnen
-            if (course) {
-                if (round.holes === 9) {
-                    const sd_9_played = ((strokes - course.cr) * (113 / course.sr));
-                    const sd_9_expected = ((myGolfer.handicapIndex * 1.04) + 2.4) / 2;
-                    round.scoreDifferential = parseFloat((sd_9_played + sd_9_expected).toFixed(1));
-                } else {
-                    round.scoreDifferential = parseFloat(((strokes - course.cr) * (113 / course.sr)).toFixed(1));
-                }
-            }
-        
-recalculateHistory();
+ function editRound(roundId) {
+    const round = myGolfer.rounds.find(r => r.id === roundId);
+    if (!round) return;
+
+    const newStrokes = prompt('Schläge ändern:', round.strokes);
+    if (newStrokes === null) return;
+
+    const newDate = prompt('Datum ändern (YYYY-MM-DD):', round.date);
+    if (newDate === null) return;
+
+    const strokes = parseInt(newStrokes);
+    if (isNaN(strokes) || strokes < 18) {
+        return alert('Ungültige Schlagzahl!');
+    }
+
+    // Update nur die Basis-Daten
+    round.strokes = strokes;
+    round.date = newDate;
+
+    // recalculateHistory berechnet SD, HCP, courseHandicap etc. korrekt
+    recalculateHistory();
+    
+    // WICHTIG: Wird von recalculateHistory schon gemacht!
+    // Aber doppelt schadet nicht
     localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
     updateUI();
     alert('✅ Runde aktualisiert!');
@@ -2676,7 +2763,7 @@ function deleteRound(roundId) {
                 }
                 
                 courses.push({
-                    id: Date.now().toString(),
+                    id: generateUniqueId(),
                     name: name,
                     cr: cr,
                     sr: sr,
@@ -2803,60 +2890,65 @@ function deleteRound(roundId) {
                 alert('Platz wurde aktualisiert!');
             }
 
-        function deleteCourse(courseId) {
-            const course = courses.find(c => c.id === courseId);
-            if (!course) return;
-            
-            const usedInRounds = myGolfer.rounds.some(r => r.course === course.name);
-            
-            let confirmMsg = `Platz "${course.name}" wirklich löschen?`;
-            if (usedInRounds) {
-                confirmMsg += '\n\n⚠️ ACHTUNG: Dieser Platz wurde bereits in Runden verwendet.\nDie Runden bleiben erhalten, aber der Platzname kann nicht mehr bearbeitet werden.';
+function deleteCourse(courseId) {
+    const course = courses.find(c => c.id === courseId);
+    if (!course) return;
+    
+    // 🔧 Null-Check + holes prüfen + Daten-Validierung
+    let affectedRounds = [];
+    if (myGolfer && myGolfer.rounds && Array.isArray(myGolfer.rounds)) {
+        affectedRounds = myGolfer.rounds.filter(r => 
+            r && r.course === course.name && r.holes === course.holes
+        );
+    }
+    
+    let confirmMsg = `Platz "${course.name}" (${course.holes} Löcher) wirklich löschen?`;
+    
+    if (affectedRounds.length > 0) {
+        // 🔧 Beispiel-Datum mit Fallback
+        let dateText = '';
+        try {
+            if (affectedRounds[0] && affectedRounds[0].date) {
+                const date = new Date(affectedRounds[0].date);
+                if (!isNaN(date.getTime())) {
+                    dateText = `\n(z.B. am ${date.toLocaleDateString('de-DE')})`;
+                }
             }
-            
-            if (!confirm(confirmMsg)) return;
-            
-            courses = courses.filter(c => c.id !== courseId);
-            saveCourses();
-            updateUI();
-            alert('✅ Platz wurde gelöscht!');
+        } catch (e) {
+            // Ignoriere Datum-Fehler
         }
         
-        function showEditProfile() {
-            const newName = prompt('Name ändern:', myGolfer.name);
-            if (newName && newName.trim()) {
-                myGolfer.name = newName.trim();
-            }
-            
-            const newClub = prompt('Club ändern:', myGolfer.club);
-            if (newClub !== null) {
-                myGolfer.club = newClub.trim();
-            }
-            
-const newHcp = prompt('Handicap manuell setzen:', myGolfer.handicapIndex.toFixed(1));
-if (newHcp !== null) {
-    // Komma → Punkt für internationale parseFloat-Kompatibilität
-    const normalizedHcp = newHcp.toString().trim().replace(',', '.');
-    const hcpValue = parseFloat(normalizedHcp);
-    
-    if (!isNaN(hcpValue) && hcpValue >= -5 && hcpValue <= 54) {
-        myGolfer.handicapIndex = hcpValue;
-        myGolfer.unofficialHandicap = hcpValue;
-        if (typeof myGolfer.lowestHandicapIndex === 'number') {
-            myGolfer.lowestHandicapIndex = Math.min(myGolfer.lowestHandicapIndex, hcpValue);
-        } else {
-            myGolfer.lowestHandicapIndex = hcpValue;
-        }
-    } else {
-        alert('❌ Ungültiger Handicap-Wert! (-5 bis 54, z.B. 23.4 oder 23,4)');
-        return;
+        confirmMsg += `\n\n⚠️ ACHTUNG: Dieser Platz wurde in ${affectedRounds.length} Runde(n) verwendet!${dateText}\n\n` +
+                      `Die Runden bleiben erhalten, aber der Platz wird aus der Liste entfernt.\n` +
+                      `Bei Statistiken wird "${course.name}" dann als "unbekannter Platz" angezeigt.\n\n` +
+                      `WIRKLICH LÖSCHEN?`;
     }
+    
+    if (!confirm(confirmMsg)) return;
+    
+    courses = courses.filter(c => c.id !== courseId);
+    saveCourses();
+    updateUI();
+    alert('✅ Platz wurde gelöscht!');
 }
-            
-            localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
-            updateUI();
-            alert('✅ Profil aktualisiert!');
-        }
+
+function showEditProfile() {
+  const newName = prompt("Name ändern", myGolfer.name);
+  if (newName && newName.trim()) {
+    myGolfer.name = newName.trim();
+  }
+  
+  const newClub = prompt("Club ändern", myGolfer.club);
+  if (newClub !== null) {
+    myGolfer.club = newClub.trim();
+  }
+  
+  
+  localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+  updateUI();
+  alert('✅ Profil wurde gespeichert!');
+}
+
         
         function exportData() {
             const data = {
@@ -2879,9 +2971,10 @@ if (newHcp !== null) {
             alert('✅ Daten wurden exportiert!');
         }
         
- function importData(event) {
+function importData(event) {
     const file = event.target.files[0];
     if (!file) return;
+    
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
@@ -2892,21 +2985,30 @@ if (newHcp !== null) {
                 throw new Error('Ungültiges Datenformat');
             }
             
-            // Vorschau mit Bestätigung (nur hier!)
+            // Vorschau mit Bestätigung
             confirmImport(data, function(confirmedData) {
                 myGolfer = confirmedData.golfer;
-                courses = confirmedData.courses || [];
+                courses = confirmedData.courses;
+                
+                // 🔧 ID-Normalisierung VOR dem Speichern
+                if (courses && Array.isArray(courses)) {
+                    courses = courses.map(c => ({
+                        ...c,
+                        id: String(c.id)
+                    }));
+                }
+                
+                if (myGolfer && myGolfer.rounds && Array.isArray(myGolfer.rounds)) {
+                    myGolfer.rounds = myGolfer.rounds.map(r => ({
+                        ...r,
+                        id: String(r.id)
+                    }));
+                }
+                
                 localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
                 saveCourses();
                 checkSetup();
-                
-                alert(
-                    '✅ Import erfolgreich!\n\n' +
-                    'Spieler: ' + (myGolfer.name || 'Unbekannt') + '\n' +
-                    'Handicap: ' + myGolfer.handicapIndex.toFixed(1) + '\n' +
-                    'Runden: ' + (myGolfer.rounds ? myGolfer.rounds.length : 0) + '\n' +
-                    'Plätze: ' + (Array.isArray(courses) ? courses.length : 0)
-                );
+                alert(`✅ Import erfolgreich!\n\nSpieler: ${myGolfer.name || 'Unbekannt'}\nHandicap: ${myGolfer.handicapIndex.toFixed(1)}\nRunden: ${myGolfer.rounds ? myGolfer.rounds.length : 0}`);
             });
             
         } catch(err) {
@@ -2914,14 +3016,13 @@ if (newHcp !== null) {
         }
     };
     reader.readAsText(file);
-    event.target.value = '';
+    event.target.value = ''; // Reset input
 }
 
-
-        
 function setupImportData(event) {
     const file = event.target.files[0];
     if (!file) return;
+    
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
@@ -2929,22 +3030,33 @@ function setupImportData(event) {
             
             // Validierung
             if (!data.golfer || !data.golfer.rounds || !Array.isArray(data.golfer.rounds)) {
-                throw new Error('Ungültiges Datenformat: "golfer.rounds" fehlt oder ist kein Array.');
+                throw new Error('Ungültiges Datenformat - golfer.rounds fehlt oder ist kein Array.');
             }
             
             // Direkter Import ohne Bestätigung (Ersteinrichtung)
             myGolfer = data.golfer;
-            courses = data.courses || [];
+            courses = data.courses;
+            
+            // 🔧 ID-Normalisierung VOR dem Speichern
+            if (courses && Array.isArray(courses)) {
+                courses = courses.map(c => ({
+                    ...c,
+                    id: String(c.id)
+                }));
+            }
+            
+            if (myGolfer && myGolfer.rounds && Array.isArray(myGolfer.rounds)) {
+                myGolfer.rounds = myGolfer.rounds.map(r => ({
+                    ...r,
+                    id: String(r.id)
+                }));
+            }
+            
             localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
             saveCourses();
             
-            alert(
-                '✅ Import erfolgreich!\n\n' +
-                'Spieler: ' + (myGolfer.name || 'Unbekannt') + '\n' +
-                'Handicap: ' + myGolfer.handicapIndex.toFixed(1) + '\n' +
-                'Runden: ' + (myGolfer.rounds ? myGolfer.rounds.length : 0) + '\n' +
-                'Plätze: ' + (Array.isArray(courses) ? courses.length : 0)
-            );
+            alert(`✅ Import erfolgreich!\n\nSpieler: ${myGolfer.name || 'Unbekannt'}\nHandicap: ${myGolfer.handicapIndex.toFixed(1)}\nRunden: ${myGolfer.rounds ? myGolfer.rounds.length : 0}\nPlätze: ${Array.isArray(courses) ? courses.length : 0}`);
+            
             checkSetup();
             
         } catch(err) {
@@ -2953,7 +3065,7 @@ function setupImportData(event) {
         }
     };
     reader.readAsText(file);
-    event.target.value = '';
+    event.target.value = ''; // Reset
 }
         
         function showHandicapCalculation() {
