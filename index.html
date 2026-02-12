@@ -1221,112 +1221,146 @@ const DEFAULT_COURSES = [
             document.getElementById('officialHcp').textContent = myGolfer.handicapIndex.toFixed(1);
             document.getElementById('unofficialHcp').textContent = (myGolfer.unofficialHandicap || myGolfer.handicapIndex).toFixed(1);
             
-if (rounds.length > 0) {
-    // === FORM NETTO (Letzte 5 Runden) ===
-const last5 = rounds.slice(-5);
-
-if (last5.length > 0) {
-    // Berechne Ø Netto-Abweichung (unter/über HCP)
-    const nettoDeltas = last5.map(r => r.playingHcp - r.scoreDifferential);
-    const avgNettoDelta = (nettoDeltas.reduce((a,b) => a + b, 0) / last5.length);
-    
-    let nettoText = '';
-    let nettoColor = '';
-    
-    if (avgNettoDelta >= 0.5) {
-        // Unter HCP = gut = positiv anzeigen
-        nettoText = `+${avgNettoDelta.toFixed(1)}`;
-        nettoColor = 'var(--color-primary)';
-    } else if (avgNettoDelta <= -0.5) {
-        // Über HCP = schlecht = negativ anzeigen
-        nettoText = `${avgNettoDelta.toFixed(1)}`;
-        nettoColor = 'var(--color-danger)';
-    } else {
-        // Nahe bei 0 = neutral
-        nettoText = '±0,0';
-        nettoColor = 'var(--color-text-secondary)';
-    }
-    
-    document.getElementById('formNettoLast5').textContent = nettoText;
-    document.getElementById('formNettoLast5').style.color = nettoColor;
-    
-    // Trend-Anzeige: Vergleich mit Gesamtdurchschnitt
-    const allNettoDeltas = rounds.map(r => r.playingHcp - r.scoreDifferential);
-    const avgNettoAll = allNettoDeltas.reduce((a,b) => a + b, 0) / rounds.length;
-    const trendDiff = avgNettoDelta - avgNettoAll;
-    
-    let trendText = '';
-    let trendColor = '';
-    
-    if (trendDiff >= 1.0) {
-        trendText = '📈 Besser';
-        trendColor = 'var(--color-primary)';
-    } else if (trendDiff <= -1.0) {
-        trendText = '📉 Schlechter';
-        trendColor = 'var(--color-danger)';
-    } else {
-        trendText = '➡️ Stabil';
-        trendColor = 'var(--color-text-secondary)';
-    }
-    
-    document.getElementById('formNettoTrend').textContent = trendText;
-    document.getElementById('formNettoTrend').style.color = trendColor;
-} else {
-    document.getElementById('formNettoLast5').textContent = '-';
-    document.getElementById('formNettoTrend').textContent = '-';
-}
-    
-    // === Ø ZU PAR (Letzte 5 Runden) ===
-    if (last5.length > 0) {
-        const toParValues = last5.map(r => {
-            const course = courses.find(c => c.name === r.course && c.holes === r.holes);
-            const par = course ? course.par : (r.holes === 9 ? 36 : 72);
-            return r.strokes - par;
-        });
+            if (rounds.length > 0) {
+                // === FORM NETTO (Letzte 5 Runden) ===
+                const last5 = rounds.slice(-5);
         
-        const avgToPar = toParValues.reduce((a,b) => a + b, 0) / last5.length;
-        const toParText = avgToPar > 0 
-            ? `+${Math.round(avgToPar)}` 
-            : `${Math.round(avgToPar)}`;
-        
-        document.getElementById('avgToParLast5').textContent = toParText;
-    } else {
-        document.getElementById('avgToParLast5').textContent = '-';
-    }
-    
-    // === RUNDEN IM HCP (Letzte 10) ===
-    const last10 = rounds.slice(-10);
-    
-    if (last10.length > 0) {
-        const roundsUnderHcp = last10.filter(r => r.scoreDifferential <= r.playingHcp).length;
-        const percentInHcp = Math.round((roundsUnderHcp / last10.length) * 100);
-        
-        document.getElementById('percentInHcpLast10').textContent = `${percentInHcp}%`;
-    } else {
-        document.getElementById('percentInHcpLast10').textContent = '-';
-    }
-    
-} else {
-    document.getElementById('formNettoLast5').textContent = '-';
-    document.getElementById('formNettoTrend').textContent = '-';
-    document.getElementById('avgToParLast5').textContent = '-';
-    document.getElementById('percentInHcpLast10').textContent = '-';
-}
-            
-                renderCourses();
-                renderRounds();
-                const chartWrapper = document.getElementById('handicapChartWrapper');
-                if (rounds.length >= 2) {
-                    chartWrapper.style.display = 'block';
-                    chartWrapper.classList.add('block');  // Mobile Override
-                    renderChart();
+                if (last5.length > 0) {
+                    // ✅ KORRIGIERT: Berechne klassisches Netto (Schläge minus erlaubte Schläge)
+                    const nettoDeltas = last5.map(r => {
+                        const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+                        const par = course ? course.par : (r.holes === 9 ? 36 : 72);
+                        const allowedStrokes = par + r.courseHandicap;
+                        return r.strokes - allowedStrokes;
+                    });
+                    
+                    const avgNettoDelta = (nettoDeltas.reduce((a,b) => a + b, 0) / last5.length);
+                    
+                    let nettoText = '';
+                    let nettoColor = '';
+                    
+                    if (avgNettoDelta <= -0.5) {
+                        // UNTER erlaubte Schläge = gut = negativ mit grün
+                        nettoText = `${avgNettoDelta.toFixed(1)}`;
+                        nettoColor = 'var(--color-primary)';
+                    } else if (avgNettoDelta >= 0.5) {
+                        // ÜBER erlaubte Schläge = schlecht = positiv mit rot
+                        nettoText = `+${avgNettoDelta.toFixed(1)}`;
+                        nettoColor = 'var(--color-danger)';
+                    } else {
+                        // Nahe bei 0 = neutral
+                        nettoText = '±0,0';
+                        nettoColor = 'var(--color-text-secondary)';
+                    }
+                    
+                    document.getElementById('formNettoLast5').textContent = nettoText;
+                    document.getElementById('formNettoLast5').style.color = nettoColor;
+                    
+                    // ✅ KORRIGIERT: Trend-Anzeige mit gleicher Metrik
+                    const allNettoDeltas = rounds.map(r => {
+                        const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+                        const par = course ? course.par : (r.holes === 9 ? 36 : 72);
+                        const allowedStrokes = par + r.courseHandicap;
+                        return r.strokes - allowedStrokes;
+                    });
+                    
+                    const avgNettoAll = allNettoDeltas.reduce((a,b) => a + b, 0) / rounds.length;
+                    const trendDiff = avgNettoDelta - avgNettoAll;
+                    
+                    let trendText = '';
+                    let trendColor = '';
+                    
+                    if (trendDiff <= -1.0) {
+                        // Letzte 5 sind BESSER (niedriger Netto)
+                        trendText = '📈 Besser';
+                        trendColor = 'var(--color-primary)';
+                    } else if (trendDiff >= 1.0) {
+                        // Letzte 5 sind SCHLECHTER (höher Netto)
+                        trendText = '📉 Schlechter';
+                        trendColor = 'var(--color-danger)';
+                    } else {
+                        trendText = '➡️ Stabil';
+                        trendColor = 'var(--color-text-secondary)';
+                    }
+                    
+                    document.getElementById('formNettoTrend').textContent = trendText;
+                    document.getElementById('formNettoTrend').style.color = trendColor;
                 } else {
-                    chartWrapper.style.display = 'none';
-                    chartWrapper.classList.remove('block');
+                    document.getElementById('formNettoLast5').textContent = '-';
+                    document.getElementById('formNettoTrend').textContent = '-';
                 }
-
-
+                
+                // === Ø ZU PAR (Letzte 5 Runden) ===
+                // === Ø ZU PAR (Letzte 5 Runden) - MIT INTELLIGENTER FARBE ===
+if (last5.length > 0) {
+    const toParValues = last5.map(r => {
+        const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+        const par = course ? course.par : (r.holes === 9 ? 36 : 72);
+        return r.strokes - par;
+    });
+    
+    // ✅ Durchschnittliche Vorgabe berechnen
+    const avgCourseHandicap = last5.reduce((sum, r) => sum + r.courseHandicap, 0) / last5.length;
+    
+    const avgToPar = toParValues.reduce((a,b) => a + b, 0) / last5.length;
+    const toParText = avgToPar > 0 
+        ? `+${Math.round(avgToPar)}` 
+        : `${Math.round(avgToPar)}`;
+    
+    // ✅ INTELLIGENTE FARBLOGIK: Vergleich mit Vorgabe
+    let toParColor;
+    const difference = avgToPar - avgCourseHandicap;
+    
+    if (difference <= -5) {
+        // Deutlich BESSER als Vorgabe (≥5 Schläge)
+        toParColor = 'var(--color-primary)';  // GRÜN
+    } else if (difference <= 5) {
+        // Nahe an Vorgabe (±5 Schläge)
+        toParColor = 'var(--color-text-secondary)';  // NEUTRAL
+    } else {
+        // Deutlich SCHLECHTER als Vorgabe (>5 Schläge)
+        toParColor = 'var(--color-danger)';  // ROT
+    }
+    
+    document.getElementById('avgToParLast5').textContent = toParText;
+    document.getElementById('avgToParLast5').style.color = toParColor;
+} else {
+    document.getElementById('avgToParLast5').textContent = '-';
+    document.getElementById('avgToParLast5').style.color = '';
+}
+                
+                // === RUNDEN IM HCP (Letzte 10) ===
+                const last10 = rounds.slice(-10);
+                
+                if (last10.length > 0) {
+                    const roundsUnderHcp = last10.filter(r => r.scoreDifferential <= r.playingHcp).length;
+                    const percentInHcp = Math.round((roundsUnderHcp / last10.length) * 100);
+                    
+                    document.getElementById('percentInHcpLast10').textContent = `${percentInHcp}%`;
+                } else {
+                    document.getElementById('percentInHcpLast10').textContent = '-';
+                }
+                
+            } else {
+                document.getElementById('formNettoLast5').textContent = '-';
+                document.getElementById('formNettoTrend').textContent = '-';
+                document.getElementById('avgToParLast5').textContent = '-';
+                document.getElementById('percentInHcpLast10').textContent = '-';
+            }
+            
+            renderCourses();
+            renderRounds();
+            const chartWrapper = document.getElementById('handicapChartWrapper');
+            if (rounds.length >= 2) {
+                chartWrapper.style.display = 'block';
+                chartWrapper.classList.add('block');
+                renderChart();
+            } else {
+                chartWrapper.style.display = 'none';
+                chartWrapper.classList.remove('block');
+            }
         }
+
         
 function loadData() {
     try {
@@ -2124,10 +2158,20 @@ function renderAdvancedStats() {
     }
 
     if (goalPriority < 40 && last5.length >= 5) {
-        const nettoLast5 = last5.map(r => r.playingHcp - r.scoreDifferential);
+        // Klassisches Netto für die letzten 5 Runden:
+        const nettoLast5 = last5.map(r => {
+            const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+            const par = course ? course.par : (r.holes === 9 ? 36 : 72);  // Fallback wie im Dashboard
+            const allowedStrokes = par + r.courseHandicap;                // Vorgabe zum Spielzeitpunkt
+            return r.strokes - allowedStrokes;                            // Netto dieser Runde
+        });
+    
         const avgNettoLast5 = (nettoLast5.reduce((a, b) => a + b, 0) / 5).toFixed(1);
-        if (parseFloat(avgNettoLast5) >= -0.5 && parseFloat(avgNettoLast5) <= 1.5) {
-            goalText = `💪 Ø Netto letzte 5: ${avgNettoLast5 >= 0 ? '+' : ''}${avgNettoLast5} HCP – Ziel: Konstant über HCP spielen!`;
+    
+        // Zielbedingung: im Schnitt ca. auf oder unter Vorgabe (Fenster -5 bis +5)
+        if (parseFloat(avgNettoLast5) >= -5 && parseFloat(avgNettoLast5) <= 5) {
+            const sign = parseFloat(avgNettoLast5) > 0 ? '+' : '';
+            goalText = `Netto letzte 5: ${sign}${avgNettoLast5} – Ziel: konstant unter Vorgabe spielen!`;
             goalPriority = 40;
         }
     }
@@ -2225,33 +2269,67 @@ function renderAdvancedStats() {
         }
     }
 
-    const displayCoursesArr = showAllCourses ? allCourseEntries : allCourseEntries.slice(0, 5);
+const displayCoursesArr = showAllCourses ? allCourseEntries : allCourseEntries.slice(0, 5);
 
-    const courseStatsHtml = displayCoursesArr
-        .map(([key, data]) => {
-            const avgSDCourse = (data.scoreDiffs.reduce((a, b) => a + b, 0) / data.count).toFixed(1);
-            const nettoValues = data.rounds.map(r => r.playingHcp - r.scoreDifferential);
-            const avgNetto = (nettoValues.reduce((a, b) => a + b, 0) / data.count).toFixed(1);
-            const nettoTextCourse = parseFloat(avgNetto) >= 0 ? `+${avgNetto} HCP` : `${avgNetto} HCP`;
-            const courseInfo = courses.find(c => c.name === data.name && c.holes === data.holes);
-            const coursePar = courseInfo ? courseInfo.par : (data.holes === 9 ? 36 : 72);
-            const bestSDCourse = Math.min(...data.scoreDiffs);
-            const bestRound = data.rounds.find(r => r.scoreDifferential === bestSDCourse);
-            const bestStrokes = bestRound ? bestRound.strokes : Math.min(...data.strokes);
-            const bestToPar = bestStrokes - coursePar;
-            const bestToParText = bestToPar > 0 ? `+${bestToPar}` : bestToPar.toString();
-            const displayName = `${data.name} (${data.holes}L)`;
-            return `
-                <div class="course-stats-item">
-                    <div style="font-weight: 600; margin-bottom: 5px">${displayName}</div>
-                    <div style="font-size: 0.85em; color: var(--color-text-secondary)">
-                        ${data.count}x gespielt • Ø SD ${avgSDCourse} • Ø Netto ${nettoTextCourse}<br>
-                        <strong>Beste:</strong> ${bestToParText} zu Par • SD ${bestSDCourse.toFixed(1)}
-                    </div>
+const courseStatsHtml = displayCoursesArr
+    .map(([key, data]) => {
+        const avgSDCourse = (data.scoreDiffs.reduce((a, b) => a + b, 0) / data.count).toFixed(1);
+        
+        // ✅ WHS-Performance mit AKTUELLEM Handicap
+        const courseInfo = courses.find(c => c.name === data.name && c.holes === data.holes);
+        let avgWHS = '-';
+        let whsColor = 'var(--color-text-secondary)';
+        let whsText = '-';
+        
+        if (courseInfo) {
+            const is9 = data.holes === 9;
+            let adjustedIndex = myGolfer.handicapIndex;
+            if (is9) adjustedIndex = adjustedIndex / 2;
+            
+            const currentCourseHcp = calculateCourseHandicap(
+                adjustedIndex, 
+                courseInfo.sr, 
+                courseInfo.cr, 
+                courseInfo.par
+            );
+            
+            const whsPerformance = data.rounds.map(r => currentCourseHcp - r.scoreDifferential);
+            avgWHS = (whsPerformance.reduce((a, b) => a + b, 0) / data.count).toFixed(1);
+            
+            const whsValue = parseFloat(avgWHS);
+            if (whsValue >= 5) {
+                whsColor = 'var(--color-primary)';
+            } else if (whsValue >= -5) {
+                whsColor = 'var(--color-text-secondary)';
+            } else {
+                whsColor = 'var(--color-danger)';
+            }
+            
+            whsText = whsValue > 0 ? `+${avgWHS}` : avgWHS;
+        }
+
+        const coursePar = courseInfo ? courseInfo.par : (data.holes === 9 ? 36 : 72);
+        const bestSDCourse = Math.min(...data.scoreDiffs);
+        const bestRound = data.rounds.find(r => r.scoreDifferential === bestSDCourse);
+        const bestStrokes = bestRound ? bestRound.strokes : Math.min(...data.strokes);
+        const bestToPar = bestStrokes - coursePar;
+        const bestToParText = bestToPar > 0 ? `+${bestToPar}` : bestToPar.toString();
+        const displayName = `${data.name} (${data.holes}L)`;
+        
+        return `
+            <div class="course-stats-item">
+                <div style="font-weight: 600; margin-bottom: 5px">${displayName}</div>
+                <div style="font-size: 0.85em; color: var(--color-text-secondary)">
+                    ${data.count}x gespielt • Ø SD ${avgSDCourse}<br>
+                    <span style="color: ${whsColor}; font-weight: 600">HCP-Performance: ${whsText}</span><br>
+                    <strong>Beste:</strong> ${bestToParText} zu Par • SD ${bestSDCourse.toFixed(1)}
                 </div>
-            `;
-        })
-        .join('');
+            </div>
+        `;
+    })
+    .join('');
+
+
 
     courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:var(--color-text-secondary);padding:20px">Keine Platzdaten</div>`;
 
