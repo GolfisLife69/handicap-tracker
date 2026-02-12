@@ -2175,9 +2175,12 @@
                 // Klassisches Netto für die letzten 5 Runden:
                 const nettoLast5 = last5.map(r => {
                     const course = courses.find(c => c.name === r.course && c.holes === r.holes);
-                    const par = course ? course.par : (r.holes === 9 ? 36 : 72);  // Fallback wie im Dashboard
-                    const allowedStrokes = par + r.courseHandicap;                // Vorgabe zum Spielzeitpunkt
-                    return r.strokes - allowedStrokes;                            // Netto dieser Runde
+                    const par = course ? course.par : (r.holes === 9 ? 36 : 72);
+                    const allowedStrokes = par + r.courseHandicap;
+                    const netto = r.strokes - allowedStrokes;
+                    
+                    // ✅ Normalisiere 9-Loch auf 18-Loch
+                    return r.holes === 9 ? netto * 2 : netto;
                 });
             
                 const avgNettoLast5 = (nettoLast5.reduce((a, b) => a + b, 0) / 5).toFixed(1);
