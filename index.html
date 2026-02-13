@@ -1641,19 +1641,27 @@
                 { holes: holes }, course, myGolfer.handicapIndex
             );
         
-            const round = {
-                id: generateUniqueId(),
-                date: date,
-                course: course.name,
-                holes: holes,
-                strokes: strokes,
-                cr: cr.toFixed(1),
-                sr: sr.toFixed(0),
-                scoreDifferential: parseFloat(scoreDifferential),
-                playingHcp: myGolfer.handicapIndex,
-                courseHandicap: courseHandicap,
-                official: isOfficial
-            };
+            // WHS 2024: Für 9-Loch-Runden SD in 18-Loch-Äquivalent umrechnen
+        const rawSD = parseFloat(scoreDifferential);
+        const isNineHole = holes === 9;
+        const effectiveSD = isNineHole
+            ? convert9HoleTo18HoleSD(rawSD, myGolfer.handicapIndex)
+            : rawSD;
+
+        const round = {
+            id: generateUniqueId(),
+            date: date,
+            course: course.name,
+            holes: holes,
+            strokes: strokes,
+            cr: cr.toFixed(1),
+            sr: sr.toFixed(0),
+            scoreDifferential: effectiveSD,
+            scoreDifferential9: isNineHole ? rawSD : null, // Rohwert für Anzeige
+            playingHcp: myGolfer.handicapIndex,
+            courseHandicap: courseHandicap,
+            official: isOfficial
+        };
         
             myGolfer.rounds.push(round);
         
@@ -1708,69 +1716,59 @@
         }
                 
         function updateMyHandicap() {
-// ✅ FIX 4: 9-Loch-Runden kombinieren vor HCP-Berechnung
-const effectiveSDs = combineNineHoleRounds(
-    myGolfer.rounds.filter(r => r.official !== false)
-);
-const officialRounds = effectiveSDs
-    .slice(-20)
-    .sort((a, b) => a.sd - b.sd);
-        
-            if (officialRounds.length === 0) {
-                myGolfer.handicapIndex = myGolfer.startHcp;
-                return;
-            }
-        
-            const count = officialRounds.length;
-        
-            if (count < 3) {
-                myGolfer.handicapIndex = myGolfer.startHcp;
-                myGolfer.countedRoundIds = [];
-                return;
-            }
-        
-            const { numCounted, adjustment } = getWHSParameters(count);
-            const bestRounds = officialRounds.slice(0, numCounted);
-            let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
-        
-            // ✅ FIX 1: 12-Monats-Fenster für Soft/Hard Cap
-            const hcpHistory = myGolfer.hcpHistory || [];
-            const now = new Date().toISOString();
-            const lowestHcp12m = getLowestHcpLast12Months(now, hcpHistory, myGolfer.startHcp);
-        
-            // Soft Cap: lowestHcp (12 Monate) + 3.0
-            const softCapLimit = lowestHcp12m + 3.0;
-            newHcp = Math.min(newHcp, softCapLimit);
-        
-            // Adjustment anwenden
-            newHcp += adjustment;
-            newHcp = Math.round(newHcp * 10) / 10;
-        
-            // Hard Cap: lowestHcp (12 Monate) + 5.0
-            const hardCapLimit = lowestHcp12m + 5.0;
-            newHcp = Math.min(newHcp, hardCapLimit);
-        
-            myGolfer.handicapIndex = newHcp;
-        
-            // HCP-History aktualisieren (für zukünftige 12-Monats-Berechnung)
-            const lastRoundDate = myGolfer.rounds
-                .filter(r => r.official !== false)
-                .slice(-1)[0]?.date || now;
-            
-            if (!myGolfer.hcpHistory) myGolfer.hcpHistory = [];
-            myGolfer.hcpHistory.push({ date: lastRoundDate, hcp: newHcp });
-        
-        // ✅ FIX 4: Bei kombinierten Runden beide IDs aufnehmen
+    const officialRounds = myGolfer.rounds
+        .filter(r => r.official !== false)
+        .slice(-20)
+        .map(r => ({ id: r.id, sd: r.scoreDifferential }))
+        .sort((a, b) => a.sd - b.sd);
+
+    if (officialRounds.length === 0) {
+        myGolfer.handicapIndex = myGolfer.startHcp;
+        return;
+    }
+
+    const count = officialRounds.length;
+
+    if (count < 3) {
+        myGolfer.handicapIndex = myGolfer.startHcp;
         myGolfer.countedRoundIds = [];
-        bestRounds.forEach(r => {
-            if (r.combined) {
-                myGolfer.countedRoundIds.push(r.round1Id, r.round2Id);
-            } else {
-                myGolfer.countedRoundIds.push(r.id);
-            }
-        });
-                        
-        }
+        return;
+    }
+
+    const { numCounted, adjustment } = getWHSParameters(count);
+    const bestRounds = officialRounds.slice(0, numCounted);
+    let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
+
+    // 12-Monats-Fenster für Soft/Hard Cap
+    const hcpHistory = myGolfer.hcpHistory || [];
+    const now = new Date().toISOString();
+    const lowestHcp12m = getLowestHcpLast12Months(now, hcpHistory, myGolfer.startHcp);
+
+    // Soft Cap
+    const softCapLimit = lowestHcp12m + 3.0;
+    newHcp = Math.min(newHcp, softCapLimit);
+
+    // Adjustment anwenden
+    newHcp += adjustment;
+    newHcp = Math.round(newHcp * 10) / 10;
+
+    // Hard Cap
+    const hardCapLimit = lowestHcp12m + 5.0;
+    newHcp = Math.min(newHcp, hardCapLimit);
+
+    myGolfer.handicapIndex = newHcp;
+
+    // HCP-History aktualisieren
+    const lastRoundDate = myGolfer.rounds
+        .filter(r => r.official !== false)
+        .slice(-1)[0]?.date || now;
+    
+    if (!myGolfer.hcpHistory) myGolfer.hcpHistory = [];
+    myGolfer.hcpHistory.push({ date: lastRoundDate, hcp: newHcp });
+
+    // Counted Round IDs (jetzt einfach, keine kombinierten Runden mehr)
+    myGolfer.countedRoundIds = bestRounds.map(r => r.id);
+}
             
          function updateUnofficialHandicap() {
             const allRounds = myGolfer.rounds
@@ -1871,52 +1869,19 @@ const officialRounds = effectiveSDs
             return Math.min(...inWindow.map(h => h.hcp));
         }
 
-                    // WHS: 9-Loch-Runden paarweise kombinieren
-// Zwei 9-Loch Score Differentials werden addiert = ein 18-Loch SD
-// Ungeparte 9-Loch-Runden werden gehalten (zählen nicht)
-        function combineNineHoleRounds(rounds) {
-            const result = [];
-            let pending9Hole = null;
-        
-            // Runden chronologisch durchgehen
-            const sorted = [...rounds].sort((a, b) => {
-                const dateCompare = new Date(a.date) - new Date(b.date);
-                if (dateCompare !== 0) return dateCompare;
-                return parseInt(a.id) - parseInt(b.id);
-            });
-        
-            for (const round of sorted) {
-                if (round.holes === 18) {
-                    result.push({
-                        id: round.id,
-                        sd: round.scoreDifferential,
-                        combined: false
-                    });
-                } else if (round.holes === 9) {
-                    if (pending9Hole === null) {
-                        pending9Hole = round;
-                    } else {
-                        // Zwei 9-Loch-Runden kombinieren
-                        const combinedSD = parseFloat(
-                            (pending9Hole.scoreDifferential + round.scoreDifferential).toFixed(1)
-                        );
-                        result.push({
-                            id: pending9Hole.id + '+' + round.id,
-                            sd: combinedSD,
-                            combined: true,
-                            round1Id: pending9Hole.id,
-                            round2Id: round.id
-                        });
-                        pending9Hole = null;
-                    }
-                }
-            }
-        
-            // Ungeparte 9-Loch-Runde: wird NICHT in die Berechnung aufgenommen
-            // (WHS: wird gehalten bis eine zweite 9-Loch-Runde vorliegt)
-        
-            return result;
-        }
+// WHS 2024: Expected Score – erwartetes 9-Loch Score Differential
+// Basiert auf dem USGA-Modell. Die exakte Formel ist proprietär,
+// aber diese Näherung passt zum offiziellen USGA-Beispiel:
+// HI 14.0 → erwartetes 9h-SD = 8.5 → bestätigt: HI/2 + 1.5
+function getExpected9HoleSD(handicapIndex) {
+    return (handicapIndex / 2) + 1.5;
+}
+
+// WHS 2024: 9-Loch SD in 18-Loch-Äquivalent umrechnen
+// 18h-SD = tatsächliches 9h-SD + erwartetes 9h-SD
+function convert9HoleTo18HoleSD(sd9, handicapIndex) {
+    return parseFloat((sd9 + getExpected9HoleSD(handicapIndex)).toFixed(1));
+}
         
         function toggleAdvancedStats() {
             const stats = document.getElementById('advancedStats');
@@ -3255,42 +3220,21 @@ const officialRounds = effectiveSDs
         }
                 
                 function showHandicapCalculation() {
-                    // 1. Hole alle offiziellen Runden (max. 20, sortiert nach Score Differential)
-// ✅ FIX 4: 9-Loch-Runden kombinieren
-const rawOfficial = myGolfer.rounds.filter(r => r.official !== false);
-const effectiveSDs = combineNineHoleRounds(rawOfficial);
-const officialRounds = effectiveSDs
-    .slice(-20)
-    .map(r => {
-        if (r.combined) {
-            // Kombinierte 9-Loch-Runde: Details aus beiden Runden zusammensetzen
-            const r1 = rawOfficial.find(x => x.id === r.round1Id);
-            const r2 = rawOfficial.find(x => x.id === r.round2Id);
-            return {
-                id: r.id,
-                date: (r1?.date || '') + ' + ' + (r2?.date || ''),
-                course: (r1?.course || '9L') + ' + ' + (r2?.course || '9L'),
-                holes: 18,
-                strokes: (r1?.strokes || 0) + (r2?.strokes || 0),
-                sd: r.sd,
-                playingHcp: r1?.playingHcp,
-                combined: true
-            };
-        } else {
-            const orig = rawOfficial.find(x => x.id === r.id);
-            return {
-                id: r.id,
-                date: orig?.date || '',
-                course: orig?.course || '',
-                holes: orig?.holes || 18,
-                strokes: orig?.strokes || 0,
-                sd: r.sd,
-                playingHcp: orig?.playingHcp,
-                combined: false
-            };
-        }
-    })
-    .sort((a, b) => a.sd - b.sd);
+                // 1. Hole alle offiziellen Runden (max. 20, sortiert nach Score Differential)
+                const officialRounds = myGolfer.rounds
+                    .filter(r => r.official !== false)
+                    .slice(-20)
+                    .map(r => ({ 
+                        id: r.id,
+                        date: r.date, 
+                        course: r.course, 
+                        holes: r.holes,
+                        strokes: r.strokes,
+                        sd: r.scoreDifferential,
+                        sd9: r.scoreDifferential9,
+                        playingHcp: r.playingHcp
+                    }))
+                    .sort((a, b) => a.sd - b.sd);
                 
                     if (officialRounds.length === 0) {
                         alert("Keine offiziellen Runden vorhanden!\n\nDein Handicap basiert auf dem Startwert: " + myGolfer.startHcp.toFixed(1));
@@ -3360,15 +3304,18 @@ const officialRounds = effectiveSDs
                     msg += "Die besten Runden zählen für dein HCP:\n\n";
                     
                     countedRounds.forEach((r, i) => {
-                        // Finde Platzinfo für zu-Par-Berechnung
-                        const course = courses.find(c => c.name === r.course && c.holes === r.holes);
-                        const par = course ? course.par : (r.holes === 9 ? 36 : 72);
-                        const toPar = r.strokes - par;
-                        const toParText = toPar > 0 ? `+${toPar}` : toPar.toString();
-                        
-                        msg += `${i + 1}. ${r.date} • ${r.course}\n`;
-                        msg += `   ${r.strokes} Schläge (${toParText} zu Par) • SD ${r.sd.toFixed(1)}\n`;
-                    });
+                    const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+                    const par = course ? course.par : (r.holes === 9 ? 36 : 72);
+                    const toPar = r.strokes - par;
+                    const toParText = toPar > 0 ? `+${toPar}` : toPar.toString();
+                    // Bei 9-Loch-Runden: zeige auch das rohe 9h-SD
+                    const sdText = r.sd9 !== null && r.sd9 !== undefined
+                        ? `SD ${r.sd.toFixed(1)} (9L: ${r.sd9.toFixed(1)})`
+                        : `SD ${r.sd.toFixed(1)}`;
+                    
+                    msg += `${i + 1}. ${r.date} • ${r.course}\n`;
+                    msg += `   ${r.strokes} Schläge (${toParText} zu Par) • ${sdText}\n`;
+                });
                     
                     msg += "\n";
                     msg += `Durchschnitt: ${beforeCap.toFixed(1)}\n`;
@@ -3421,7 +3368,7 @@ const officialRounds = effectiveSDs
                     alert(msg);
                 }
         
-        function recalculateHistory() {
+   function recalculateHistory() {
     if (!myGolfer || !myGolfer.rounds || myGolfer.rounds.length === 0) return;
 
     // 1. Alle Runden nach Datum sortieren
@@ -3434,7 +3381,7 @@ const officialRounds = effectiveSDs
     // 2. Vom Start-HCP aus chronologisch durchrechnen
     let runningHcp = myGolfer.startHcp;
     
-    // ✅ FIX 1: HCP-History aufbauen (für 12-Monats-Fenster)
+    // HCP-History aufbauen (für 12-Monats-Fenster)
     const hcpHistory = [{ date: myGolfer.created || myGolfer.rounds[0].date, hcp: myGolfer.startHcp }];
 
     for (let i = 0; i < myGolfer.rounds.length; i++) {
@@ -3451,22 +3398,28 @@ const officialRounds = effectiveSDs
 
         // C) Score Differential neu berechnen
         if (course) {
-            round.scoreDifferential = parseFloat(
+            const rawSD = parseFloat(
                 ((round.strokes - course.cr) * (113 / course.sr)).toFixed(1)
             );
             round.cr = course.cr.toFixed(1);
             round.sr = course.sr.toFixed(0);
+
+            // WHS 2024: 9-Loch SD → 18-Loch-Äquivalent
+            if (round.holes === 9) {
+                round.scoreDifferential9 = rawSD;
+                round.scoreDifferential = convert9HoleTo18HoleSD(rawSD, runningHcp);
+            } else {
+                round.scoreDifferential = rawSD;
+                round.scoreDifferential9 = null;
+            }
         }
 
         // D) HCP nach dieser Runde neu berechnen (nur offizielle)
-        const roundsSoFar = myGolfer.rounds.slice(0, i + 1);
-
-        // ✅ FIX 4: 9-Loch-Runden kombinieren
-        const effectiveSDs = combineNineHoleRounds(
-            roundsSoFar.filter(r => r.official !== false)
-        );
-        const officialSoFar = effectiveSDs
+        const officialSoFar = myGolfer.rounds
+            .slice(0, i + 1)
+            .filter(r => r.official !== false)
             .slice(-20)
+            .map(r => ({ id: r.id, sd: r.scoreDifferential }))
             .sort((a, b) => a.sd - b.sd);
 
         if (officialSoFar.length >= 3) {
@@ -3474,7 +3427,7 @@ const officialRounds = effectiveSDs
             const bestRounds = officialSoFar.slice(0, numCounted);
             let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
 
-            // ✅ FIX 1: 12-Monats-Fenster für Caps
+            // 12-Monats-Fenster für Caps
             const lowestHcp12m = getLowestHcpLast12Months(round.date, hcpHistory, myGolfer.startHcp);
 
             // Soft Cap
@@ -3487,7 +3440,7 @@ const officialRounds = effectiveSDs
 
             runningHcp = newHcp;
 
-            // ✅ FIX 2: ESR in recalculateHistory
+            // ESR in recalculateHistory
             if (round.official !== false) {
                 const esrDiff = runningHcp - round.scoreDifferential;
                 if (esrDiff >= 10.0) {
@@ -3498,35 +3451,26 @@ const officialRounds = effectiveSDs
             }
         }
 
-        // HCP-History fortschreiben (nur offizielle Runden ändern das HCP)
+        // HCP-History fortschreiben
         if (round.official !== false) {
             hcpHistory.push({ date: round.date, hcp: runningHcp });
         }
     }
 
     myGolfer.handicapIndex = runningHcp;
-    myGolfer.hcpHistory = hcpHistory; // ✅ Persistieren für updateMyHandicap
+    myGolfer.hcpHistory = hcpHistory;
     updateUnofficialHandicap();
 
-    // Counted Round IDs für aktuelle Anzeige
-    const finalEffective = combineNineHoleRounds(
-        myGolfer.rounds.filter(r => r.official !== false)
-    );
-    const finalOfficial = finalEffective
+    // Counted Round IDs (vereinfacht – keine kombinierten Runden mehr)
+    const finalOfficial = myGolfer.rounds
+        .filter(r => r.official !== false)
         .slice(-20)
+        .map(r => ({ id: r.id, sd: r.scoreDifferential }))
         .sort((a, b) => a.sd - b.sd);
 
     if (finalOfficial.length >= 3) {
         const { numCounted } = getWHSParameters(finalOfficial.length);
-        // Counted IDs: Bei kombinierten Runden beide IDs aufnehmen
-        myGolfer.countedRoundIds = [];
-        finalOfficial.slice(0, numCounted).forEach(r => {
-            if (r.combined) {
-                myGolfer.countedRoundIds.push(r.round1Id, r.round2Id);
-            } else {
-                myGolfer.countedRoundIds.push(r.id);
-            }
-        });
+        myGolfer.countedRoundIds = finalOfficial.slice(0, numCounted).map(r => r.id);
     } else {
         myGolfer.countedRoundIds = [];
     }
