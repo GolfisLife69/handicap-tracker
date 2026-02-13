@@ -1679,23 +1679,25 @@
         
 
         // WHS: Exceptional Score Reduction (ESR)
-        const esrHcp = round.playingHcp; // HI zum Zeitpunkt der Runde
-        const esrDiff = esrHcp - round.scoreDifferential;
-        if (isOfficial && esrDiff >= 10.0) {
-            myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 2.0);
-            // HCP-History aktualisieren
-            if (myGolfer.hcpHistory) {
-                const lastEntry = myGolfer.hcpHistory[myGolfer.hcpHistory.length - 1];
-                if (lastEntry) lastEntry.hcp = myGolfer.handicapIndex;
+        // NUR für nicht-historische Runden (recalculateHistory handhabt ESR selbst)
+        if (!isHistorical) {
+            const esrHcp = round.playingHcp;
+            const esrDiff = esrHcp - round.scoreDifferential;
+            if (isOfficial && esrDiff >= 10.0) {
+                myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 2.0);
+                if (myGolfer.hcpHistory) {
+                    const lastEntry = myGolfer.hcpHistory[myGolfer.hcpHistory.length - 1];
+                    if (lastEntry) lastEntry.hcp = myGolfer.handicapIndex;
+                }
+                alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -2.0 reduziert!');
+            } else if (isOfficial && esrDiff >= 7.0) {
+                myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 1.0);
+                if (myGolfer.hcpHistory) {
+                    const lastEntry = myGolfer.hcpHistory[myGolfer.hcpHistory.length - 1];
+                    if (lastEntry) lastEntry.hcp = myGolfer.handicapIndex;
+                }
+                alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -1.0 reduziert!');
             }
-            alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -2.0 reduziert!');
-        } else if (isOfficial && esrDiff >= 7.0) {
-            myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 1.0);
-            if (myGolfer.hcpHistory) {
-                const lastEntry = myGolfer.hcpHistory[myGolfer.hcpHistory.length - 1];
-                if (lastEntry) lastEntry.hcp = myGolfer.handicapIndex;
-            }
-            alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -1.0 reduziert!');
         }
         
             localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
@@ -1712,7 +1714,10 @@
             document.getElementById('roundStrokes').value = '';
             document.getElementById('roundOfficial').checked = false;
             updateStrokesSuffix();
-            alert(`Runde gespeichert!\nDifferential: ${round.scoreDifferential}\n${isOfficial ? 'Offizielles' : 'Inoffizielles'} HCP: ${myGolfer[isOfficial ? 'handicapIndex' : 'unofficialHandicap'].toFixed(1)}`);
+            const sdInfo = round.scoreDifferential9 !== null
+                ? `${round.scoreDifferential9} (→ 18L: ${round.scoreDifferential})`
+                : `${round.scoreDifferential}`;
+            alert(`Runde gespeichert!\nDifferential: ${sdInfo}\n${isOfficial ? 'Offizielles' : 'Inoffizielles'} HCP: ${myGolfer[isOfficial ? 'handicapIndex' : 'unofficialHandicap'].toFixed(1)}`);
         }
                 
         function updateMyHandicap() {
@@ -1744,17 +1749,10 @@
     const now = new Date().toISOString();
     const lowestHcp12m = getLowestHcpLast12Months(now, hcpHistory, myGolfer.startHcp);
 
-    // Soft Cap
-    const softCapLimit = lowestHcp12m + 3.0;
-    newHcp = Math.min(newHcp, softCapLimit);
-
-    // Adjustment anwenden
+    // WHS-Reihenfolge: Adjustment → Runden → Soft Cap → Hard Cap
     newHcp += adjustment;
     newHcp = Math.round(newHcp * 10) / 10;
-
-    // Hard Cap
-    const hardCapLimit = lowestHcp12m + 5.0;
-    newHcp = Math.min(newHcp, hardCapLimit);
+    newHcp = applyCaps(newHcp, lowestHcp12m);
 
     myGolfer.handicapIndex = newHcp;
 
@@ -1797,19 +1795,12 @@
             const now = new Date().toISOString();
             const lowestHcp12m = getLowestHcpLast12Months(now, hcpHistory, myGolfer.startHcp);
         
-            // Soft Cap
-            newHcp = Math.min(newHcp, lowestHcp12m + 3.0);
-        
-            // Adjustment anwenden
+            // WHS-Reihenfolge: Adjustment → Runden → Soft Cap → Hard Cap
             newHcp += adjustment;
-        
-            myGolfer.unofficialHandicap = Math.round(newHcp * 10) / 10;
-        
-            // Hard Cap
-            const hardCapLimit = lowestHcp12m + 5.0;
-            if (myGolfer.unofficialHandicap > hardCapLimit) {
-                myGolfer.unofficialHandicap = hardCapLimit;
-            }
+            newHcp = Math.round(newHcp * 10) / 10;
+            newHcp = applyCaps(newHcp, lowestHcp12m);
+
+            myGolfer.unofficialHandicap = newHcp;
         
         }
                 
@@ -1868,6 +1859,16 @@
             if (inWindow.length === 0) return fallback;
             return Math.min(...inWindow.map(h => h.hcp));
         }
+
+// WHS: Soft Cap + Hard Cap anwenden
+// Reihenfolge laut WHS: Durchschnitt → Adjustment → Runden → Soft Cap → Hard Cap
+function applyCaps(hcp, lowestHcp12m) {
+    // Soft Cap: lowestHcp (12 Monate) + 3.0
+    hcp = Math.min(hcp, lowestHcp12m + 3.0);
+    // Hard Cap: lowestHcp (12 Monate) + 5.0
+    hcp = Math.min(hcp, lowestHcp12m + 5.0);
+    return hcp;
+}
 
 // WHS 2024: Expected Score – erwartetes 9-Loch Score Differential
 // Basiert auf dem USGA-Modell. Die exakte Formel ist proprietär,
@@ -2010,9 +2011,11 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                             myGolfer.hcpHistory || [],
                             myGolfer.startHcp
                         );
-                    avgHcp = Math.min(avgHcp, lowestHcp + 3.0);
+                    // WHS-Reihenfolge: Adjustment → Caps
                     avgHcp += adjustment;
-                    hcp30DaysAgo = Math.round(avgHcp * 10) / 10;
+                    avgHcp = Math.round(avgHcp * 10) / 10;
+                    avgHcp = applyCaps(avgHcp, lowestHcp);
+                    hcp30DaysAgo = avgHcp;
                 }
             }
             const monthChange = (myGolfer.handicapIndex - hcp30DaysAgo).toFixed(1);
@@ -2743,12 +2746,13 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                             myGolfer.hcpHistory || [],
                             myGolfer.startHcp
                         );
-                        newHcp = Math.min(newHcp, lowestHcp + 3.0);
         
-                        // Adjustment anwenden
+                        // WHS-Reihenfolge: Adjustment → Caps
                         newHcp += adjustment;
+                        newHcp = Math.round(newHcp * 10) / 10;
+                        newHcp = applyCaps(newHcp, lowestHcp);
         
-                        unofficialHistory.push(Math.round(newHcp * 10) / 10);
+                        unofficialHistory.push(newHcp);
                         }
                         
                     // Offizielles HCP nach dieser Runde (WHS-KORREKT!)
@@ -2777,12 +2781,13 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                             myGolfer.hcpHistory || [],
                             myGolfer.startHcp
                         );
-                        newHcp = Math.min(newHcp, lowestHcp + 3.0);
-        
-                        // Adjustment anwenden
+
+                        // WHS-Reihenfolge: Adjustment → Caps
                         newHcp += adjustment;
+                        newHcp = Math.round(newHcp * 10) / 10;
+                        newHcp = applyCaps(newHcp, lowestHcp);
         
-                        officialHistory.push(Math.round(newHcp * 10) / 10);
+                        officialHistory.push(newHcp);
                     }
                         }
                     
@@ -3019,16 +3024,12 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                             (r.course === oldName && r.holes === oldHoles)
                         );
                         roundsToRecalc.forEach(round => {
-                            // WHS-Standardformel für 9 und 18 Loch
-                            const newSD = parseFloat(((round.strokes - cr) * (113 / sr)).toFixed(1));
+                            // Nur Basisdaten aktualisieren - SD wird durch recalculateHistory korrekt berechnet
                             round.cr = cr.toFixed(1);
                             round.sr = sr.toFixed(0);
-                            round.scoreDifferential = newSD;
                         });
-                        updateMyHandicap();
-                        updateUnofficialHandicap();
-                        localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
-                        saveCourses();
+                        // recalculateHistory berechnet SD inkl. 9-Loch-Konvertierung
+                        recalculateHistory();
                         updateUI();
                         alert(`Platz wurde aktualisiert!\n${roundsToRecalc.length} Runden wurden mit neuen CR/SR-Werten neu berechnet.\nHandicap wurde aktualisiert.`);
                         return;
@@ -3254,29 +3255,30 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     const countedRounds = officialRounds.slice(0, numCounted);
                     const countedIds = countedRounds.map(r => r.id);
                     
-                    // 3. Berechne Durchschnitt der besten Runden
+                    // 3. Berechne Durchschnitt + Adjustment
                     let avgBest = countedRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
+                    const beforeAdj = avgBest;
                     
-                    // 4. Soft Cap: ✅ FIX 1: 12-Monats-Fenster
-                        const hcpHistory = myGolfer.hcpHistory || [];
-                        const now = new Date().toISOString();
-                        const lowestHcp12m = getLowestHcpLast12Months(now, hcpHistory, myGolfer.startHcp);
-                        const softCapLimit = lowestHcp12m + 3.0;
-                        const beforeCap = avgBest;
-                        avgBest = Math.min(avgBest, softCapLimit);
-                        const softCapApplied = beforeCap > softCapLimit;
-                        
-                        // 5. Adjustment (Bonus/Anpassung) anwenden
-                        let calculatedHcp = avgBest + adjustment;
-                        
-                        // 6. Hard Cap: ✅ FIX 1: 12-Monats-Fenster
-                        const hardCapLimit = lowestHcp12m + 5.0;
-                        const beforeHardCap = calculatedHcp;
-                        calculatedHcp = Math.min(calculatedHcp, hardCapLimit);
-                        const hardCapApplied = beforeHardCap > hardCapLimit;
+                    // 4. Adjustment anwenden (VOR Caps)
+                    let calculatedHcp = avgBest + adjustment;
                     
-                    // 7. Runde auf 0.1
-                    const finalHcp = Math.round(calculatedHcp * 10) / 10;
+                    // 5. Runden auf 0.1
+                    calculatedHcp = Math.round(calculatedHcp * 10) / 10;
+                    const beforeCap = calculatedHcp;
+                    
+                    // 6. Soft/Hard Cap
+                    const hcpHistory = myGolfer.hcpHistory || [];
+                    const now = new Date().toISOString();
+                    const lowestHcp12m = getLowestHcpLast12Months(now, hcpHistory, myGolfer.startHcp);
+                    const softCapLimit = lowestHcp12m + 3.0;
+                    const hardCapLimit = lowestHcp12m + 5.0;
+                    const afterCap = applyCaps(calculatedHcp, lowestHcp12m);
+                    const softCapApplied = beforeCap > softCapLimit;
+                    const hardCapApplied = beforeCap > hardCapLimit;
+                    const capsApplied = afterCap !== beforeCap;
+                    
+                    // 7. Endergebnis
+                    const finalHcp = afterCap;
                 
                     // 8. Finde die Runden die als nächstes "rausfallen"
                     const allOfficialByDate = myGolfer.rounds
@@ -3289,19 +3291,22 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 
                     // === TEXT ERSTELLEN ===
                     let msg = "WHS HANDICAP-BERECHNUNG\n";
-                    msg += "━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+                        msg += "\n";
+                    msg += `Durchschnitt: ${beforeAdj.toFixed(1)}\n`;
                     
-                    // Übersicht
-                    msg += `Offizielle Runden (letzte 20): ${count}\n`;
-                    msg += `Davon gewertet (beste): ${numCounted}\n`;
                     if (adjustment !== 0) {
                         msg += `WHS-Anpassung: ${adjustment > 0 ? '+' : ''}${adjustment.toFixed(1)}\n`;
                     }
+                    
+                    msg += `Gerundet: ${beforeCap.toFixed(1)}\n`;
+                    
+                    if (capsApplied) {
+                            msg += `Soft/Hard Cap angewendet (Low HI 12M: ${lowestHcp12m.toFixed(1)})\n`;
+                    }
+                    
                     msg += "\n";
-                
-                    // Schritt 1: Gewertete Runden
-                    msg += "GEWERTETE RUNDEN\n";
-                    msg += "Die besten Runden zählen für dein HCP:\n\n";
+                    msg += `DEIN HANDICAP: ${finalHcp.toFixed(1)}\n`;
+                    msg += "\n━━━━━━━━━━━━━━━━━━━━━━━\n\n";
                     
                     countedRounds.forEach((r, i) => {
                     const course = courses.find(c => c.name === r.course && c.holes === r.holes);
@@ -3316,24 +3321,6 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     msg += `${i + 1}. ${r.date} • ${r.course}\n`;
                     msg += `   ${r.strokes} Schläge (${toParText} zu Par) • ${sdText}\n`;
                 });
-                    
-                    msg += "\n";
-                    msg += `Durchschnitt: ${beforeCap.toFixed(1)}\n`;
-                    
-                    // Soft Cap
-                    if (softCapApplied) {
-                        msg += `Soft Cap angewendet (max. ${softCapLimit.toFixed(1)})\n`;
-                    }
-                    
-                    // Adjustment
-                    if (adjustment !== 0) {
-                        msg += `WHS-Anpassung: ${adjustment > 0 ? '+' : ''}${adjustment.toFixed(1)}\n`;
-                    }
-                    
-                    // Hard Cap
-                    if (hardCapApplied) {
-                        msg += `Hard Cap angewendet (max. ${hardCapLimit.toFixed(1)})\n`;
-                    }
                     
                     msg += "\n";
                     msg += `DEIN HANDICAP: ${finalHcp.toFixed(1)}\n`;
@@ -3425,24 +3412,21 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
         if (officialSoFar.length >= 3) {
             const { numCounted, adjustment } = getWHSParameters(officialSoFar.length);
             const bestRounds = officialSoFar.slice(0, numCounted);
-            let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
+                let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
 
-            // 12-Monats-Fenster für Caps
-            const lowestHcp12m = getLowestHcpLast12Months(round.date, hcpHistory, myGolfer.startHcp);
-
-            // Soft Cap
-            newHcp = Math.min(newHcp, lowestHcp12m + 3.0);
+            // Adjustment anwenden (VOR Caps, wie in updateMyHandicap)
             newHcp += adjustment;
             newHcp = Math.round(newHcp * 10) / 10;
 
-            // Hard Cap
-            newHcp = Math.min(newHcp, lowestHcp12m + 5.0);
+            // Soft/Hard Cap
+            const lowestHcp12m = getLowestHcpLast12Months(round.date, hcpHistory, myGolfer.startHcp);
+            newHcp = applyCaps(newHcp, lowestHcp12m);
 
             runningHcp = newHcp;
 
             // ESR in recalculateHistory
             if (round.official !== false) {
-                const esrDiff = runningHcp - round.scoreDifferential;
+                const esrDiff = round.playingHcp - round.scoreDifferential;
                 if (esrDiff >= 10.0) {
                     runningHcp = Math.max(-5.0, runningHcp - 2.0);
                 } else if (esrDiff >= 7.0) {
