@@ -1921,30 +1921,34 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             const rounds9 = rounds.filter(r => r.holes === 9);
             const last10 = rounds.slice(-10);
             const last5 = rounds.slice(-5);
+
+            // Letzte 20 Runden: Basis für SD-basierte Statistiken
+            // Vermeidet Verzerrung durch alte Runden mit stark abweichendem HCP
+            const recent20 = rounds.slice(-20);
         
             // =========================================================
             // VORAB-BERECHNUNGEN (benötigt für Ziele UND spätere Stats)
             // =========================================================
         
-            // --- Allgemeine SD-Werte ---
-            const sdValues = rounds.map(r => r.scoreDifferential);
+            // --- Allgemeine SD-Werte (letzte 20) ---
+            const sdValues = recent20.map(r => r.scoreDifferential);
             const bestSD = Math.min(...sdValues).toFixed(1);
             const worstSD = Math.max(...sdValues).toFixed(1);
             const avgSD = (sdValues.reduce((a, b) => a + b, 0) / sdValues.length).toFixed(1);
         
-            // --- Konstanz ---
+            // --- Konstanz (letzte 20) ---
             const variance = sdValues.reduce((sum, sd) => sum + Math.pow(sd - parseFloat(avgSD), 2), 0) / sdValues.length;
             const consistency = Math.sqrt(variance).toFixed(1);
         
-            // --- Unter HCP / Serien ---
-            const underPar = rounds.filter(r => r.scoreDifferential <= r.playingHcp).length;
+            // --- Unter HCP / Serien (letzte 20) ---
+            const underPar = recent20.filter(r => r.scoreDifferential <= r.playingHcp).length;
             let currentStreak = 0;
             let bestStreak = 0;
             let currentStreakActive = false;
-            rounds.forEach((r, i) => {
+            recent20.forEach((r, i) => {
                 if (r.scoreDifferential <= r.playingHcp) {
                     currentStreak++;
-                    if (i === rounds.length - 1) currentStreakActive = true;
+                    if (i === recent20.length - 1) currentStreakActive = true;
                 } else {
                     bestStreak = Math.max(bestStreak, currentStreak);
                     currentStreak = 0;
@@ -1956,9 +1960,9 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 ? `${bestStreak} Runden${currentStreakActive && currentStreak > 0 ? ` (aktuell: ${currentStreak})` : ''}`
                 : 'Noch keine';
         
-            // --- Offizielle / Inoffizielle Runden ---
-            const officialRounds = rounds.filter(r => r.official !== false);
-            const unofficialRounds = rounds.filter(r => r.official === false);
+            // --- Offizielle / Inoffizielle Runden (letzte 20) ---
+            const officialRounds = recent20.filter(r => r.official !== false);
+            const unofficialRounds = recent20.filter(r => r.official === false);
             const avgSDOfficial = officialRounds.length > 0
                 ? (officialRounds.map(r => r.scoreDifferential).reduce((a, b) => a + b, 0) / officialRounds.length).toFixed(1)
                 : '-';
@@ -1966,7 +1970,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 ? (unofficialRounds.map(r => r.scoreDifferential).reduce((a, b) => a + b, 0) / unofficialRounds.length).toFixed(1)
                 : '-';
         
-            // --- Performance unter Druck ---
+            // --- Performance unter Druck (letzte 20) ---
             let pressureText = 'Nur offizielle Runden';
             let pressureColor = 'var(--color-text-secondary)';
             if (unofficialRounds.length > 0 && officialRounds.length > 0) {
@@ -1982,6 +1986,10 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     pressureColor = 'var(--color-text-secondary)';
                 }
             }
+
+            // Alle offiziellen/inoffiziellen Runden (für Zähler und Ziele)
+            const allOfficialRounds = rounds.filter(r => r.official !== false);
+            const allUnofficialRounds = rounds.filter(r => r.official === false);
         
             // --- Trend-Werte ---
             const hcpStart = myGolfer.startHcp;
@@ -2065,10 +2073,10 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 }
             }
         
-            // --- Saisonale Performance ---
+            // --- Saisonale Performance (letzte 20) ---
             const monthlyStats = {};
             const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
-            rounds.forEach(r => {
+            recent20.forEach(r => {
                 const month = new Date(r.date).getMonth();
                 if (!monthlyStats[month]) {
                     monthlyStats[month] = { scoreDiffs: [], count: 0 };
@@ -2104,8 +2112,8 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             let goalText = 'Weiter so! 💪';
             let goalPriority = 0;
         
-            if (officialRounds.length < 20) {
-                const remaining = 20 - officialRounds.length;
+            if (allOfficialRounds.length < 20) {
+                const remaining = 20 - allOfficialRounds.length;
                 goalText = `Noch ${remaining} offizielle Runde${remaining > 1 ? 'n' : ''} bis stabiles HCP (20 Runden)`;
                 goalPriority = 100;
             }
@@ -2192,16 +2200,16 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             if (goalPriority < 55) {
                 const currentMonth = new Date().getMonth();
                 const currentYear = new Date().getFullYear();
-                const thisMonthOfficial = officialRounds.filter(r => {
+                const thisMonthOfficial = allOfficialRounds.filter(r => {
                     const rDate = new Date(r.date);
                     return rDate.getMonth() === currentMonth && rDate.getFullYear() === currentYear;
                 }).length;
-                if (officialRounds.length >= 3) {
-                    const firstOfficial = officialRounds[0];
-                    const lastOfficial = officialRounds[officialRounds.length - 1];
+                if (allOfficialRounds.length >= 3) {
+                    const firstOfficial = allOfficialRounds[0];
+                    const lastOfficial = allOfficialRounds[allOfficialRounds.length - 1];
                     const monthsActive = (new Date(lastOfficial.date) - new Date(firstOfficial.date)) / (1000 * 60 * 60 * 24 * 30.44);
                     if (monthsActive >= 1) {
-                        const avgPerMonth = Math.round(officialRounds.length / monthsActive);
+                        const avgPerMonth = Math.round(allOfficialRounds.length / monthsActive);
                         const target = Math.max(3, avgPerMonth);
                         if (thisMonthOfficial < target) {
                             const remaining = target - thisMonthOfficial;
@@ -2212,7 +2220,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 }
             }
         
-            if (goalPriority < 50 && unofficialRounds.length > 0 && officialRounds.length > 0) {
+            if (goalPriority < 50 && allUnofficialRounds.length > 0 && allOfficialRounds.length > 0) {
                 const pressureDiffGoal = parseFloat(avgSDOfficial) - parseFloat(avgSDUnofficial);
                 if (pressureDiffGoal > 0.5) {
                     goalText = `🏆 Performance unter Druck: +${pressureDiffGoal.toFixed(1)} SD – Ziel: Auf ±0,5 verbessern!`;
@@ -2260,7 +2268,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             }
         
             if (goalPriority < 20 && rounds.length >= 10) {
-                const last10Official = officialRounds.slice(-10);
+                const last10Official = allOfficialRounds.slice(-10);
                 if (last10Official.length >= 10) {
                     if (Math.abs(parseFloat(monthChange)) < 0.5) {
                         goalText = `Seit 10 Runden ohne große Änderung – Zeit für neuen Impuls? 📚`;
@@ -2276,6 +2284,9 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             // =========================================================
         
             generalStats.innerHTML = `
+                <div style="font-size: 11px; color: var(--color-text-secondary); text-align: right; margin-bottom: 4px; opacity: 0.7;">
+                    Basis: letzte ${recent20.length} Runde${recent20.length !== 1 ? 'n' : ''} (wie WHS)
+                </div>
                 <div class="stat-row">
                     <span class="stat-label">Ø Score Differential</span>
                     <span class="stat-data">${avgSD}</span>
@@ -2302,7 +2313,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Unter HCP gespielt</span>
-                    <span class="stat-data">${underPar} (${((underPar / rounds.length) * 100).toFixed(0)}%)</span>
+                    <span class="stat-data">${underPar} von ${recent20.length} (${((underPar / recent20.length) * 100).toFixed(0)}%)</span>
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Beste Serie</span>
@@ -2315,11 +2326,11 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             `;
         
             // =========================================================
-            // HTML-Ausgabe: PLATZ-STATISTIK
+            // HTML-Ausgabe: PLATZ-STATISTIK (letzte 20 Runden)
             // =========================================================
         
             const coursesPlayed = {};
-            rounds.forEach(r => {
+            recent20.forEach(r => {
                 const key = `${r.course}-${r.holes}L`;
                 if (!coursesPlayed[key]) {
                     coursesPlayed[key] = { name: r.course, holes: r.holes, count: 0, strokes: [], scoreDiffs: [], rounds: [] };
