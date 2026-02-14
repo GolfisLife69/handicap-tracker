@@ -552,18 +552,53 @@
         }
          
         
-                #hcpButtonUnderGraph {
-                    display: block !important;
-                    margin: 15px auto 0 auto;
+                .hcp-box {
+                    position: relative;
+                    overflow: hidden;
                 }
-        
-                @media (max-width: 768px) {
-                    #handicapChartWrapper {
-                        display: none !important;
-                    }
-                    
-                    #handicapChartWrapper.block {
-                        display: block !important;
+
+                .sparkline-container {
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    height: 25px;
+                    opacity: 0.35;
+                    pointer-events: none;
+                }
+
+                .sparkline-container svg {
+                    width: 100%;
+                    height: 100%;
+                }
+
+                .hcpi-link {
+                    cursor: pointer;
+                    transition: opacity 0.2s;
+                    -webkit-tap-highlight-color: transparent;
+                }
+
+                .hcpi-link:hover {
+                    opacity: 0.7;
+                }
+
+                .hcpi-sidebar-btn {
+                    background: transparent;
+                    color: var(--color-text-secondary);
+                    border: 1px solid var(--color-border);
+                    font-size: 13px;
+                    font-weight: 400;
+                    padding: 10px 20px;
+                    transition: all 0.2s;
+                    cursor: pointer;
+                }
+
+                @media (hover: hover) and (pointer: fine) {
+                    .hcpi-sidebar-btn:hover {
+                        background: var(--color-bg-primary);
+                        border-color: var(--color-text-secondary);
+                        color: var(--color-text-primary);
+                        transform: translateY(-1px);
                     }
                 }
         
@@ -808,11 +843,12 @@
                         <div class="file-input-wrapper" style="margin-bottom: 0;">
                         
                         <input type="file" id="importFile" accept=".json" onchange="importData(event)">
-                        <button class="secondary" onclick="document.getElementById('importFile').click()">📁 Daten importieren</button>
+                        <button class="hcpi-sidebar-btn" onclick="document.getElementById('importFile').click()">📁 Daten importieren</button>
                         </div>
                         
-                        <button class="secondary" onclick="showEditProfile()">👤 Profil bearbeiten</button>
-                        <button class="secondary" onclick="manualRecalculate()">🔄 Handicap neu berechnen</button>
+                        <button class="hcpi-sidebar-btn" onclick="showEditProfile()">👤 Profil bearbeiten</button>
+                        <button class="hcpi-sidebar-btn" onclick="showHandicapCalculation()">📋 HCPI-Berechnung anzeigen</button>
+                        <button class="hcpi-sidebar-btn" onclick="manualRecalculate()">🔄 Handicap neu berechnen</button>
                         <button class="danger" onclick="clearData()">🗑️ Alles löschen</button>
                         </div>
                     
@@ -827,17 +863,19 @@
                             <div class="hcp-box official">
                                 <div class="hcp-box-label">🏆 HCP (gewertet)</div>
                                 <div class="hcp-box-value" id="officialHcp">-</div>
+                                <div class="sparkline-container" id="sparklineOfficial"></div>
                             </div>
                             <div class="hcp-box unofficial">
                                 <div class="hcp-box-label">🏌️ HCP (gesamt)</div>
                                 <div class="hcp-box-value" id="unofficialHcp">-</div>
+                                <div class="sparkline-container" id="sparklineUnofficial"></div>
                             </div>
                         </div>
                         
                         <div class="stats-grid" style="grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0;">
                             
                             <!-- Kompakte Runden-Zähler -->
-                            <div style="grid-column: 1 / -1; text-align: center; font-size: 0.85em; color: var(--color-text-secondary); margin-top: -14px; margin-bottom: -2px; padding: 6px 0;">
+                            <div class="hcpi-link" onclick="showHandicapCalculation()" style="grid-column: 1 / -1; text-align: center; font-size: 0.85em; color: var(--color-text-secondary); margin-top: -14px; margin-bottom: -2px; padding: 6px 0;">
                                 <span id="totalRounds">0</span> Runden (<span id="officialRounds">0</span> offiziell ☆)
                             </div>
 
@@ -867,7 +905,8 @@
                                 <div style="font-size: 0.75em; color: var(--color-text-secondary);" id="avgToParLast10">-</div>
                             </div>
 
-                        </div>           
+                        </div>
+
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                             <h2 style="margin: 0;">Letzte Runden</h2>
                             <div style="display: flex; align-items: center;">
@@ -903,20 +942,18 @@
                                 <h4 style="color: var(--color-text-secondary); font-size: 0.9em; margin-bottom: 10px;">TREND-ANALYSE</h4>
                                 <div id="trendStats"></div>
                             </div>
-                        </div>
-                        
-                        <!-- Graph + Button Wrapper -->
-                        <div id="handicapChartWrapper" style="display: none; text-align: center; margin-bottom: 25px;">
-                            <canvas id="hcpCanvas"></canvas>
-                            <div style="margin-top:10px;font-size:14px;color:var(--color-text-secondary);">
-                                Handicap-Entwicklung (letzte 10 Runden)
+
+                            <!-- Graph innerhalb Erweiterte Statistiken -->
+                            <div id="handicapChartWrapper" style="display: none; text-align: center; margin-top: 20px;">
+                                <h4 style="color: var(--color-text-secondary); font-size: 0.9em; margin-bottom: 10px;">HANDICAP-ENTWICKLUNG</h4>
+                                <canvas id="hcpCanvas"></canvas>
+                                <div style="margin-top:10px;font-size:13px;color:var(--color-text-secondary);">
+                                    Letzte 10 Runden
+                                </div>
                             </div>
-                            <button id="hcpButtonUnderGraph" class="toggle-stats-btn small" onclick="showHandicapCalculation()" style="margin-top: 10px;">
-                                HCPI-Berechnung anzeigen
-                            </button>
                         </div>
         
-        
+
                         <div class="round-list" id="roundList"></div>
                         
                         <button id="showAllRoundsBtn" class="show-all-rounds-btn" onclick="toggleAllRounds()" style="display: none;">
@@ -1387,19 +1424,75 @@ if (recent20All.length > 0) {
                     
                     renderCourses();
                     renderRounds();
+                    renderSparklines();
+                    
+                    // Chart: nur innerhalb Erweiterte Statistiken rendern wenn offen
                     const chartWrapper = document.getElementById('handicapChartWrapper');
                     if (rounds.length >= 2) {
                         chartWrapper.style.display = 'block';
-                        chartWrapper.classList.add('block');
-                        renderChart();
+                        if (document.getElementById('advancedStats').classList.contains('active')) {
+                            renderChart();
+                        }
                     } else {
                         chartWrapper.style.display = 'none';
-                        chartWrapper.classList.remove('block');
                     }
                 }
         
                 
-        function loadData() {
+        function renderSparklines() {
+            const rounds = myGolfer.rounds || [];
+            if (rounds.length < 2) {
+                document.getElementById('sparklineOfficial').innerHTML = '';
+                document.getElementById('sparklineUnofficial').innerHTML = '';
+                return;
+            }
+
+            function buildSparklineSVG(values, color) {
+                if (values.length < 2) return '';
+                const min = Math.min(...values);
+                const max = Math.max(...values);
+                const range = max - min || 1;
+                const w = 100;
+                const h = 25;
+                const pad = 2;
+                const points = values.map((v, i) => {
+                    const x = pad + (i / (values.length - 1)) * (w - 2 * pad);
+                    // Invert Y: lower HCP = higher on chart
+                    const y = pad + ((v - min) / range) * (h - 2 * pad);
+                    return `${x},${y}`;
+                }).join(' ');
+                return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+            }
+
+            // Offizielle HCP-History
+            const hcpHistory = myGolfer.hcpHistory || [];
+            const officialVals = hcpHistory.slice(-10).map(h => h.hcp);
+            document.getElementById('sparklineOfficial').innerHTML = buildSparklineSVG(officialVals, 'rgba(255,255,255,0.8)');
+
+            // Inoffizielle: berechne aus allen Runden
+            const last10Rounds = rounds.slice(-10);
+            const unofficialVals = [];
+            for (let i = 0; i < last10Rounds.length; i++) {
+                const roundDate = new Date(last10Rounds[i].date);
+                const tempAll = rounds.filter(r => new Date(r.date) <= roundDate)
+                    .slice(-20)
+                    .map(r => r.scoreDifferential)
+                    .sort((a, b) => a - b);
+                if (tempAll.length < 3) {
+                    unofficialVals.push(myGolfer.startHcp);
+                } else {
+                    const { numCounted, adjustment } = getWHSParameters(tempAll.length);
+                    let hcp = tempAll.slice(0, numCounted).reduce((a, b) => a + b, 0) / numCounted + adjustment;
+                    hcp = Math.round(hcp * 10) / 10;
+                    const lowestHcp = getLowestHcpLast12Months(last10Rounds[i].date, myGolfer.hcpHistory || [], myGolfer.startHcp);
+                    hcp = applyCaps(hcp, lowestHcp);
+                    unofficialVals.push(hcp);
+                }
+            }
+            document.getElementById('sparklineUnofficial').innerHTML = buildSparklineSVG(unofficialVals, 'rgba(255,255,255,0.7)');
+        }
+
+                function loadData() {
             try {
                 const data = localStorage.getItem('courses');
                 if (data) {
@@ -1736,6 +1829,10 @@ if (recent20All.length > 0) {
             document.getElementById('roundStrokes').value = '';
             document.getElementById('roundOfficial').checked = false;
             updateStrokesSuffix();
+            
+            // Scroll to top to see updated dashboard
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
             const sdInfo = round.scoreDifferential9 !== null
                 ? `${round.scoreDifferential9} (→ 18L: ${round.scoreDifferential})`
                 : `${round.scoreDifferential}`;
@@ -1919,10 +2016,30 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
         
             if (!isVisible) {
                 renderAdvancedStats();
+                // Render chart when opening stats
+                const rounds = myGolfer.rounds || [];
+                if (rounds.length >= 2) {
+                    const chartWrapper = document.getElementById('handicapChartWrapper');
+                    chartWrapper.style.display = 'block';
+                    setTimeout(() => renderChart(), 50);
+                }
             }
         
             stats.classList.toggle('active');
             btn.textContent = isVisible ? '📊 Erweiterte Statistiken' : 'Statistiken ausblenden';
+
+            // Scroll behavior
+            if (!isVisible) {
+                // Opening: scroll to top of stats
+                setTimeout(() => {
+                    stats.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            } else {
+                // Closing: scroll to top of page
+                setTimeout(() => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 100);
+            }
         
             if (window.matchMedia("(hover: none)").matches) {
                 btn.blur();
@@ -3761,7 +3878,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
         
                 // Chart bei Fenstergrößenänderung neu zeichnen
                 window.addEventListener('resize', function() {
-                    if (myGolfer && myGolfer.rounds.length >= 2) {
+                    if (myGolfer && myGolfer.rounds.length >= 2 && document.getElementById('advancedStats').classList.contains('active')) {
                         renderChart();
                     }
                 });
