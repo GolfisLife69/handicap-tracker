@@ -89,7 +89,7 @@
                 
                 h1 {
                     color: var(--color-primary);
-                    margin: 0 0 20px 0;
+                    margin: 0px 0 20px 0;
                     text-align: center;
                     font-size: 1.8em;
                     grid-column: 1/-1;
@@ -326,7 +326,7 @@
                 .stat-row {
                     display: flex;
                     justify-content: space-between;
-                        align-items: center;
+                    align-items: center;
                     padding: 12px;
                     margin-bottom: 8px;
                     background: var(--color-surface);
@@ -336,13 +336,14 @@
                 
                 .stat-label {
                     font-weight: 600;
+                    font-size: 0.85em;
                     color: var(--color-text-secondary);
                 }
                 
                 .stat-data {
                     font-weight: bold;
                     color: var(--color-primary);
-                    font-size: 1.1em;
+                    font-size: 0.85em;
                 }
                 
                 .course-stats-item {
@@ -566,18 +567,11 @@
                     }
                 }
         
-                /* Mobile: Tausche Gesamtrunden & Offizielle für bessere Zuordnung */
                 @media (max-width: 768px) {
                     .stats-grid {
                         display: grid;
                         grid-template-columns: 1fr 1fr;
                     }
-                    
-                    /* Reihenfolge ändern: Offizielle (2) → Position 1, Gesamtrunden (1) → Position 2 */
-                    .stat:nth-child(1) { order: 2; }  /* Gesamtrunden nach rechts */
-                    .stat:nth-child(2) { order: 1; }  /* Offizielle nach links */
-                    .stat:nth-child(3) { order: 3; }  /* Beste Runde bleibt */
-                    .stat:nth-child(4) { order: 4; }  /* Ø Schläge bleibt */
                 }
                 
                 .sidebar #roundCourse,
@@ -847,29 +841,30 @@
                                 <span id="totalRounds">0</span> Runden (<span id="officialRounds">0</span> offiziell ☆)
                             </div>
 
-                            <!-- Kachel 1: Netto Ø letzte 5 -->
+                            <!-- Kachel 1: Letzte Runde -->
+                            <div class="stat" id="lastRoundTile">
+                                <div style="font-size: 1.4em; font-weight: bold;" id="lastRoundScore">-</div>
+                                <div style="font-size: 0.75em; margin-top: 3px; color: var(--color-text-secondary); overflow: hidden; text-overflow: ellipsis;" id="lastRoundInfo">Letzte Runde</div>
+                            </div>
+
+                            <!-- Kachel 2: Netto Ø letzte 5 -->
                             <div class="stat">
                                 <div class="stat-value" id="formNettoLast5" style="font-size: 1.8em;">-</div>
                                 <div style="font-size: 0.75em; margin-top: 3px; color: var(--color-text-secondary);" id="formNettoTrend">-</div>
                                 <div style="font-size: 0.75em; color: var(--color-text-secondary);">Netto (Ø letzte 5)</div>
                             </div>
 
-                            <!-- Kachel 2: 30-Tage-Trend -->
+                            <!-- Kachel 3: 30-Tage-Trend -->
                             <div class="stat">
                                 <div style="font-size: 1.8em; font-weight: bold;" id="trend30Days">-</div>
                                 <div style="font-size: 0.75em; margin-top: 3px; color: var(--color-text-secondary);" id="trend30DaysLabel">HCP letzte 30 Tage</div>
                             </div>
 
-                            <!-- Kachel 3: Runden im HCP -->
+                            <!-- Kachel 4: Runden im HCP + zu Par -->
                             <div class="stat">
                                 <div style="font-size: 1.8em; font-weight: bold; color: var(--color-accent);" id="percentInHcpLast10">-</div>
                                 <div style="font-size: 0.75em; color: var(--color-text-secondary);">Runden im HCP (letzte 10)</div>
-                            </div>
-
-                            <!-- Kachel 4: Letzte Runde -->
-                            <div class="stat" id="lastRoundTile">
-                                <div style="font-size: 1.4em; font-weight: bold;" id="lastRoundScore">-</div>
-                                <div style="font-size: 0.75em; margin-top: 3px; color: var(--color-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" id="lastRoundInfo">Letzte Runde</div>
+                                <div style="font-size: 0.75em; color: var(--color-text-secondary);" id="avgToParLast10">-</div>
                             </div>
 
                         </div>           
@@ -890,8 +885,8 @@
                             <h3 style="color: var(--color-primary); margin-bottom: 15px;">📊 Erweiterte Statistiken</h3>
                                 
                                 <div style="background: linear-gradient(135deg, var(--color-primary), #20c997); color: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
-                <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">🎯 NÄCHSTES ZIEL</div>
-                <div id="nextGoal" style="font-size: 1.1em; font-weight: 600;">-</div>
+                <div style="font-size: 0.8em; opacity: 0.9; margin-bottom: 5px;">🎯 NÄCHSTES ZIEL</div>
+                <div id="nextGoal" style="font-size: 0.85em; font-weight: 600;">-</div>
                         </div>
                         
                             <div style="margin-bottom: 20px;">
@@ -1313,14 +1308,34 @@
             document.getElementById('trend30Days').style.color = 'var(--color-text-secondary)';
         }
         
-        // === KACHEL 3: RUNDEN IM HCP (Letzte 10) ===
+        // === KACHEL 3: RUNDEN IM HCP (Letzte 10) + Ø zu Par ===
         const last10 = rounds.slice(-10);
         if (last10.length > 0) {
             const roundsUnderHcp = last10.filter(r => r.scoreDifferential <= r.playingHcp).length;
             const percentInHcp = Math.round((roundsUnderHcp / last10.length) * 100);
             document.getElementById('percentInHcpLast10').textContent = `${percentInHcp}%`;
+            
+            // Ø zu Par (letzte 10, normalisiert auf 18L)
+            const toParVals = last10.map(r => {
+                const c = courses.find(c => c.name === r.course && c.holes === r.holes);
+                const par = c ? c.par : (r.holes === 9 ? 36 : 72);
+                const toPar = r.strokes - par;
+                return r.holes === 9 ? toPar * 2 : toPar;
+            });
+            const avgToPar = toParVals.reduce((a, b) => a + b, 0) / last10.length;
+            const avgToParRound = Math.round(avgToPar);
+            let toParDisplay;
+            if (avgToParRound === 0) {
+                toParDisplay = 'Ø Even Par';
+            } else if (avgToParRound > 0) {
+                toParDisplay = `Ø +${avgToParRound} zu Par`;
+            } else {
+                toParDisplay = `Ø ${avgToParRound} zu Par`;
+            }
+            document.getElementById('avgToParLast10').textContent = toParDisplay;
         } else {
             document.getElementById('percentInHcpLast10').textContent = '-';
+            document.getElementById('avgToParLast10').textContent = '-';
         }
 
         // === KACHEL 4: LETZTE RUNDE ===
@@ -1336,7 +1351,7 @@
             scoreEl.textContent = `${lastRound.strokes} (${lrToParText})`;
             scoreEl.style.color = lrNetto < 0 ? 'var(--color-primary)' : lrNetto <= 2 ? 'var(--color-warning)' : 'var(--color-danger)';
             
-            const courseName = lastRound.course.length > 18 ? lastRound.course.substring(0, 16) + '…' : lastRound.course;
+            const courseName = lastRound.course;
             document.getElementById('lastRoundInfo').innerHTML = `${lastRound.date}<br>${courseName}`;
         } else {
             document.getElementById('lastRoundScore').textContent = '-';
@@ -1348,6 +1363,7 @@
                         document.getElementById('formNettoTrend').textContent = '-';
                         document.getElementById('trend30Days').textContent = '-';
                         document.getElementById('percentInHcpLast10').textContent = '-';
+                        document.getElementById('avgToParLast10').textContent = '-';
                         document.getElementById('lastRoundScore').textContent = '-';
                         document.getElementById('lastRoundInfo').textContent = 'Letzte Runde';
                     }
@@ -1995,7 +2011,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 const par = c ? c.par : (r.holes === 9 ? 36 : 72);
                 const toPar = r.strokes - par;
                 const toParText = toPar > 0 ? `+${toPar}` : `${toPar}`;
-                const name = r.course.length > 14 ? r.course.substring(0, 12) + '…' : r.course;
+                const name = r.course;
                 return `${r.strokes} (${toParText}) • ${r.date}<br>${name}`;
             }
             const bestRoundText = formatRoundInfo(bestRound);
@@ -2019,16 +2035,39 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 scoringAvgText = '-';
             }
 
-            // --- Konstanz: menschlich lesbare Schwankungsbreite ---
-            // Zeige den Bereich in dem 80% der Netto-Ergebnisse liegen
-            const sortedSDs = [...sdValues].sort((a, b) => a - b);
-            const p10idx = Math.floor(sortedSDs.length * 0.1);
-            const p90idx = Math.min(Math.ceil(sortedSDs.length * 0.9) - 1, sortedSDs.length - 1);
-            const sdLow = sortedSDs[p10idx].toFixed(1);
-            const sdHigh = sortedSDs[p90idx].toFixed(1);
-            const consistencyText = recent20.length >= 5 
-                ? `SD ${sdLow} bis ${sdHigh}` 
-                : `σ ${consistency}`;
+            // --- Konstanz: Brutto zu Par + Netto Schwankungsbreite ---
+            let consistencyText = `σ ${consistency}`;
+            if (recent20.length >= 2) {
+                // Brutto zu Par (normalisiert auf 18L)
+                const bruttoToPar = recent20.map(r => {
+                    const c = courses.find(c => c.name === r.course && c.holes === r.holes);
+                    const par = c ? c.par : (r.holes === 9 ? 36 : 72);
+                    const tp = r.strokes - par;
+                    return r.holes === 9 ? tp * 2 : tp;
+                }).sort((a, b) => a - b);
+                const bp10 = Math.floor(bruttoToPar.length * 0.1);
+                const bp90 = Math.min(Math.ceil(bruttoToPar.length * 0.9) - 1, bruttoToPar.length - 1);
+                const bLow = Math.round(bruttoToPar[bp10]);
+                const bHigh = Math.round(bruttoToPar[bp90]);
+                const bLowText = bLow > 0 ? `+${bLow}` : bLow === 0 ? 'Par' : `${bLow}`;
+                const bHighText = bHigh > 0 ? `+${bHigh}` : bHigh === 0 ? 'Par' : `${bHigh}`;
+
+                // Netto (normalisiert auf 18L)
+                const nettoVals = recent20.map(r => {
+                    const c = courses.find(c => c.name === r.course && c.holes === r.holes);
+                    const par = c ? c.par : (r.holes === 9 ? 36 : 72);
+                    const netto = r.strokes - (par + r.courseHandicap);
+                    return r.holes === 9 ? netto * 2 : netto;
+                }).sort((a, b) => a - b);
+                const np10 = Math.floor(nettoVals.length * 0.1);
+                const np90 = Math.min(Math.ceil(nettoVals.length * 0.9) - 1, nettoVals.length - 1);
+                const nLow = Math.round(nettoVals[np10]);
+                const nHigh = Math.round(nettoVals[np90]);
+                const nLowText = nLow > 0 ? `+${nLow}` : nLow === 0 ? '±0' : `${nLow}`;
+                const nHighText = nHigh > 0 ? `+${nHigh}` : nHigh === 0 ? '±0' : `${nHigh}`;
+
+                consistencyText = `${bLowText} bis ${bHighText} zu Par<br>Netto ${nLowText} bis ${nHighText}`;
+            }
 
             // --- Nächste HCP-Verbesserung: bei welchem SD? ---
             let nextImprovementText = '-';
@@ -2172,8 +2211,8 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             const avgSDLast10 = last10.length > 0
                 ? (last10.map(r => r.scoreDifferential).reduce((a, b) => a + b, 0) / last10.length).toFixed(1)
                 : '-';
-            const sdLast10Better = parseFloat(avgSDLast10) < parseFloat(avgSD);
-            const sdLast10Color = sdLast10Better ? 'var(--color-primary)' : 'var(--color-danger)';
+            const sdLast10Diff = parseFloat(avgSDLast10) - parseFloat(avgSD);
+            const sdLast10Color = sdLast10Diff < -0.5 ? 'var(--color-primary)' : sdLast10Diff > 0.5 ? 'var(--color-danger)' : 'var(--color-text-secondary)';
         
             // =========================================================
             // NÄCHSTES ZIEL (jetzt sind alle Variablen verfügbar)
@@ -2367,11 +2406,11 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Beste Runde</span>
-                    <span class="stat-data" style="font-size: 0.85em; color: var(--color-primary)">${bestRoundText}</span>
+                    <span class="stat-data" style="color: var(--color-primary)">${bestRoundText}</span>
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Schwächste Runde</span>
-                    <span class="stat-data" style="font-size: 0.85em">${worstRoundText}</span>
+                    <span class="stat-data">${worstRoundText}</span>
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">Schwankungsbreite (80%)</span>
