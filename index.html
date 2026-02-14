@@ -834,21 +834,20 @@
                         
                         <h2 style="margin-top: 30px;">Daten-Verwaltung</h2>
                         <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
-            <input type="checkbox" id="autoFocusToggle" onchange="toggleAutoFocus()" 
-                   style="width: 20px; height: 20px; margin: 0; accent-color: var(--color-primary);">
-            <span style="font-weight: 500; font-size: 14px;">Auto-Fokus "Schläge eingeben"</span>
-        </label>
+                    <input type="checkbox" id="autoFocusToggle" onchange="toggleAutoFocus()" style="width: 20px; height: 20px; margin: 0; accent-color: var(--color-primary);">
+                            <span style="font-weight: 500; font-size: 14px;">Auto-Fokus "Schläge eingeben"</span>
+                        </label>
         
                         <button onclick="exportData()">💾 Daten exportieren (JSON)</button>
                         <div class="file-input-wrapper" style="margin-bottom: 0;">
                         
                         <input type="file" id="importFile" accept=".json" onchange="importData(event)">
-                        <button class="hcpi-sidebar-btn" onclick="document.getElementById('importFile').click()">📁 Daten importieren</button>
+                        <button class="secondary" onclick="document.getElementById('importFile').click()">📁 Daten importieren</button>
                         </div>
                         
-                        <button class="hcpi-sidebar-btn" onclick="showEditProfile()">👤 Profil bearbeiten</button>
-                        <button class="hcpi-sidebar-btn" onclick="showHandicapCalculation()">📋 HCPI-Berechnung anzeigen</button>
-                        <button class="hcpi-sidebar-btn" onclick="manualRecalculate()">🔄 Handicap neu berechnen</button>
+                        <button class="secondary" onclick="showEditProfile()">👤 Profil bearbeiten</button>
+                        <button class="secondary" onclick="showHandicapCalculation()">📋 HCPI-Berechnung anzeigen</button>
+                        <button class="secondary" onclick="manualRecalculate()">🔄 Handicap neu berechnen</button>
                         <button class="danger" onclick="clearData()">🗑️ Alles löschen</button>
                         </div>
                     
