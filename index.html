@@ -1456,8 +1456,9 @@ if (recent20All.length > 0) {
                 const pad = 2;
                 const points = values.map((v, i) => {
                     const x = pad + (i / (values.length - 1)) * (w - 2 * pad);
-                    // Invert Y: lower HCP = higher on chart
-                    const y = pad + ((v - min) / range) * (h - 2 * pad);
+
+                    const y = pad + ((max - v) / range) * (h - 2 * pad);
+                        
                     return `${x},${y}`;
                 }).join(' ');
                 return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
