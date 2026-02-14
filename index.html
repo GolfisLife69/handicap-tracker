@@ -1995,7 +1995,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 const toPar = r.strokes - par;
                 const toParText = toPar > 0 ? `+${toPar}` : `${toPar}`;
                 const name = r.course.length > 14 ? r.course.substring(0, 12) + '…' : r.course;
-                return `${r.strokes} (${toParText}) • ${r.date} ${name}`;
+                return `${r.strokes} (${toParText}) • ${r.date}<br>${name}`;
             }
             const bestRoundText = formatRoundInfo(bestRound);
             const worstRoundText = formatRoundInfo(worstRound);
@@ -2365,11 +2365,11 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     <span class="stat-data">${avgSD}</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">🏆 Beste Runde</span>
+                    <span class="stat-label">Beste<br>Runde</span>
                     <span class="stat-data" style="font-size: 0.85em; color: var(--color-primary)">${bestRoundText}</span>
                 </div>
                 <div class="stat-row">
-                    <span class="stat-label">Schwächste Runde</span>
+                    <span class="stat-label">Schwächste<br>Runde</span>
                     <span class="stat-data" style="font-size: 0.85em">${worstRoundText}</span>
                 </div>
                 <div class="stat-row">
