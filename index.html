@@ -1995,7 +1995,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 const toPar = r.strokes - par;
                 const toParText = toPar > 0 ? `+${toPar}` : `${toPar}`;
                 const name = r.course.length > 14 ? r.course.substring(0, 12) + '…' : r.course;
-                return `${r.strokes} (${toParText}) • ${name} • ${r.date}`;
+                return `${r.strokes} (${toParText}) • ${r.date}<br>${name}`;
             }
             const bestRoundText = formatRoundInfo(bestRound);
             const worstRoundText = formatRoundInfo(worstRound);
