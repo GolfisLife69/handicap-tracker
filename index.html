@@ -818,7 +818,7 @@
                     
                     <div class="main">
                         <div style="text-align: center; margin-bottom: 5px;">
-                            <h1 style="font-size: 0.85em; margin-bottom: 5px; margin-top: 0px; color: var(--color-text-secondary); text-align: left;">
+                            <h1 style="font-size: 0.85em; margin-bottom: 5px; margin-top: 0px; color: var(--color-text-secondary);">
                                 <span id="golferNameDisplay">-</span> - <span id="golferClubDisplay">-</span>
                             </h1>
                         </div>
@@ -841,11 +841,11 @@
                                 <span id="totalRounds">0</span> Runden (<span id="officialRounds">0</span> offiziell ☆)
                             </div>
 
-                            <!-- Kachel 1: Letzte Runde -->
-                            <div class="stat" id="lastRoundTile">
-                                <div style="font-size: 1.4em; font-weight: bold;" id="lastRoundScore">-</div>
-                                <div style="font-size: 0.75em; margin-top: 3px; color: var(--color-text-secondary); overflow: hidden; text-overflow: ellipsis;" id="lastRoundInfo">Letzte Runde</div>
-                            </div>
+                                <!-- Kachel 1: Ø über Par -->
+                                <div class="stat">
+                                    <div style="font-size: 1.4em; font-weight: bold; color: var(--color-text-secondary);" id="avgOverPar">-</div>
+                                    <div style="font-size: 0.75em; color: var(--color-text-secondary);">Ø zu Par (letzte 20)</div>
+                                </div>
 
                             <!-- Kachel 2: Netto Ø letzte 5 -->
                             <div class="stat">
@@ -1338,34 +1338,51 @@
             document.getElementById('avgToParLast10').textContent = '-';
         }
 
-        // === KACHEL 4: LETZTE RUNDE ===
-        const lastRound = rounds[rounds.length - 1];
-        if (lastRound) {
-            const lrCourse = courses.find(c => c.name === lastRound.course && c.holes === lastRound.holes);
-            const lrPar = lrCourse ? lrCourse.par : (lastRound.holes === 9 ? 36 : 72);
-            const lrToPar = lastRound.strokes - lrPar;
-            const lrToParText = lrToPar > 0 ? `+${lrToPar}` : `${lrToPar}`;
-            const lrNetto = lastRound.strokes - (lrPar + lastRound.courseHandicap);
-            
-            const scoreEl = document.getElementById('lastRoundScore');
-            scoreEl.textContent = `${lastRound.strokes} (${lrToParText})`;
-            scoreEl.style.color = lrNetto < 0 ? 'var(--color-primary)' : lrNetto <= 2 ? 'var(--color-warning)' : 'var(--color-danger)';
-            
-            const courseName = lastRound.course;
-            document.getElementById('lastRoundInfo').innerHTML = `${lastRound.date}<br>${courseName}`;
-        } else {
-            document.getElementById('lastRoundScore').textContent = '-';
-            document.getElementById('lastRoundInfo').textContent = 'Letzte Runde';
-        }
+// === KACHEL 4: Ø ÜBER PAR (letzte 20, getrennt 9/18L) ===
+const recent20All = rounds.slice(-20);
+if (recent20All.length > 0) {
+    const r18 = recent20All.filter(r => r.holes === 18);
+    const r9 = recent20All.filter(r => r.holes === 9);
+    
+    const avg18 = r18.length > 0 
+        ? Math.round(r18.reduce((s, r) => {
+            const c = courses.find(c => c.name === r.course && c.holes === r.holes);
+            const par = c ? c.par : 72;
+            return s + (r.strokes - par);
+        }, 0) / r18.length) : null;
+    
+    const avg9 = r9.length > 0 
+        ? Math.round(r9.reduce((s, r) => {
+            const c = courses.find(c => c.name === r.course && c.holes === r.holes);
+            const par = c ? c.par : 36;
+            return s + (r.strokes - par);
+        }, 0) / r9.length) : null;
+    
+    let overParText = '';
+    if (avg18 !== null && avg9 !== null) {
+        const t18 = avg18 > 0 ? `+${avg18}` : avg18 === 0 ? 'Even' : `${avg18}`;
+        const t9 = avg9 > 0 ? `+${avg9}` : avg9 === 0 ? 'Even' : `${avg9}`;
+        overParText = `${t18} (18L)\n${t9} (9L)`;
+    } else if (avg18 !== null) {
+        overParText = avg18 > 0 ? `+${avg18}` : avg18 === 0 ? 'Even' : `${avg18}`;
+    } else {
+        overParText = avg9 > 0 ? `+${avg9}` : avg9 === 0 ? 'Even' : `${avg9}`;
+    }
+    
+    const el = document.getElementById('avgOverPar');
+    el.style.whiteSpace = 'pre-line';
+    el.textContent = overParText;
+} else {
+    document.getElementById('avgOverPar').textContent = '-';
+}
                         
-                    } else {
+        } else {
                         document.getElementById('formNettoLast5').textContent = '-';
                         document.getElementById('formNettoTrend').textContent = '-';
                         document.getElementById('trend30Days').textContent = '-';
                         document.getElementById('percentInHcpLast10').textContent = '-';
                         document.getElementById('avgToParLast10').textContent = '-';
-                        document.getElementById('lastRoundScore').textContent = '-';
-                        document.getElementById('lastRoundInfo').textContent = 'Letzte Runde';
+                        document.getElementById('avgOverPar').textContent = '-';
                     }
                     
                     renderCourses();
