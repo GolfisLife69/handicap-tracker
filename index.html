@@ -99,6 +99,7 @@
                     color: var(--color-primary);
                     margin-bottom: 15px;
                     font-size: 1.3em;
+                    font-weight: 600;
                 }
                 
                 button {
@@ -593,12 +594,72 @@
                     cursor: pointer;
                 }
 
+  .export-btn {
+                    background: transparent;
+                    color: var(--color-primary);
+                    border: 1px solid var(--color-primary);
+                    font-size: 13px;
+                    font-weight: 400;
+                    padding: 10px 20px;
+                    transition: all 0.2s;
+                    cursor: pointer;
+                    -webkit-tap-highlight-color: transparent;
+                }
+
+                .danger-btn {
+                    background: transparent;
+                    color: var(--color-danger);
+                    border: 1px solid var(--color-danger);
+                    font-size: 13px;
+                    font-weight: 400;
+                    padding: 10px 20px;
+                    transition: all 0.2s;
+                    cursor: pointer;
+                    -webkit-tap-highlight-color: transparent;
+                }
+
+                /* Desktop Hover */
                 @media (hover: hover) and (pointer: fine) {
-                    .hcpi-sidebar-btn:hover {
+                    .hcpi-sidebar-btn:hover,
+                    .export-btn:hover {
                         background: var(--color-bg-primary);
                         border-color: var(--color-text-secondary);
                         color: var(--color-text-primary);
                         transform: translateY(-1px);
+                    }
+                    .danger-btn:hover {
+                        background: rgba(220, 53, 69, 0.1);
+                        border-color: var(--color-danger);
+                        color: var(--color-danger);
+                        transform: translateY(-1px);
+                    }
+                }
+
+                /* Mobile: kein klebriger Hover, kurzer Active-Flash */
+                @media (hover: none) {
+                    .hcpi-sidebar-btn:hover,
+                    .hcpi-sidebar-btn:focus,
+                    .export-btn:hover,
+                    .export-btn:focus,
+                    .danger-btn:hover,
+                    .danger-btn:focus {
+                        background: transparent !important;
+                        outline: none !important;
+                    }
+                    .hcpi-sidebar-btn:active {
+                        background: var(--color-bg-primary) !important;
+                        transform: scale(0.98) !important;
+                        transition: none !important;
+                    }
+                    .export-btn:active {
+                        background: rgba(40, 167, 69, 0.1) !important;
+                        transform: scale(0.98) !important;
+                        transition: none !important;
+                    }
+                    .danger-btn:active {
+                        background: rgba(220, 53, 69, 0.1) !important;
+                        transform: scale(0.98) !important;
+                        transition: none !important;
                     }
                 }
         
@@ -796,8 +857,8 @@
         
                         
                         <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
-                            <input type="checkbox" id="roundOfficial" style="width: 20px; height: 20px; margin: 0; accent-color: var(--color-primary);">
-                            <span style="font-weight: 500; font-size: 14px;">HCPI wirksam</span>
+                            <input type="checkbox" id="roundOfficial" style="width: 16px; height: 20px; margin: 0; accent-color: var(--color-primary);">
+                            <span style="font-weight: 400; font-size: 14px;">HCPI wirksam</span>
                         </label>
                         
                         <button onclick="saveRound()">Runde speichern</button>
@@ -834,21 +895,21 @@
                         
                         <h2 style="margin-top: 30px;">Daten-Verwaltung</h2>
                         <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
-                    <input type="checkbox" id="autoFocusToggle" onchange="toggleAutoFocus()" style="width: 20px; height: 20px; margin: 0; accent-color: var(--color-primary);">
-                            <span style="font-weight: 500; font-size: 14px;">Auto-Fokus "Schläge eingeben"</span>
+                    <input type="checkbox" id="autoFocusToggle" onchange="toggleAutoFocus()" style="width: 16px; height: 20px; margin: 0; accent-color: var(--color-primary);">
+                            <span style="font-weight: 400; font-size: 14px;">Auto-Fokus "Schläge eingeben"</span>
                         </label>
         
-                        <button onclick="exportData()">💾 Daten exportieren (JSON)</button>
+                        <button class="export-btn" onclick="exportData()">💾 Daten exportieren (JSON)</button>
                         <div class="file-input-wrapper" style="margin-bottom: 0;">
                         
                         <input type="file" id="importFile" accept=".json" onchange="importData(event)">
-                        <button class="secondary" onclick="document.getElementById('importFile').click()">📁 Daten importieren</button>
+                        <button class="hcpi-sidebar-btn" onclick="document.getElementById('importFile').click()">📁 Daten importieren</button>
                         </div>
                         
-                        <button class="secondary" onclick="showEditProfile()">👤 Profil bearbeiten</button>
-                        <button class="secondary" onclick="showHandicapCalculation()">📋 HCPI-Berechnung anzeigen</button>
-                        <button class="secondary" onclick="manualRecalculate()">🔄 Handicap neu berechnen</button>
-                        <button class="danger" onclick="clearData()">🗑️ Alles löschen</button>
+                        <button class="hcpi-sidebar-btn" onclick="showEditProfile()">👤 Profil bearbeiten</button>
+                        <button class="hcpi-sidebar-btn" onclick="showHandicapCalculation()">📋 HCPI-Berechnung anzeigen</button>
+                        <button class="hcpi-sidebar-btn" onclick="manualRecalculate()">🔄 Handicap neu berechnen</button>
+                        <button class="danger-btn" onclick="clearData()">🗑️ Alles löschen</button>
                         </div>
                     
                     <div class="main">
@@ -937,8 +998,11 @@
                         <button id="showAllCoursesStatsBtn" class="show-all-rounds-btn" onclick="toggleAllCoursesStats()" style="display: none; margin-top: 10px;">Alle Plätze anzeigen</button>
         
                             
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <h4 style="color: var(--color-text-secondary); font-size: 0.9em; margin: 0;">TREND-ANALYSE</h4>
+                                <button class="small" onclick="toggleAdvancedStats()" style="background: transparent; color: var(--color-text-secondary); font-size: 18px; font-weight: bold; padding: 0 8px; line-height: 1; border: none; cursor: pointer; -webkit-tap-highlight-color: transparent;">^</button>
+                            </div>
                             <div>
-                                <h4 style="color: var(--color-text-secondary); font-size: 0.9em; margin-bottom: 10px;">TREND-ANALYSE</h4>
                                 <div id="trendStats"></div>
                             </div>
 
@@ -1270,7 +1334,7 @@
             const nettoDeltas = last5.map(r => {
                 const course = courses.find(c => c.name === r.course && c.holes === r.holes);
                 const par = course ? course.par : (r.holes === 9 ? 36 : 72);
-                const netto = r.strokes - (par + r.courseHandicap);
+                const netto = r.strokes - (par + (r.courseHandicap || 0));
                 return r.holes === 9 ? netto * 2 : netto;
             });
             const avgNettoDelta = nettoDeltas.reduce((a,b) => a + b, 0) / last5.length;
@@ -1294,7 +1358,7 @@
             const allNettoDeltas = recent.map(r => {
                 const course = courses.find(c => c.name === r.course && c.holes === r.holes);
                 const par = course ? course.par : (r.holes === 9 ? 36 : 72);
-                const netto = r.strokes - (par + r.courseHandicap);
+                const netto = r.strokes - (par + (r.courseHandicap || 0));
                 return r.holes === 9 ? netto * 2 : netto;
             });
             const avgNettoAll = allNettoDeltas.reduce((a,b) => a + b, 0) / recent.length;
@@ -1830,13 +1894,13 @@ if (recent20All.length > 0) {
             document.getElementById('roundOfficial').checked = false;
             updateStrokesSuffix();
             
-            // Scroll to top to see updated dashboard
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            
             const sdInfo = round.scoreDifferential9 !== null
                 ? `${round.scoreDifferential9} (→ 18L: ${round.scoreDifferential})`
                 : `${round.scoreDifferential}`;
             alert(`Runde gespeichert!\nDifferential: ${sdInfo}\n${isOfficial ? 'Offizielles' : 'Inoffizielles'} HCP: ${myGolfer[isOfficial ? 'handicapIndex' : 'unofficialHandicap'].toFixed(1)}`);
+            
+            // Scroll to top to see updated dashboard
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
                 
         function updateMyHandicap() {
@@ -2030,10 +2094,10 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
 
             // Scroll behavior
             if (!isVisible) {
-                // Opening: scroll to top of stats
+                // Opening: scroll to top of stats (nach CSS-Transition)
                 setTimeout(() => {
                     stats.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
+                }, 400);
             } else {
                 // Closing: scroll to top of page
                 setTimeout(() => {
@@ -2190,7 +2254,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 const nettoVals = recent20.map(r => {
                     const c = courses.find(c => c.name === r.course && c.holes === r.holes);
                     const par = c ? c.par : (r.holes === 9 ? 36 : 72);
-                    const netto = r.strokes - (par + r.courseHandicap);
+                    const netto = r.strokes - (par + (r.courseHandicap || 0));
                     return r.holes === 9 ? netto * 2 : netto;
                 }).sort((a, b) => a - b);
                 const np10 = Math.floor(nettoVals.length * 0.1);
