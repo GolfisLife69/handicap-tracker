@@ -2,7 +2,7 @@
         <html lang="de">
         <head>
             <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
             <title>Mein Golf Handicap - DGV/WHS</title>
             <meta name="apple-mobile-web-app-capable" content="yes">
             <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -281,6 +281,8 @@
                     padding: 15px;
                     color: white;
                     border-radius: 12px;
+                    position: relative;
+                    overflow: hidden;
                 }
                 
                 .hcp-box.official {
@@ -437,10 +439,6 @@
                 }
                 
                 @media (max-width: 768px) {
-                    .container {
-                        grid-template-columns: 1fr;
-                    }
-                    
                     .add-round-btn {
                         display: inline-block;
                     }
@@ -553,11 +551,6 @@
         }
          
         
-                .hcp-box {
-                    position: relative;
-                    overflow: hidden;
-                }
-
                 .sparkline-container {
                     position: absolute;
                     bottom: 0;
@@ -1730,17 +1723,16 @@ if (recent20All.length > 0) {
             const courseId = document.getElementById('roundCourse').value;
             const course = courses.find(c => c.id === courseId);
             const strokesInput = document.getElementById('roundStrokes');
-            const is9HoleRound = course?.holes === 9 || course?.is9Hole; // Flag oder Löcher prüfen
         
             if (course) {
-                // Par und CR/SR je Rundenlänge aus Course-Objekt (z. B. course.par9, course.cr9)
-                const par = is9HoleRound ? (course.par9 || course.par) : course.par;
-                const cr = is9HoleRound ? (course.cr9 || course.cr) : course.cr;
-                const sr = is9HoleRound ? (course.sr9 || course.sr) : course.sr;
+                const is9HoleRound = course.holes === 9;
+                const par = course.par;
+                const cr = course.cr;
+                const sr = course.sr;
         
                 let adjustedIndex = myGolfer.handicapIndex;
                 if (is9HoleRound) {
-                    adjustedIndex /= 2; // Halbes Index für 9-Loch [web:81]
+                    adjustedIndex /= 2; // Halbes Index für 9-Loch
                 }
         
                 const courseHcp = calculateCourseHandicap(adjustedIndex, sr, cr, par);
@@ -1755,7 +1747,7 @@ if (recent20All.length > 0) {
             const strokesInput = document.getElementById('roundStrokes');
             const suffix = document.getElementById('strokesSuffix');
             
-            if (strokesInput.value && strokesInput.value > 0) {
+            if (strokesInput.value && parseInt(strokesInput.value) > 0) {
                 suffix.textContent = strokesInput.value + ' Schläge';
                 suffix.style.display = 'block';
                 strokesInput.style.color = 'transparent';
@@ -2951,8 +2943,16 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             if (newDate === null) return;
         
             const strokes = parseInt(newStrokes);
-            if (isNaN(strokes) || strokes < 18) {
-                return alert('Ungültige Schlagzahl!');
+            const holes = round.holes || 18;
+            const validationErrors = validateRoundData(strokes, holes, newDate);
+            if (validationErrors.length > 0) {
+                return alert('❌ Eingabefehler:\n\n' + validationErrors.join('\n'));
+            }
+        
+            // Prüfe Datumsformat (YYYY-MM-DD)
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(newDate) || isNaN(new Date(newDate).getTime())) {
+                return alert('❌ Ungültiges Datumsformat!\nBitte YYYY-MM-DD verwenden (z.B. 2025-06-15)');
             }
         
             // Update nur die Basis-Daten
@@ -3404,15 +3404,17 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
         
         function showEditProfile() {
           const newName = prompt("Name ändern", myGolfer.name);
-          if (newName && newName.trim()) {
-            myGolfer.name = newName.trim();
-          }
+          if (newName === null) return; // Abbruch → nichts ändern
           
           const newClub = prompt("Club ändern", myGolfer.club);
-          if (newClub !== null) {
-            myGolfer.club = newClub.trim();
-          }
+          if (newClub === null) return; // Abbruch → nichts ändern
           
+          if (newName.trim()) {
+            myGolfer.name = newName.trim();
+          } else {
+            return alert('Name darf nicht leer sein!');
+          }
+          myGolfer.club = newClub.trim();
           
           localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
           updateUI();
@@ -3591,8 +3593,6 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     const softCapLimit = lowestHcp12m + 3.0;
                     const hardCapLimit = lowestHcp12m + 5.0;
                     const afterCap = applyCaps(calculatedHcp, lowestHcp12m);
-                    const softCapApplied = beforeCap > softCapLimit;
-                    const hardCapApplied = beforeCap > hardCapLimit;
                     const capsApplied = afterCap !== beforeCap;
                     
                     // 7. Endergebnis
@@ -3865,7 +3865,10 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 function clearData() {
                     if (confirm('🚨 WIRKLICH ALLES LÖSCHEN?\n\nDiese Aktion kann nicht rückgängig gemacht werden!')) {
                         if (confirm('Letzte Bestätigung: Alle Daten werden unwiderruflich gelöscht!')) {
-                            localStorage.clear();
+                            localStorage.removeItem('myGolfer');
+                            localStorage.removeItem('courses');
+                            localStorage.removeItem('autoFocusStrokes');
+                            localStorage.removeItem('iosInstallPromptShown');
                             location.reload();
                         }
                     }
@@ -3940,11 +3943,15 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     }
                 }
         
-                // Chart bei Fenstergrößenänderung neu zeichnen
+                // Chart bei Fenstergrößenänderung neu zeichnen (mit Debouncing)
+                let resizeTimer;
                 window.addEventListener('resize', function() {
-                    if (myGolfer && myGolfer.rounds.length >= 2 && document.getElementById('advancedStats').classList.contains('active')) {
-                        renderChart();
-                    }
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(function() {
+                        if (myGolfer && myGolfer.rounds.length >= 2 && document.getElementById('advancedStats').classList.contains('active')) {
+                            renderChart();
+                        }
+                    }, 250);
                 });
         
             </script>
