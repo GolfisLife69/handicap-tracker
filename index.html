@@ -1845,33 +1845,36 @@ if (recent20All.length > 0) {
                 recalculateHistory();
             } else {
                 updateMyHandicap();
+
+                // WHS: Exceptional Score Reduction (ESR) — VOR unofficial HCP
+                const esrHcp = round.playingHcp;
+                const esrDiff = esrHcp - round.scoreDifferential;
+                if (isOfficial && esrDiff >= 10.0) {
+                    myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 2.0);
+                    if (myGolfer.hcpHistory) {
+                        const lastEntry = myGolfer.hcpHistory[myGolfer.hcpHistory.length - 1];
+                        if (lastEntry) lastEntry.hcp = myGolfer.handicapIndex;
+                    }
+                    alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -2.0 reduziert!');
+                } else if (isOfficial && esrDiff >= 7.0) {
+                    myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 1.0);
+                    if (myGolfer.hcpHistory) {
+                        const lastEntry = myGolfer.hcpHistory[myGolfer.hcpHistory.length - 1];
+                        if (lastEntry) lastEntry.hcp = myGolfer.handicapIndex;
+                    }
+                    alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -1.0 reduziert!');
+                }
+
+                // Allzeit-Tiefstwert nach ESR prüfen
+                if (myGolfer.lowestHandicapIndex === undefined || myGolfer.handicapIndex < myGolfer.lowestHandicapIndex) {
+                    myGolfer.lowestHandicapIndex = myGolfer.handicapIndex;
+                }
+
                 updateUnofficialHandicap();
             }
         
 
-        // WHS: Exceptional Score Reduction (ESR)
-        // NUR für nicht-historische Runden (recalculateHistory handhabt ESR selbst)
-        if (!isHistorical) {
-            const esrHcp = round.playingHcp;
-            const esrDiff = esrHcp - round.scoreDifferential;
-            if (isOfficial && esrDiff >= 10.0) {
-                myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 2.0);
-                if (myGolfer.hcpHistory) {
-                    const lastEntry = myGolfer.hcpHistory[myGolfer.hcpHistory.length - 1];
-                    if (lastEntry) lastEntry.hcp = myGolfer.handicapIndex;
-                }
-                alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -2.0 reduziert!');
-            } else if (isOfficial && esrDiff >= 7.0) {
-                myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 1.0);
-                if (myGolfer.hcpHistory) {
-                    const lastEntry = myGolfer.hcpHistory[myGolfer.hcpHistory.length - 1];
-                    if (lastEntry) lastEntry.hcp = myGolfer.handicapIndex;
-                }
-                alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -1.0 reduziert!');
-            }
-        }
-        
-            localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+        localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
         
             if (myGolfer.rounds.length % 5 === 0) {
                 setTimeout(() => {
@@ -1883,7 +1886,7 @@ if (recent20All.length > 0) {
         
             updateUI();
             document.getElementById('roundStrokes').value = '';
-            document.getElementById('roundOfficial').checked = false;
+            document.getElementById('roundOfficial').checked = true;
             updateStrokesSuffix();
             
             const sdInfo = round.scoreDifferential9 !== null
@@ -1931,6 +1934,11 @@ if (recent20All.length > 0) {
 
     myGolfer.handicapIndex = newHcp;
 
+    // Allzeit-Tiefstwert pflegen
+    if (myGolfer.lowestHandicapIndex === undefined || newHcp < myGolfer.lowestHandicapIndex) {
+        myGolfer.lowestHandicapIndex = newHcp;
+    }
+
     // HCP-History aktualisieren
     const lastRoundDate = myGolfer.rounds
         .filter(r => r.official !== false)
@@ -1938,6 +1946,11 @@ if (recent20All.length > 0) {
     
     if (!myGolfer.hcpHistory) myGolfer.hcpHistory = [];
     myGolfer.hcpHistory.push({ date: lastRoundDate, hcp: newHcp });
+
+    // hcpHistory begrenzen: max. 100 Einträge (12-Monats-Fenster braucht ~50 max)
+    if (myGolfer.hcpHistory.length > 100) {
+        myGolfer.hcpHistory = myGolfer.hcpHistory.slice(-100);
+    }
 
     // Counted Round IDs (jetzt einfach, keine kombinierten Runden mehr)
     myGolfer.countedRoundIds = bestRounds.map(r => r.id);
@@ -2048,6 +2061,8 @@ function applyCaps(hcp, lowestHcp12m) {
     }
     // Hard Cap: absolutes Maximum
     hcp = Math.min(hcp, hardCapLimit);
+    // WHS-Grenzen: -5.0 bis 54.0
+    hcp = Math.max(-5.0, Math.min(54.0, hcp));
     return hcp;
 }
 
@@ -3234,13 +3249,23 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 
                     function addCourse() {
                         const name = document.getElementById('courseName').value.trim();
-                        const cr = parseFloat(document.getElementById('courseCR').value);
+                        const crRaw = document.getElementById('courseCR').value.replace(',', '.');
+                        const cr = parseFloat(crRaw);
                         const sr = parseInt(document.getElementById('courseSR').value);
                         const holes = parseInt(document.querySelector('input[name="courseHoles"]:checked').value);
-                        const par = parseInt(document.getElementById('coursePar').value) || (holes === 9 ? 36 : 72);
+                        const parRaw = document.getElementById('coursePar').value.replace(',', '.');
+                        const par = parseInt(parRaw) || (holes === 9 ? 36 : 72);
                         
                         if (!name || isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
                             return alert('Bitte korrekte Platzdaten eingeben!\n(CR min. 20, SR 55-155)');
+                        }
+                        
+                        // Duplikat-Prüfung: gleicher Name + gleiche Lochzahl
+                        const duplicate = courses.find(c => c.name.toLowerCase() === name.toLowerCase() && c.holes === holes);
+                        if (duplicate) {
+                            if (!confirm(`⚠️ Ein Platz "${duplicate.name}" mit ${holes} Löchern existiert bereits!\n\nCR ${duplicate.cr.toFixed(1)} / SR ${duplicate.sr} / Par ${duplicate.par}\n\nTrotzdem einen weiteren Eintrag anlegen?`)) {
+                                return;
+                            }
                         }
                         
                         courses.push({
@@ -3296,7 +3321,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                         const newSR = prompt('Slope Rating ändern:', course.sr);
                         if (newSR === null) return;
                           
-                        const cr = parseFloat(newCR);
+                        const cr = parseFloat(newCR.replace(',', '.'));
                         const sr = parseInt(newSR);
                     
                         if (!newName.trim() || isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
@@ -3316,6 +3341,10 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                         
                                 const usedInRounds = myGolfer.rounds.filter(r => r.course === oldName && r.holes === oldHoles);
                           
+                        // Tracke ob Name/Holes in Runden aktualisiert wurden
+                        let roundsNameUpdated = false;
+                        let roundsHolesUpdated = false;
+
                         if (usedInRounds.length > 0) {
                                 const nameChanged = oldName !== newName.trim();
                                 const holesChanged = oldHoles !== holes;
@@ -3325,21 +3354,19 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                                     if (holesChanged) changes.push('Lochzahl');
                                     if (confirm(`${usedInRounds.length} Runden verwenden diesen Platz. ${changes.join(' und ')} in allen Runden aktualisieren?`)) {
                                         usedInRounds.forEach(round => {
-                                            if (nameChanged) round.course = newName.trim();
-                                            if (holesChanged) round.holes = holes;
+                                            if (nameChanged) { round.course = newName.trim(); roundsNameUpdated = true; }
+                                            if (holesChanged) { round.holes = holes; roundsHolesUpdated = true; }
                                         });
                                     }
                                 }
                     
                     if (oldCR !== cr || oldSR !== sr) {
-                        // Neuberechnung muss mit den tatsächlichen Rundendaten matchen
-                        // Falls Name/Holes NICHT aktualisiert wurden, temporär zurücksetzen
-                        const savedName = course.name;
-                        const savedHoles = course.holes;
-                        // Finde Runden mit den Werten die sie tatsächlich haben
+                        // Finde nur Runden die tatsächlich zu diesem Platz gehören
+                        // (entweder mit aktualisiertem oder altem Namen, je nachdem was der User gewählt hat)
+                        const matchName = roundsNameUpdated ? newName.trim() : oldName;
+                        const matchHoles = roundsHolesUpdated ? holes : oldHoles;
                         const roundsToRecalc = myGolfer.rounds.filter(r => 
-                            (r.course === savedName && r.holes === savedHoles) ||
-                            (r.course === oldName && r.holes === oldHoles)
+                            r.course === matchName && r.holes === matchHoles
                         );
                         roundsToRecalc.forEach(round => {
                             // Nur Basisdaten aktualisieren - SD wird durch recalculateHistory korrekt berechnet
@@ -3597,6 +3624,11 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     
                     // 7. Endergebnis
                     const finalHcp = afterCap;
+                    
+                    // 8. Prüfe ob ESR (Exceptional Score Reduction) angewendet wurde
+                    const storedHcp = myGolfer.handicapIndex;
+                    const esrApplied = Math.abs(storedHcp - finalHcp) > 0.05;
+                    const displayHcp = storedHcp; // Immer das tatsächlich gespeicherte HCP anzeigen
                 
                     // 8. Finde die Runden die als nächstes "rausfallen"
                     const allOfficialByDate = myGolfer.rounds
@@ -3622,8 +3654,12 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                             msg += `Soft/Hard Cap angewendet (Low HI 12M: ${lowestHcp12m.toFixed(1)})\n`;
                     }
                     
+                    if (esrApplied) {
+                        msg += `Exceptional Score Reduction: ${finalHcp.toFixed(1)} → ${displayHcp.toFixed(1)}\n`;
+                    }
+                    
                     msg += "\n";
-                    msg += `DEIN HANDICAP: ${finalHcp.toFixed(1)}\n`;
+                    msg += `DEIN HANDICAP: ${displayHcp.toFixed(1)}\n`;
                     msg += "\n━━━━━━━━━━━━━━━━━━━━━━━\n\n";
                     
                     countedRounds.forEach((r, i) => {
@@ -3641,7 +3677,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 });
                     
                     msg += "\n";
-                    msg += `DEIN HANDICAP: ${finalHcp.toFixed(1)}\n`;
+                    msg += `DEIN HANDICAP: ${displayHcp.toFixed(1)}\n`;
                     msg += "\n━━━━━━━━━━━━━━━━━━━━━━━\n\n";
                 
                     // Schritt 2: Nicht gewertete Runden
@@ -3760,7 +3796,12 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
     }
 
     myGolfer.handicapIndex = runningHcp;
-    myGolfer.hcpHistory = hcpHistory;
+    // Allzeit-Tiefstwert pflegen
+    if (myGolfer.lowestHandicapIndex === undefined || runningHcp < myGolfer.lowestHandicapIndex) {
+        myGolfer.lowestHandicapIndex = runningHcp;
+    }
+    // hcpHistory begrenzen: max. 100 Einträge
+    myGolfer.hcpHistory = hcpHistory.length > 100 ? hcpHistory.slice(-100) : hcpHistory;
     updateUnofficialHandicap();
 
     // Counted Round IDs (vereinfacht – keine kombinierten Runden mehr)
