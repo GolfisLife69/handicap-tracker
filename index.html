@@ -1162,6 +1162,21 @@
                 let courses = [];
                 let editingRoundId = null;
                 let editingCourseId = null;
+
+                // Auto-dismiss: Entfernt 'active' nach 10s
+                function toggleActive(el, ev) {
+                    ev.stopPropagation();
+                    el.classList.toggle('active');
+                    if (el._activeTimer) clearTimeout(el._activeTimer);
+                    if (el.classList.contains('active')) {
+                        el._activeTimer = setTimeout(function() {
+                            el.classList.remove('active');
+                            el._activeTimer = null;
+                        }, 10000);
+                    } else {
+                        el._activeTimer = null;
+                    }
+                }
         
                     // ID-Generator verhindert Kollisionen bei schnellem Speichern
             let lastGeneratedId = 0;
@@ -1893,7 +1908,7 @@ if (recent20All.length > 0) {
                             // Zeige nur 3 oder alle
                             const displayCourses = (showAll || sortedCourses.length <= 3) ? sortedCourses : sortedCourses.slice(0, 3);
                             manageList.innerHTML = displayCourses.map(c => `
-                  <div class="course-item" onclick="this.classList.toggle('active'); event.stopPropagation();" 
+                  <div class="course-item" onclick="toggleActive(this, event)" 
                        style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
                 <div style="flex:1;">
                     <div style="font-weight:600;font-size:14px;line-height:1.4;">${esc(c.name)}</div>
@@ -2966,7 +2981,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             const hcpiLabel = isOfficial ? '<span style="color: var(--color-text-secondary); font-weight: 600;"> • HCPI</span>' : '';
         
             return `
-        <div class="round-item" onclick="this.classList.toggle('active'); event.stopPropagation();">
+        <div class="round-item" onclick="toggleActive(this, event)">
             <div style="flex: 1; min-width: 0;">
                 <div style="font-size: 13px; color: var(--color-text-secondary);">
                     ${r.date} • HCP ${historicHcp}${countedBadge}
