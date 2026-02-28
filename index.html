@@ -1152,6 +1152,30 @@
                     return b !== 0 ? a / b : fallback;
                 }
 
+                // Par für eine Runde ermitteln (Kurs-Objekt bevorzugt, Fallback auf Standardwerte)
+                function getParForRound(r, course) {
+                    if (course) return course.par || (course.holes === 9 ? 36 : 72);
+                    return r.holes === 9 ? 36 : 72;
+                }
+
+                // Import-Daten normalisieren (IDs → String, courseId ergänzen, Typen korrigieren)
+                function migrateImportedData() {
+                    if (courses && Array.isArray(courses)) {
+                        courses = courses.map(c => ({ ...c, id: String(c.id) }));
+                    }
+                    if (myGolfer && myGolfer.rounds && Array.isArray(myGolfer.rounds)) {
+                        myGolfer.rounds = myGolfer.rounds.map(r => ({ ...r, id: String(r.id) }));
+                        myGolfer.rounds.forEach(r => {
+                            if (!r.courseId) {
+                                const c = courses.find(c => c.name === r.course && c.holes === r.holes);
+                                if (c) r.courseId = c.id;
+                            }
+                            if (typeof r.cr === 'string') r.cr = parseFloat(r.cr);
+                            if (typeof r.sr === 'string') r.sr = parseInt(r.sr);
+                        });
+                    }
+                }
+
                 // XSS-Schutz für innerHTML
                 function esc(s) {
                     if (s == null) return '';
@@ -1483,7 +1507,7 @@
                 // === Dirty-Flag System für selektives Rendering ===
                 const dirty = { dashboard: true, rounds: true, courses: true, stats: true, chart: true };
                 function markDirty() {
-                    var keys = arguments.length > 0 ? Array.from(arguments) : ['dashboard', 'rounds', 'courses', 'stats', 'chart'];
+                    const keys = arguments.length > 0 ? Array.from(arguments) : ['dashboard', 'rounds', 'courses', 'stats', 'chart'];
                     keys.forEach(function(k) { dirty[k] = true; });
                 }
                 function markAllDirty() { markDirty('dashboard', 'rounds', 'courses', 'stats', 'chart'); }
@@ -1492,7 +1516,7 @@
                 // If omitted, renders everything (backward compatible)
                 function updateUI(sections) {
                     if (!myGolfer) return;
-                    var all = !sections;
+                    const all = !sections;
                     
                     if (all || sections.dashboard) renderDashboard();
                     if (all || sections.courses)   renderCourses();
@@ -1532,7 +1556,7 @@
         if (last5.length > 0) {
             const nettoDeltas = last5.map(r => {
                 const course = findCourseForRound(r);
-                const par = course ? course.par : (r.holes === 9 ? 36 : 72);
+                const par = getParForRound(r, course);
                 const netto = r.strokes - (par + (r.courseHandicap || 0));
                 return r.holes === 9 ? netto * 2 : netto;
             });
@@ -1556,7 +1580,7 @@
             const recent = rounds.slice(-20);
             const allNettoDeltas = recent.map(r => {
                 const course = findCourseForRound(r);
-                const par = course ? course.par : (r.holes === 9 ? 36 : 72);
+                const par = getParForRound(r, course);
                 const netto = r.strokes - (par + (r.courseHandicap || 0));
                 return r.holes === 9 ? netto * 2 : netto;
             });
@@ -1617,7 +1641,7 @@
             // Ø zu Par (letzte 10, normalisiert auf 18L)
             const toParVals = last10.map(r => {
                 const c = findCourseForRound(r);
-                const par = c ? c.par : (r.holes === 9 ? 36 : 72);
+                const par = getParForRound(r, c);
                 const toPar = r.strokes - par;
                 return r.holes === 9 ? toPar * 2 : toPar;
             });
@@ -1646,14 +1670,14 @@ if (recent20All.length > 0) {
     const avg18 = r18.length > 0 
         ? Math.round(r18.reduce((s, r) => {
             const c = findCourseForRound(r);
-            const par = c ? c.par : 72;
+            const par = getParForRound(r, c);
             return s + (r.strokes - par);
         }, 0) / r18.length) : null;
     
     const avg9 = r9.length > 0 
         ? Math.round(r9.reduce((s, r) => {
             const c = findCourseForRound(r);
-            const par = c ? c.par : 36;
+            const par = getParForRound(r, c);
             return s + (r.strokes - par);
         }, 0) / r9.length) : null;
     
@@ -1737,9 +1761,10 @@ if (recent20All.length > 0) {
             }
             const unofficialSVG = buildSparklineSVG(unofficialVals, 'rgba(255,255,255,0.7)');
             document.getElementById('sparklineUnofficial').innerHTML = unofficialSVG;
+
             // Cache aktualisieren
             sparklineCache.key = cacheKey;
-            sparklineCache.official = buildSparklineSVG(officialVals, 'rgba(255,255,255,0.8)');
+            sparklineCache.official = officialSVG;
             sparklineCache.unofficial = unofficialSVG;
         }
 
@@ -1808,7 +1833,7 @@ if (recent20All.length > 0) {
                     html_content += '<div class="toast-progress"></div>';
                     toast.innerHTML = html_content;
                     if (actionBtn && actionBtn.fn) {
-                        var btn = toast.querySelector('.toast-action');
+                        const btn = toast.querySelector('.toast-action');
                         if (btn) {
                             btn.addEventListener('click', function() {
                                 actionBtn.fn();
@@ -1820,7 +1845,7 @@ if (recent20All.length > 0) {
                     requestAnimationFrame(function() {
                         requestAnimationFrame(function() {
                             toast.classList.add('show');
-                            var bar = toast.querySelector('.toast-progress');
+                            const bar = toast.querySelector('.toast-progress');
                             if (bar) {
                                 bar.style.animation = 'toast-shrink ' + duration + 'ms linear forwards';
                             }
@@ -1841,14 +1866,14 @@ if (recent20All.length > 0) {
                 function calculateHCPFromSDs(scoreDiffs, hcpHistory, startHcp, asOfDate) {
                     if (!scoreDiffs || scoreDiffs.length < 3) return null;
                     const sorted = [...scoreDiffs].sort(function(a, b) { return a - b; });
-                    var count = Math.min(sorted.length, 20);
-                    var p = getWHSParameters(count);
-                    var best = sorted.slice(0, p.numCounted);
-                    var avgBeforeAdj = safeDiv(best.reduce(function(a, b) { return a + b; }, 0), p.numCounted);
-                    var hcp = avgBeforeAdj + p.adjustment;
-                    hcp = Math.round(hcp * 10) / 10;
-                    var beforeCap = hcp;
-                    var low12m = getLowestHcpLast12Months(asOfDate || new Date().toISOString(), hcpHistory || [], startHcp);
+                    const count = Math.min(sorted.length, 20);
+                    const p = getWHSParameters(count);
+                    const best = sorted.slice(0, p.numCounted);
+                    const avgBeforeAdj = safeDiv(best.reduce(function(a, b) { return a + b; }, 0), p.numCounted);
+                    let hcp = avgBeforeAdj + p.adjustment;
+                    hcp = roundTo1(hcp);
+                    const beforeCap = hcp;
+                    const low12m = getLowestHcpLast12Months(asOfDate || new Date().toISOString(), hcpHistory || [], startHcp);
                     hcp = applyCaps(hcp, low12m);
                     return { hcp: hcp, numCounted: p.numCounted, adjustment: p.adjustment, bestSDs: best, avgBeforeAdj: avgBeforeAdj, beforeCap: beforeCap, lowestHcp12m: low12m };
                 }
@@ -1980,8 +2005,6 @@ if (recent20All.length > 0) {
                         sortedCourses.forEach(c => {
                             const playCount = courseCounts[c.id] || 0;
                             const countText = playCount > 0 ? ` • ${playCount}x` : '';
-                            const par = c.par || (c.holes === 9 ? 36 : 72);
-                            const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, c.sr, c.cr, par);
                             html += `<option value="${c.id}">${esc(c.name)}${countText}</option>`;
                         });
                     }
@@ -2087,7 +2110,7 @@ if (recent20All.length > 0) {
         // WHS Score Differential Berechnung (gleich für 9 und 18 Loch)
         const cr = course.cr;
         const sr = course.sr;
-        const scoreDifferential = Math.round(((strokes - cr) * (113 / sr)) * 10) / 10;
+        const scoreDifferential = roundTo1(((strokes - cr) * (113 / sr)));
         
         
             const isOfficial = document.getElementById('roundOfficial').checked;
@@ -2143,42 +2166,21 @@ if (recent20All.length > 0) {
         };
         
             myGolfer.rounds.push(round);
-        
-            // Prüfe ob historische Runde
-            const existingDates = myGolfer.rounds.slice(0, -1).map(r => new Date(r.date));
-            const isHistorical = existingDates.length > 0 &&
-                new Date(date) < new Date(Math.max(...existingDates));
-        
-            if (isHistorical) {
-                recalculateHistory();
-            } else {
-                updateMyHandicap();
 
-                // WHS: Exceptional Score Reduction (ESR) — VOR unofficial HCP
-                const esrHcp = round.playingHcp;
-                const esrDiff = esrHcp - round.scoreDifferential;
-                if (isOfficial && esrDiff >= 10.0) {
-                    myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 2.0);
-                    if (myGolfer.hcpHistory) {
-                        const lastEntry = myGolfer.hcpHistory[myGolfer.hcpHistory.length - 1];
-                        if (lastEntry) lastEntry.hcp = myGolfer.handicapIndex;
-                    }
+            // Einheitlicher Berechnungspfad: immer komplett neu durchrechnen.
+            // recalculateHistory setzt SD, courseHandicap, playingHcp, ESR, HCP korrekt.
+            const hcpBefore = myGolfer.handicapIndex;
+            recalculateHistory();
+
+            // ESR-Toast: recalculateHistory hat ESR bereits angewendet,
+            // wir prüfen die Bedingung nochmal für die Benutzer-Benachrichtigung
+            if (isOfficial) {
+                const esrDiff = round.playingHcp - round.scoreDifferential;
+                if (esrDiff >= 10.0) {
                     showToast('🏆 Exceptional Score! HCP zusätzlich -2.0!', 'success', 5000);
-                } else if (isOfficial && esrDiff >= 7.0) {
-                    myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 1.0);
-                    if (myGolfer.hcpHistory) {
-                        const lastEntry = myGolfer.hcpHistory[myGolfer.hcpHistory.length - 1];
-                        if (lastEntry) lastEntry.hcp = myGolfer.handicapIndex;
-                    }
+                } else if (esrDiff >= 7.0) {
                     showToast('🏆 Exceptional Score! HCP zusätzlich -1.0!', 'success', 5000);
                 }
-
-                // Allzeit-Tiefstwert nach ESR prüfen
-                if (myGolfer.lowestHandicapIndex === undefined || myGolfer.handicapIndex < myGolfer.lowestHandicapIndex) {
-                    myGolfer.lowestHandicapIndex = myGolfer.handicapIndex;
-                }
-
-                updateUnofficialHandicap();
             }
         
 
@@ -2209,43 +2211,6 @@ if (recent20All.length > 0) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
                 
-        function updateMyHandicap() {
-    const officialRounds = myGolfer.rounds
-        .filter(r => r.official !== false)
-        .slice(-20)
-        .map(r => ({ id: r.id, sd: r.scoreDifferential }))
-        .sort((a, b) => a.sd - b.sd);
-
-    if (officialRounds.length < 3) {
-        myGolfer.handicapIndex = myGolfer.startHcp;
-        myGolfer.countedRoundIds = [];
-        return;
-    }
-
-    const sds = officialRounds.map(r => r.sd);
-    const result = calculateHCPFromSDs(sds, myGolfer.hcpHistory, myGolfer.startHcp);
-    if (!result) return;
-
-    myGolfer.handicapIndex = result.hcp;
-
-    if (myGolfer.lowestHandicapIndex === undefined || result.hcp < myGolfer.lowestHandicapIndex) {
-        myGolfer.lowestHandicapIndex = result.hcp;
-    }
-
-    const now = new Date().toISOString();
-    const lastRoundDate = myGolfer.rounds
-        .filter(r => r.official !== false)
-        .slice(-1)[0]?.date || now;
-    
-    if (!myGolfer.hcpHistory) myGolfer.hcpHistory = [];
-    myGolfer.hcpHistory.push({ date: lastRoundDate, hcp: result.hcp });
-    if (myGolfer.hcpHistory.length > 100) {
-        myGolfer.hcpHistory = myGolfer.hcpHistory.slice(-100);
-    }
-
-    myGolfer.countedRoundIds = officialRounds.slice(0, result.numCounted).map(r => r.id);
-}
-            
          function updateUnofficialHandicap() {
             const sds = myGolfer.rounds.slice(-20).map(r => r.scoreDifferential);
             if (sds.length < 3) {
@@ -2321,7 +2286,7 @@ function applyCaps(hcp, lowestHcp12m) {
     if (hcp > softCapThreshold) {
         // 50% der Überschreitung über Soft Cap Schwelle
         hcp = softCapThreshold + (hcp - softCapThreshold) * 0.5;
-        hcp = Math.round(hcp * 10) / 10;
+        hcp = roundTo1(hcp);
     }
     // Hard Cap: absolutes Maximum
     hcp = Math.min(hcp, hardCapLimit);
@@ -2338,10 +2303,18 @@ function getExpected9HoleSD(handicapIndex) {
     return (handicapIndex / 2) + 1.5;
 }
 
+// Stabile Rundung auf 1 Nachkommastelle
+// Math.round(x * 10) / 10 kann bei .x5-Grenzwerten falsch runden,
+// weil die Multiplikation mit 10 Gleitkomma-Artefakte erzeugt.
+// toFixed(1) verwendet einen präziseren Algorithmus.
+function roundTo1(x) {
+    return Number(x.toFixed(1));
+}
+
 // WHS 2024: 9-Loch SD in 18-Loch-Äquivalent umrechnen
 // 18h-SD = tatsächliches 9h-SD + erwartetes 9h-SD
 function convert9HoleTo18HoleSD(sd9, handicapIndex) {
-    return Math.round((sd9 + getExpected9HoleSD(handicapIndex)) * 10) / 10;
+    return roundTo1(sd9 + getExpected9HoleSD(handicapIndex));
 }
         
         function toggleAdvancedStats() {
@@ -2458,7 +2431,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             const worstRound = recent20.reduce((worst, r) => r.scoreDifferential > worst.scoreDifferential ? r : worst, recent20[0]);
             function formatRoundInfo(r) {
                 const c = findCourseForRound(r);
-                const par = c ? c.par : (r.holes === 9 ? 36 : 72);
+                const par = getParForRound(r, c);
                 const toPar = r.strokes - par;
                 const toParText = toPar > 0 ? `+${toPar}` : `${toPar}`;
                 const name = getCourseDisplayName(r);
@@ -2485,7 +2458,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             if (recent20.length >= 2) {
                 const bruttoToPar = recent20.map(r => {
                     const c = findCourseForRound(r);
-                    const par = c ? c.par : (r.holes === 9 ? 36 : 72);
+                    const par = getParForRound(r, c);
                     const tp = r.strokes - par;
                     return r.holes === 9 ? tp * 2 : tp;
                 }).sort((a, b) => a - b);
@@ -2498,7 +2471,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
 
                 const nettoVals = recent20.map(r => {
                     const c = findCourseForRound(r);
-                    const par = c ? c.par : (r.holes === 9 ? 36 : 72);
+                    const par = getParForRound(r, c);
                     const netto = r.strokes - (par + (r.courseHandicap || 0));
                     return r.holes === 9 ? netto * 2 : netto;
                 }).sort((a, b) => a - b);
@@ -2715,7 +2688,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             if (goalPriority < 40 && gen.last5.length >= 5) {
                 const nettoLast5 = gen.last5.map(r => {
                     const course = findCourseForRound(r);
-                    const par = course ? course.par : (r.holes === 9 ? 36 : 72);
+                    const par = getParForRound(r, course);
                     const netto = r.strokes - (par + r.courseHandicap);
                     return r.holes === 9 ? netto * 2 : netto;
                 });
@@ -2938,7 +2911,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
         
         container.innerHTML = displayRounds.map((r) => {
             const course = findCourseForRound(r);
-            const coursePar = course ? course.par : (r.holes === 9 ? 36 : 72);
+            const coursePar = getParForRound(r, course);
         
             // Brutto: Differenz zu Par
             const diffToPar = r.strokes - coursePar;
@@ -3129,8 +3102,8 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
 
         function undoDeleteRound() {
             if (!lastDeletedRound) return;
-            var r = lastDeletedRound.round;
-            var idx = Math.min(lastDeletedRound.index, myGolfer.rounds.length);
+            const r = lastDeletedRound.round;
+            const idx = Math.min(lastDeletedRound.index, myGolfer.rounds.length);
             myGolfer.rounds.splice(idx, 0, r);
             recalculateHistory();
             saveAll();
@@ -3543,8 +3516,8 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
 
         function undoDeleteCourse() {
             if (!lastDeletedCourse) return;
-            var c = lastDeletedCourse.course;
-            var idx = Math.min(lastDeletedCourse.index, courses.length);
+            const c = lastDeletedCourse.course;
+            const idx = Math.min(lastDeletedCourse.index, courses.length);
             courses.splice(idx, 0, c);
             saveCourses();
             updateUI({ courses: true });
@@ -3615,32 +3588,12 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     confirmImport(data, function(confirmedData) {
                         myGolfer = confirmedData.golfer;
                         courses = confirmedData.courses;
+                        migrateImportedData();
                         
-                        // 🔧 ID-Normalisierung VOR dem Speichern
-                        if (courses && Array.isArray(courses)) {
-                            courses = courses.map(c => ({
-                                ...c,
-                                id: String(c.id)
-                            }));
-                        }
-                        
-                        if (myGolfer && myGolfer.rounds && Array.isArray(myGolfer.rounds)) {
-                            myGolfer.rounds = myGolfer.rounds.map(r => ({
-                                ...r,
-                                id: String(r.id)
-                            }));
-                            // Migration: courseId ergänzen falls fehlend
-                            myGolfer.rounds.forEach(r => {
-                                if (!r.courseId) {
-                                    const c = courses.find(c => c.name === r.course && c.holes === r.holes);
-                                    if (c) r.courseId = c.id;
-                                }
-                                if (typeof r.cr === 'string') r.cr = parseFloat(r.cr);
-                                if (typeof r.sr === 'string') r.sr = parseInt(r.sr);
-                            });
-                        }
-                        
+                        // Neuberechnung aller SDs und HCPs nach Import
+                        recalculateHistory();
                         saveAll();
+                        
                         checkSetup();
                         showToast(`Import erfolgreich! ${myGolfer.name || 'Unbekannt'} • HCP ${myGolfer.handicapIndex.toFixed(1)} • ${myGolfer.rounds ? myGolfer.rounds.length : 0} Runden`, 'success', 4000);
                     });
@@ -3673,31 +3626,10 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     // Direkter Import ohne Bestätigung (Ersteinrichtung)
                     myGolfer = data.golfer;
                     courses = data.courses;
+                    migrateImportedData();
                     
-                    // 🔧 ID-Normalisierung VOR dem Speichern
-                    if (courses && Array.isArray(courses)) {
-                        courses = courses.map(c => ({
-                            ...c,
-                            id: String(c.id)
-                        }));
-                    }
-                    
-                    if (myGolfer && myGolfer.rounds && Array.isArray(myGolfer.rounds)) {
-                        myGolfer.rounds = myGolfer.rounds.map(r => ({
-                            ...r,
-                            id: String(r.id)
-                        }));
-                        // Migration: courseId ergänzen falls fehlend
-                        myGolfer.rounds.forEach(r => {
-                            if (!r.courseId) {
-                                const c = courses.find(c => c.name === r.course && c.holes === r.holes);
-                                if (c) r.courseId = c.id;
-                            }
-                            if (typeof r.cr === 'string') r.cr = parseFloat(r.cr);
-                            if (typeof r.sr === 'string') r.sr = parseInt(r.sr);
-                        });
-                    }
-                    
+                    // Neuberechnung aller SDs und HCPs nach Import
+                    recalculateHistory();
                     saveAll();
                     
                     showToast(`Import erfolgreich! ${myGolfer.name || 'Unbekannt'} • HCP ${myGolfer.handicapIndex.toFixed(1)} • ${myGolfer.rounds ? myGolfer.rounds.length : 0} Runden`, 'success', 4000);
@@ -3799,7 +3731,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     
                     countedRounds.forEach((r, i) => {
                     const course = findCourseForRound(r);
-                    const par = course ? course.par : (r.holes === 9 ? 36 : 72);
+                    const par = getParForRound(r, course);
                     const toPar = r.strokes - par;
                     const toParText = toPar > 0 ? `+${toPar}` : toPar.toString();
                     // Bei 9-Loch-Runden: zeige auch das rohe 9h-SD
@@ -3823,7 +3755,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                         
                         notCounted.slice(0, 12).forEach(r => {
                             const course = findCourseForRound(r);
-                            const par = course ? course.par : (r.holes === 9 ? 36 : 72);
+                            const par = getParForRound(r, course);
                             const toPar = r.strokes - par;
                             const toParText = toPar > 0 ? `+${toPar}` : toPar.toString();
                             
@@ -3879,10 +3811,13 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
         }
 
         // C) Score Differential neu berechnen
-        if (course) {
-            const rawSD = Math.round(((round.strokes - course.cr) * (113 / course.sr)) * 10) / 10;
-            round.cr = parseFloat(course.cr.toFixed(1));
-            round.sr = parseInt(course.sr.toFixed(0));
+        // Kurs-Objekt bevorzugt, Fallback auf gespeicherte round.cr/sr
+        const useCr = course ? course.cr : round.cr;
+        const useSr = course ? course.sr : round.sr;
+        if (useCr != null && useSr != null) {
+            const rawSD = roundTo1(((round.strokes - useCr) * (113 / useSr)));
+            round.cr = parseFloat(Number(useCr).toFixed(1));
+            round.sr = parseInt(Number(useSr).toFixed(0));
 
             // WHS 2024: 9-Loch SD → 18-Loch-Äquivalent
             if (round.holes === 9) {
