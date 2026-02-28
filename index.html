@@ -787,16 +787,137 @@
         }
         
         
+        
+        
+        /* Extracted common inline styles */
+        .flex-row { display: flex; gap: 10px; margin-bottom: 10px; }
+        .flex-row-8 { display: flex; gap: 8px; margin-bottom: 10px; }
+        .radio-label {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            gap: 6px; cursor: pointer; padding: 0 12px;
+            background: var(--color-bg-primary); border-radius: 8px;
+            border: 2px solid transparent; height: 46px; box-sizing: border-box;
+        }
+        .radio-input { width: auto; margin: 0; }
+        .radio-text { font-weight: 500; }
+        .checkbox-label {
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; cursor: pointer; margin-bottom: 10px;
+        }
+        .checkbox-input { width: 16px; height: 20px; margin: 0; accent-color: var(--color-primary); }
+        .checkbox-text { font-weight: 400; font-size: 14px; }
+        .section-title { margin-top: 30px; }
+        .section-flex-header { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+        .stat-value-lg { font-size: 1.4em; font-weight: bold; }
+        .stat-caption { font-size: 0.75em; color: var(--color-text-secondary); }
+        .stat-caption-mt { font-size: 0.75em; margin-top: 3px; color: var(--color-text-secondary); }
+        .text-center { text-align: center; }
+        .goal-banner {
+            background: linear-gradient(135deg, var(--color-primary), #20c997);
+            color: white; padding: 15px; border-radius: 12px;
+            margin-bottom: 20px; text-align: center;
+        }
+        .goal-label { font-size: 0.8em; opacity: 0.9; margin-bottom: 5px; }
+        .goal-text { font-size: 0.85em; font-weight: 600; }
+        .stats-section-title { color: var(--color-text-secondary); font-size: 0.9em; margin-bottom: 10px; }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        .toast {
+            background: var(--color-surface);
+            color: var(--color-text-primary);
+            padding: 14px 20px 18px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            font-size: 14px;
+            line-height: 1.5;
+            pointer-events: auto;
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 4px solid var(--color-primary);
+            white-space: pre-line;
+            width: 100%;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: currentColor;
+            opacity: 0.35;
+            border-radius: 0 0 0 12px;
+            width: 100%;
+            transform-origin: left;
+            /* animation set via JS */
+        }
+        
+        @keyframes toast-shrink {
+            from { transform: scaleX(1); }
+            to   { transform: scaleX(0); }
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+        
+        .toast.success { border-left-color: var(--color-primary); }
+        .toast.error { border-left-color: var(--color-danger); }
+        .toast.info { border-left-color: var(--color-accent); }
+        .toast.warning { border-left-color: var(--color-warning); }
+        
+        .toast-action {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 4px 12px;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        
+        .toast-action:hover {
+            opacity: 0.85;
+        }
+        
+        .toast-action.danger {
+            background: var(--color-danger);
+        }
+
         </style>
         
         </head>
         <body tabindex="-1">
+    <div id="toastContainer" class="toast-container"></div>
             <div id="setupScreen" class="setup-form">
                 <h2>Einmalige Einrichtung</h2>
                 <p style="margin-bottom: 20px;">Deine persönlichen Golf-Daten:</p>
-                <input id="myName" placeholder="Dein Name" required>
-                <input id="myClub" placeholder="Dein Club (optional)">
-                <input id="startHcp" type="number" step="0.1" inputmode="decimal" placeholder="Aktuelles Handicap (z.B. 19.5)" required>
+                <input id="myName" placeholder="Dein Name" required aria-label="Dein Name">
+                <input id="myClub" placeholder="Dein Club (optional)" aria-label="Golfclub">
+                <input id="startHcp" type="number" step="0.1" inputmode="decimal" placeholder="Aktuelles Handicap (z.B. 19.5)" required aria-label="Start-Handicap">
                 <button onclick="setupComplete()">✅ Einrichtung abschließen</button>
                 <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--color-border);">
                     <input type="file" id="setupImportFile" accept=".json" onchange="setupImportData(event)" style="display: none;">
@@ -808,27 +929,27 @@
             
             <div id="mainApp" style="display:none;">
                 <div class="container">
-                    <div class="sidebar">
+                    <div class="sidebar" role="complementary" aria-label="Eingabe und Verwaltung">
                         
                         <h2>Neue Runde</h2>
                         
                         <!-- 9/18 Löcher -->
-                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                            <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="roundHoles9Label">
-                                <input type="radio" name="roundHoles" id="roundHoles9" value="9" style="width: auto; margin: 0;" onchange="filterCoursesByHoles()">
+                        <div class="flex-row">
+                            <label class="radio-label" id="roundHoles9Label">
+                                <input type="radio" name="roundHoles" id="roundHoles9" value="9" class="radio-input" onchange="filterCoursesByHoles()">
                                 <span style="font-weight: 500;">9 Löcher</span>
                             </label>
-                            <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="roundHoles18Label">
-                                <input type="radio" name="roundHoles" id="roundHoles18" value="18" checked style="width: auto; margin: 0;" onchange="filterCoursesByHoles()">
+                            <label class="radio-label" id="roundHoles18Label">
+                                <input type="radio" name="roundHoles" id="roundHoles18" value="18" checked class="radio-input" onchange="filterCoursesByHoles()">
                                 <span style="font-weight: 500;">18 Löcher</span>
                             </label>
                         </div>
         
-                        <input id="roundDate" type="date" style="height: 46px; margin-bottom: 10px; text-align: center !important; padding: 12px;">
-                        <select id="roundCourse" style="height: 46px; margin-bottom: 10px;"></select>
+                        <input id="roundDate" type="date" aria-label="Datum der Runde" style="height: 46px; margin-bottom: 10px; text-align: center !important; padding: 12px;">
+                        <select id="roundCourse" style="height: 46px; margin-bottom: 10px;" aria-label="Golfplatz auswählen"></select>
                         
          <div style="position: relative; margin-bottom: 10px;">
-            <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge eingeben" 
+            <input id="roundStrokes" type="number" inputmode="numeric" placeholder="Schläge eingeben" aria-label="Anzahl Schläge" 
                    style="height: 46px; 
                           width: 100%; 
                           text-align: center; 
@@ -849,34 +970,36 @@
         
         
                         
-                        <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
-                            <input type="checkbox" id="roundOfficial" style="width: 16px; height: 20px; margin: 0; accent-color: var(--color-primary);">
-                            <span style="font-weight: 400; font-size: 14px;">HCPI wirksam</span>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="roundOfficial" class="checkbox-input">
+                            <span class="checkbox-text">HCPI wirksam</span>
                         </label>
                         
-                        <button onclick="saveRound()">Runde speichern</button>
+                        <button id="saveRoundBtn" onclick="saveRound()">Runde speichern</button>
+                        <button id="cancelEditRoundBtn" class="secondary" onclick="cancelEditRound()" style="display: none;">Abbrechen</button>
         
                         
                         <h2 style="margin-top: 30px;">Neuer Platz</h2>
-                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                            <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="courseHoles9Label">
-                                <input type="radio" name="courseHoles" id="courseHoles9" value="9" style="width: auto; margin: 0;">
+                        <div class="flex-row">
+                            <label class="radio-label" id="courseHoles9Label">
+                                <input type="radio" name="courseHoles" id="courseHoles9" value="9" class="radio-input">
                                 <span style="font-weight: 500;">9 Löcher</span>
                             </label>
-                            <label style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; padding: 0 12px; background: var(--color-bg-primary); border-radius: 8px; border: 2px solid transparent; height: 46px; box-sizing: border-box;" id="courseHoles18Label">
-                                <input type="radio" name="courseHoles" id="courseHoles18" value="18" checked style="width: auto; margin: 0;">
+                            <label class="radio-label" id="courseHoles18Label">
+                                <input type="radio" name="courseHoles" id="courseHoles18" value="18" checked class="radio-input">
                                 <span style="font-weight: 500;">18 Löcher</span>
                             </label>
                         </div>
                         <div style="text-align: center;">
-                              <input id="courseName" placeholder="Platznamen angeben">
+                              <input id="courseName" placeholder="Platznamen angeben" aria-label="Platzname">
                         </div>
-                        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                            <input id="coursePar" type="number" inputmode="numeric" placeholder="Par" style="flex: 1; min-width: 0; text-align: center;">
-                            <input id="courseCR" type="number" step="0.1" inputmode="decimal" placeholder="CR" style="flex: 1; min-width: 0; text-align: center;">
-                            <input id="courseSR" type="number" inputmode="numeric" placeholder="SR" style="flex: 1; min-width: 0; text-align: center;">
+                        <div class="flex-row-8">
+                            <input id="coursePar" type="number" inputmode="numeric" placeholder="Par" aria-label="Par" style="flex: 1; min-width: 0; text-align: center;">
+                            <input id="courseCR" type="number" step="0.1" inputmode="decimal" placeholder="CR" aria-label="Course Rating" style="flex: 1; min-width: 0; text-align: center;">
+                            <input id="courseSR" type="number" inputmode="numeric" placeholder="SR" aria-label="Slope Rating" style="flex: 1; min-width: 0; text-align: center;">
                         </div>
-                        <button onclick="addCourse()">Platz speichern</button>
+                        <button id="addCourseBtn" onclick="addCourse()">Platz speichern</button>
+                        <button id="cancelEditCourseBtn" class="secondary" onclick="cancelEditCourse()" style="display: none;">Abbrechen</button>
         
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px;">
                         
@@ -887,9 +1010,9 @@
                         <button id="showAllCoursesBtn" class="show-all-rounds-btn" onclick="toggleAllCourses()" style="display: none; margin-top: 10px; font-size: 12px; padding: 8px;">Alle Plätze anzeigen</button>
                         
                         <h2 style="margin-top: 30px;">Daten-Verwaltung</h2>
-                        <label style="display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 10px;">
-                    <input type="checkbox" id="autoFocusToggle" onchange="toggleAutoFocus()" style="width: 16px; height: 20px; margin: 0; accent-color: var(--color-primary);">
-                            <span style="font-weight: 400; font-size: 14px;">Auto-Fokus "Schläge eingeben"</span>
+                        <label class="checkbox-label">
+                    <input type="checkbox" id="autoFocusToggle" onchange="toggleAutoFocus()" class="checkbox-input">
+                            <span class="checkbox-text">Auto-Fokus "Schläge eingeben"</span>
                         </label>
         
                         <button class="export-btn" onclick="exportData()">💾 Daten exportieren (JSON)</button>
@@ -905,7 +1028,7 @@
                         <button class="danger-btn" onclick="clearData()">🗑️ Alles löschen</button>
                         </div>
                     
-                    <div class="main">
+                    <div class="main" role="main" aria-label="Dashboard">
                         <div style="text-align: center; margin-bottom: 5px;">
                             <h1 style="font-size: 0.85em; margin-bottom: 5px; margin-top: 0px; color: var(--color-text-secondary);">
                                 <span id="golferNameDisplay">-</span> - <span id="golferClubDisplay">-</span>
@@ -1010,7 +1133,7 @@
                         </div>
         
 
-                        <div class="round-list" id="roundList"></div>
+                        <div class="round-list" id="roundList" role="list" aria-label="Rundenverlauf"></div>
                         
                         <button id="showAllRoundsBtn" class="show-all-rounds-btn" onclick="toggleAllRounds()" style="display: none;">
                             Alle Runden anzeigen
@@ -1022,10 +1145,27 @@
             
             <script>
                 let myGolfer = null;
+        
+                // Sichere Division (verhindert NaN/Infinity)
+                function safeDiv(a, b, fallback) {
+                    if (fallback === undefined) fallback = 0;
+                    return b !== 0 ? a / b : fallback;
+                }
+
+                // XSS-Schutz für innerHTML
+                function esc(s) {
+                    if (s == null) return '';
+                    const d = document.createElement('div');
+                    d.textContent = String(s);
+                    return d.innerHTML;
+                }
                 let courses = [];
+                let editingRoundId = null;
+                let editingCourseId = null;
         
                     // ID-Generator verhindert Kollisionen bei schnellem Speichern
             let lastGeneratedId = 0;
+                let sparklineCache = { key: '', official: '', unofficial: '' };
             
             function generateUniqueId() {
                 const timestamp = Date.now();
@@ -1219,15 +1359,15 @@
                 
                     // Detaillierte Fehlerprüfung mit Alert
                     if (!name) {
-                        return alert('Bitte einen Namen eingeben!');
+                        return showToast('Bitte einen Namen eingeben!', 'error');
                     }
                     
                     if (isNaN(startHcp)) {
-                        return alert('Bitte ein gültiges Handicap eingeben (z.B. 19.5 oder 19,5)!');
+                        return showToast('Bitte ein gültiges Handicap eingeben!', 'error');
                     }
                     
                     if (startHcp < -5 || startHcp > 54) {
-                        return alert('Handicap muss zwischen -5 und 54 liegen!');
+                        return showToast('Handicap muss zwischen -5 und 54 liegen!', 'error');
                     }
                 
                     if (!myGolfer) {
@@ -1248,7 +1388,7 @@
                         myGolfer.created = new Date().toISOString();
                 
                     // Speichern
-                    localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+                    saveAll();
                     
                     // UI Update auslösen
                     checkSetup();
@@ -1277,6 +1417,8 @@
                             }
                             
                             // Normalisiere nur wenn nötig UND Runden vorhanden
+                            let needsSave = false;
+                            
                             if (myGolfer.rounds.length > 0) {
                                 const needsNormalization = myGolfer.rounds.some(r => typeof r.id !== 'string');
                                 
@@ -1285,9 +1427,27 @@
                                         ...r,
                                         id: String(r.id)
                                     }));
-                                    localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+                                    needsSave = true;
                                 }
                             }
+
+                            // Migration: courseId in Runden ergänzen (Altdaten)
+                            if (myGolfer.rounds.length > 0) {
+                                myGolfer.rounds.forEach(r => {
+                                    if (!r.courseId) {
+                                        const c = findCourseForRound(r);
+                                        if (c) {
+                                            r.courseId = c.id;
+                                            needsSave = true;
+                                        }
+                                    }
+                                    // Migration: cr/sr von String zu Number
+                                    if (typeof r.cr === 'string') { r.cr = parseFloat(r.cr); needsSave = true; }
+                                    if (typeof r.sr === 'string') { r.sr = parseInt(r.sr); needsSave = true; }
+                                });
+                            }
+                            
+                            if (needsSave) saveAll();
                         } catch (normErr) {
                             console.error('Warnung: ID-Normalisierung fehlgeschlagen', normErr);
                         }
@@ -1305,9 +1465,40 @@
                 }
         
                 
-                function updateUI() {
+                // === Dirty-Flag System für selektives Rendering ===
+                const dirty = { dashboard: true, rounds: true, courses: true, stats: true, chart: true };
+                function markDirty() {
+                    var keys = arguments.length > 0 ? Array.from(arguments) : ['dashboard', 'rounds', 'courses', 'stats', 'chart'];
+                    keys.forEach(function(k) { dirty[k] = true; });
+                }
+                function markAllDirty() { markDirty('dashboard', 'rounds', 'courses', 'stats', 'chart'); }
+
+                // sections: optional object { dashboard, courses, rounds, chart }
+                // If omitted, renders everything (backward compatible)
+                function updateUI(sections) {
                     if (!myGolfer) return;
+                    var all = !sections;
                     
+                    if (all || sections.dashboard) renderDashboard();
+                    if (all || sections.courses)   renderCourses();
+                    if (all || sections.rounds)    renderRounds();
+                    if (all || sections.chart) {
+                        renderSparklines();
+                        const chartWrapper = document.getElementById('handicapChartWrapper');
+                        const rounds = myGolfer.rounds || [];
+                        if (rounds.length >= 2) {
+                            chartWrapper.style.display = 'block';
+                            if (document.getElementById('advancedStats').classList.contains('active')) {
+                                renderChart();
+                                renderAdvancedStats();
+                            }
+                        } else {
+                            chartWrapper.style.display = 'none';
+                        }
+                    }
+                }
+                
+                function renderDashboard() {
                     document.getElementById('golferNameDisplay').textContent = myGolfer.name;
                     document.getElementById('golferClubDisplay').textContent = myGolfer.club || 'Unabhängiger Golfer';
                     
@@ -1325,7 +1516,7 @@
         // === KACHEL 1: NETTO Ø (Letzte 5) ===
         if (last5.length > 0) {
             const nettoDeltas = last5.map(r => {
-                const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+                const course = findCourseForRound(r);
                 const par = course ? course.par : (r.holes === 9 ? 36 : 72);
                 const netto = r.strokes - (par + (r.courseHandicap || 0));
                 return r.holes === 9 ? netto * 2 : netto;
@@ -1349,7 +1540,7 @@
             // Trend: letzte 5 vs. letzte 20
             const recent = rounds.slice(-20);
             const allNettoDeltas = recent.map(r => {
-                const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+                const course = findCourseForRound(r);
                 const par = course ? course.par : (r.holes === 9 ? 36 : 72);
                 const netto = r.strokes - (par + (r.courseHandicap || 0));
                 return r.holes === 9 ? netto * 2 : netto;
@@ -1410,7 +1601,7 @@
             
             // Ø zu Par (letzte 10, normalisiert auf 18L)
             const toParVals = last10.map(r => {
-                const c = courses.find(c => c.name === r.course && c.holes === r.holes);
+                const c = findCourseForRound(r);
                 const par = c ? c.par : (r.holes === 9 ? 36 : 72);
                 const toPar = r.strokes - par;
                 return r.holes === 9 ? toPar * 2 : toPar;
@@ -1439,14 +1630,14 @@ if (recent20All.length > 0) {
     
     const avg18 = r18.length > 0 
         ? Math.round(r18.reduce((s, r) => {
-            const c = courses.find(c => c.name === r.course && c.holes === r.holes);
+            const c = findCourseForRound(r);
             const par = c ? c.par : 72;
             return s + (r.strokes - par);
         }, 0) / r18.length) : null;
     
     const avg9 = r9.length > 0 
         ? Math.round(r9.reduce((s, r) => {
-            const c = courses.find(c => c.name === r.course && c.holes === r.holes);
+            const c = findCourseForRound(r);
             const par = c ? c.par : 36;
             return s + (r.strokes - par);
         }, 0) / r9.length) : null;
@@ -1477,21 +1668,6 @@ if (recent20All.length > 0) {
                         document.getElementById('avgToParLast10').textContent = '-';
                         document.getElementById('avgOverPar').textContent = '-';
                     }
-                    
-                    renderCourses();
-                    renderRounds();
-                    renderSparklines();
-                    
-                    // Chart: nur innerhalb Erweiterte Statistiken rendern wenn offen
-                    const chartWrapper = document.getElementById('handicapChartWrapper');
-                    if (rounds.length >= 2) {
-                        chartWrapper.style.display = 'block';
-                        if (document.getElementById('advancedStats').classList.contains('active')) {
-                            renderChart();
-                        }
-                    } else {
-                        chartWrapper.style.display = 'none';
-                    }
                 }
         
                 
@@ -1500,6 +1676,14 @@ if (recent20All.length > 0) {
             if (rounds.length < 2) {
                 document.getElementById('sparklineOfficial').innerHTML = '';
                 document.getElementById('sparklineUnofficial').innerHTML = '';
+                sparklineCache.key = '';
+                return;
+            }
+            // Cache: Nur neu rendern wenn sich Daten geändert haben
+            const cacheKey = rounds.length + '-' + myGolfer.handicapIndex + '-' + (rounds[rounds.length-1] || {}).id;
+            if (sparklineCache.key === cacheKey) {
+                document.getElementById('sparklineOfficial').innerHTML = sparklineCache.official;
+                document.getElementById('sparklineUnofficial').innerHTML = sparklineCache.unofficial;
                 return;
             }
 
@@ -1524,29 +1708,24 @@ if (recent20All.length > 0) {
             // Offizielle HCP-History
             const hcpHistory = myGolfer.hcpHistory || [];
             const officialVals = hcpHistory.slice(-10).map(h => h.hcp);
-            document.getElementById('sparklineOfficial').innerHTML = buildSparklineSVG(officialVals, 'rgba(255,255,255,0.8)');
+            const officialSVG = buildSparklineSVG(officialVals, 'rgba(255,255,255,0.8)');
+            document.getElementById('sparklineOfficial').innerHTML = officialSVG;
 
-            // Inoffizielle: berechne aus allen Runden
-            const last10Rounds = rounds.slice(-10);
+            // Inoffizielle: berechne aus allen Runden (Index-basiert, Runden sind chronologisch sortiert)
+            const startIdx = Math.max(0, rounds.length - 10);
             const unofficialVals = [];
-            for (let i = 0; i < last10Rounds.length; i++) {
-                const roundDate = new Date(last10Rounds[i].date);
-                const tempAll = rounds.filter(r => new Date(r.date) <= roundDate)
-                    .slice(-20)
-                    .map(r => r.scoreDifferential)
-                    .sort((a, b) => a - b);
-                if (tempAll.length < 3) {
-                    unofficialVals.push(myGolfer.startHcp);
-                } else {
-                    const { numCounted, adjustment } = getWHSParameters(tempAll.length);
-                    let hcp = tempAll.slice(0, numCounted).reduce((a, b) => a + b, 0) / numCounted + adjustment;
-                    hcp = Math.round(hcp * 10) / 10;
-                    const lowestHcp = getLowestHcpLast12Months(last10Rounds[i].date, myGolfer.hcpHistory || [], myGolfer.startHcp);
-                    hcp = applyCaps(hcp, lowestHcp);
-                    unofficialVals.push(hcp);
-                }
+            for (let j = startIdx; j < rounds.length; j++) {
+                const sdsUpToHere = rounds.slice(Math.max(0, j - 19), j + 1)
+                    .map(r => r.scoreDifferential);
+                const result = calculateHCPFromSDs(sdsUpToHere, myGolfer.hcpHistory || [], myGolfer.startHcp, rounds[j].date);
+                unofficialVals.push(result ? result.hcp : myGolfer.startHcp);
             }
-            document.getElementById('sparklineUnofficial').innerHTML = buildSparklineSVG(unofficialVals, 'rgba(255,255,255,0.7)');
+            const unofficialSVG = buildSparklineSVG(unofficialVals, 'rgba(255,255,255,0.7)');
+            document.getElementById('sparklineUnofficial').innerHTML = unofficialSVG;
+            // Cache aktualisieren
+            sparklineCache.key = cacheKey;
+            sparklineCache.official = buildSparklineSVG(officialVals, 'rgba(255,255,255,0.8)');
+            sparklineCache.unofficial = unofficialSVG;
         }
 
                 function loadData() {
@@ -1588,7 +1767,92 @@ if (recent20All.length > 0) {
                 function saveCourses() {
                     localStorage.setItem('courses', JSON.stringify(courses));
                 }
+
+                function saveAll() {
+                    localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+                    localStorage.setItem('courses', JSON.stringify(courses));
+                }
         
+                // === Toast-Notification System ===
+                let toastQueue = [];
+                let lastDeletedRound = null;
+                let lastDeletedCourse = null;
+                let undoRoundTimeout = null;
+                let undoCourseTimeout = null;
+                function showToast(message, type, duration, actionBtn) {
+                    if (!type) type = 'success';
+                    if (!duration) duration = 3500;
+                    const container = document.getElementById('toastContainer');
+                    if (!container) { console.log(message); return; }
+                    const toast = document.createElement('div');
+                    toast.className = 'toast ' + type;
+                    let html_content = esc(message).replace(/\n/g, '<br>');
+                    if (actionBtn) {
+                        html_content += ' <button class="toast-action ' + (actionBtn.cls || '') + '">' + esc(actionBtn.label) + '</button>';
+                    }
+                    html_content += '<div class="toast-progress"></div>';
+                    toast.innerHTML = html_content;
+                    if (actionBtn && actionBtn.fn) {
+                        var btn = toast.querySelector('.toast-action');
+                        if (btn) {
+                            btn.addEventListener('click', function() {
+                                actionBtn.fn();
+                                dismissToast(toast);
+                            });
+                        }
+                    }
+                    container.appendChild(toast);
+                    requestAnimationFrame(function() {
+                        requestAnimationFrame(function() {
+                            toast.classList.add('show');
+                            var bar = toast.querySelector('.toast-progress');
+                            if (bar) {
+                                bar.style.animation = 'toast-shrink ' + duration + 'ms linear forwards';
+                            }
+                        });
+                    });
+                    const timer = setTimeout(function() { dismissToast(toast); }, duration);
+                    toast._timer = timer;
+                    return toast;
+                }
+                function dismissToast(toast) {
+                    if (!toast || !toast.parentNode) return;
+                    clearTimeout(toast._timer);
+                    toast.classList.remove('show');
+                    setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+                }
+
+                // === Zentrale HCP-Berechnung aus Score Differentials ===
+                function calculateHCPFromSDs(scoreDiffs, hcpHistory, startHcp, asOfDate) {
+                    if (!scoreDiffs || scoreDiffs.length < 3) return null;
+                    const sorted = [...scoreDiffs].sort(function(a, b) { return a - b; });
+                    var count = Math.min(sorted.length, 20);
+                    var p = getWHSParameters(count);
+                    var best = sorted.slice(0, p.numCounted);
+                    var avgBeforeAdj = safeDiv(best.reduce(function(a, b) { return a + b; }, 0), p.numCounted);
+                    var hcp = avgBeforeAdj + p.adjustment;
+                    hcp = Math.round(hcp * 10) / 10;
+                    var beforeCap = hcp;
+                    var low12m = getLowestHcpLast12Months(asOfDate || new Date().toISOString(), hcpHistory || [], startHcp);
+                    hcp = applyCaps(hcp, low12m);
+                    return { hcp: hcp, numCounted: p.numCounted, adjustment: p.adjustment, bestSDs: best, avgBeforeAdj: avgBeforeAdj, beforeCap: beforeCap, lowestHcp12m: low12m };
+                }
+
+                // Kurs für eine Runde finden: zuerst per courseId, Fallback auf Name+Holes
+                function findCourseForRound(r) {
+                    if (r.courseId) {
+                        const byId = courses.find(c => c.id === r.courseId);
+                        if (byId) return byId;
+                    }
+                    return courses.find(c => c.name === r.course && c.holes === r.holes) || null;
+                }
+
+                // Anzeigename für eine Runde (aus Kurs-Objekt oder gespeichertem Namen)
+                function getCourseDisplayName(r) {
+                    const c = findCourseForRound(r);
+                    return c ? c.name : r.course;
+                }
+
                 function calculateCourseHandicap(handicapIndex, slopeRating, courseRating, par) {
                     // WHS-Formel: Course Handicap = HCP Index × (SR / 113) + (CR - Par)
                     return Math.round(handicapIndex * (slopeRating / 113) + (courseRating - par));
@@ -1632,7 +1896,7 @@ if (recent20All.length > 0) {
                   <div class="course-item" onclick="this.classList.toggle('active'); event.stopPropagation();" 
                        style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--color-bg-primary);margin-bottom:8px;border-radius:8px;">
                 <div style="flex:1;">
-                    <div style="font-weight:600;font-size:14px;line-height:1.4;">${c.name}</div>
+                    <div style="font-weight:600;font-size:14px;line-height:1.4;">${esc(c.name)}</div>
                     <div class="course-info" style="font-size:12px;color:var(--color-text-secondary);margin-top:2px;">CR ${c.cr.toFixed(1)} • SR ${c.sr} • Par ${c.par || (c.holes === 9 ? 36 : 72)}<span class="mobile-bullet"> • </span><span class="desktop-break"></span>${c.holes} Löcher</div>
                 </div>
                     <div class="course-actions" style="flex-direction: column; gap: 6px;">
@@ -1660,7 +1924,7 @@ if (recent20All.length > 0) {
                     
                     if (myGolfer && myGolfer.rounds) {
                         myGolfer.rounds.forEach(round => {
-                            const course = courses.find(c => c.name === round.course && c.holes === round.holes);
+                            const course = findCourseForRound(round);
                             if (course) {
                                 courseCounts[course.id] = (courseCounts[course.id] || 0) + 1;
                                 
@@ -1703,7 +1967,7 @@ if (recent20All.length > 0) {
                             const countText = playCount > 0 ? ` • ${playCount}x` : '';
                             const par = c.par || (c.holes === 9 ? 36 : 72);
                             const courseHcp = calculateCourseHandicap(myGolfer.handicapIndex, c.sr, c.cr, par);
-                            html += `<option value="${c.id}">${c.name}${countText}</option>`;
+                            html += `<option value="${c.id}">${esc(c.name)}${countText}</option>`;
                         });
                     }
                     
@@ -1785,10 +2049,15 @@ if (recent20All.length > 0) {
                 }
         
                 function saveRound() {
+            const btn = document.getElementById('saveRoundBtn');
+            if (btn.disabled) return;
+            btn.disabled = true;
+            setTimeout(function() { btn.disabled = false; }, 1000);
+            
             const courseId = document.getElementById('roundCourse').value;
             const course = courses.find(c => c.id === courseId);
             if (!course) {
-                return alert('Bitte zuerst einen Platz anlegen oder auswählen!');
+                return showToast('Bitte zuerst einen Platz auswählen!', 'error');
             }
         
             const strokes = parseInt(document.getElementById('roundStrokes').value);
@@ -1797,13 +2066,13 @@ if (recent20All.length > 0) {
         
             const validationErrors = validateRoundData(strokes, holes, date);
             if (validationErrors.length > 0) {
-                return alert('❌ Eingabefehler:\n\n' + validationErrors.join('\n'));
+                return showToast(validationErrors.join('\n'), 'error', 5000);
             }
         
         // WHS Score Differential Berechnung (gleich für 9 und 18 Loch)
         const cr = course.cr;
         const sr = course.sr;
-        const scoreDifferential = ((strokes - cr) * (113 / sr)).toFixed(1);
+        const scoreDifferential = Math.round(((strokes - cr) * (113 / sr)) * 10) / 10;
         
         
             const isOfficial = document.getElementById('roundOfficial').checked;
@@ -1813,20 +2082,44 @@ if (recent20All.length > 0) {
             );
         
             // WHS 2024: Für 9-Loch-Runden SD in 18-Loch-Äquivalent umrechnen
-        const rawSD = parseFloat(scoreDifferential);
+        const rawSD = scoreDifferential;
         const isNineHole = holes === 9;
         const effectiveSD = isNineHole
             ? convert9HoleTo18HoleSD(rawSD, myGolfer.handicapIndex)
             : rawSD;
 
+        // === EDIT-MODE: bestehende Runde aktualisieren ===
+        if (editingRoundId) {
+            const existingRound = myGolfer.rounds.find(r => r.id === editingRoundId);
+            if (!existingRound) { cancelEditRound(); return; }
+            
+            existingRound.date = date;
+            existingRound.course = course.name;
+            existingRound.courseId = course.id;
+            existingRound.holes = holes;
+            existingRound.strokes = strokes;
+            existingRound.official = isOfficial;
+            
+            // recalculateHistory berechnet SD, courseHandicap, HCP etc. korrekt
+            recalculateHistory();
+            saveAll();
+            updateUI({ dashboard: true, rounds: true, chart: true });
+            
+            showToast('Runde aktualisiert!', 'success');
+            cancelEditRound();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
         const round = {
             id: generateUniqueId(),
             date: date,
             course: course.name,
+            courseId: course.id,
             holes: holes,
             strokes: strokes,
-            cr: cr.toFixed(1),
-            sr: sr.toFixed(0),
+            cr: parseFloat(cr.toFixed(1)),
+            sr: parseInt(sr.toFixed(0)),
             scoreDifferential: effectiveSD,
             scoreDifferential9: isNineHole ? rawSD : null, // Rohwert für Anzeige
             playingHcp: myGolfer.handicapIndex,
@@ -1855,14 +2148,14 @@ if (recent20All.length > 0) {
                         const lastEntry = myGolfer.hcpHistory[myGolfer.hcpHistory.length - 1];
                         if (lastEntry) lastEntry.hcp = myGolfer.handicapIndex;
                     }
-                    alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -2.0 reduziert!');
+                    showToast('🏆 Exceptional Score! HCP zusätzlich -2.0!', 'success', 5000);
                 } else if (isOfficial && esrDiff >= 7.0) {
                     myGolfer.handicapIndex = Math.max(-5.0, myGolfer.handicapIndex - 1.0);
                     if (myGolfer.hcpHistory) {
                         const lastEntry = myGolfer.hcpHistory[myGolfer.hcpHistory.length - 1];
                         if (lastEntry) lastEntry.hcp = myGolfer.handicapIndex;
                     }
-                    alert('🏆 Exceptional Score! Dein Handicap wurde zusätzlich um -1.0 reduziert!');
+                    showToast('🏆 Exceptional Score! HCP zusätzlich -1.0!', 'success', 5000);
                 }
 
                 // Allzeit-Tiefstwert nach ESR prüfen
@@ -1874,25 +2167,28 @@ if (recent20All.length > 0) {
             }
         
 
-        localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
+        saveAll();
         
-            if (myGolfer.rounds.length % 5 === 0) {
-                setTimeout(() => {
-                    if (confirm(`Du hast ${myGolfer.rounds.length} Runden erfasst! Automatisches Backup jetzt erstellen?`)) {
-                        exportData();
-                    }
-                }, 500);
+            // Auto-Backup Hinweis alle 10 Runden
+            if (myGolfer.rounds.length % 10 === 0) {
+                setTimeout(function() {
+                    showToast(`${myGolfer.rounds.length} Runden! Backup empfohlen.`, 'info', 6000, {
+                        label: 'Exportieren',
+                        fn: function() { exportData(); }
+                    });
+                }, 800);
             }
         
-            updateUI();
+            updateUI({ dashboard: true, rounds: true, chart: true });
             document.getElementById('roundStrokes').value = '';
             document.getElementById('roundOfficial').checked = false;
+            document.getElementById('roundDate').valueAsDate = new Date();
             updateStrokesSuffix();
             
             const sdInfo = round.scoreDifferential9 !== null
                 ? `${round.scoreDifferential9} (→ 18L: ${round.scoreDifferential})`
                 : `${round.scoreDifferential}`;
-            alert(`Runde gespeichert!\nDifferential: ${sdInfo}\n${isOfficial ? 'Offizielles' : 'Inoffizielles'} HCP: ${myGolfer[isOfficial ? 'handicapIndex' : 'unofficialHandicap'].toFixed(1)}`);
+            showToast(`Runde gespeichert!\nSD: ${sdInfo} • HCP: ${myGolfer[isOfficial ? 'handicapIndex' : 'unofficialHandicap'].toFixed(1)}`, 'success', 4000);
             
             // Scroll to top to see updated dashboard
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1905,91 +2201,44 @@ if (recent20All.length > 0) {
         .map(r => ({ id: r.id, sd: r.scoreDifferential }))
         .sort((a, b) => a.sd - b.sd);
 
-    if (officialRounds.length === 0) {
-        myGolfer.handicapIndex = myGolfer.startHcp;
-        return;
-    }
-
-    const count = officialRounds.length;
-
-    if (count < 3) {
+    if (officialRounds.length < 3) {
         myGolfer.handicapIndex = myGolfer.startHcp;
         myGolfer.countedRoundIds = [];
         return;
     }
 
-    const { numCounted, adjustment } = getWHSParameters(count);
-    const bestRounds = officialRounds.slice(0, numCounted);
-    let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
+    const sds = officialRounds.map(r => r.sd);
+    const result = calculateHCPFromSDs(sds, myGolfer.hcpHistory, myGolfer.startHcp);
+    if (!result) return;
 
-    // 12-Monats-Fenster für Soft/Hard Cap
-    const hcpHistory = myGolfer.hcpHistory || [];
-    const now = new Date().toISOString();
-    const lowestHcp12m = getLowestHcpLast12Months(now, hcpHistory, myGolfer.startHcp);
+    myGolfer.handicapIndex = result.hcp;
 
-    // WHS-Reihenfolge: Adjustment → Runden → Soft Cap → Hard Cap
-    newHcp += adjustment;
-    newHcp = Math.round(newHcp * 10) / 10;
-    newHcp = applyCaps(newHcp, lowestHcp12m);
-
-    myGolfer.handicapIndex = newHcp;
-
-    // Allzeit-Tiefstwert pflegen
-    if (myGolfer.lowestHandicapIndex === undefined || newHcp < myGolfer.lowestHandicapIndex) {
-        myGolfer.lowestHandicapIndex = newHcp;
+    if (myGolfer.lowestHandicapIndex === undefined || result.hcp < myGolfer.lowestHandicapIndex) {
+        myGolfer.lowestHandicapIndex = result.hcp;
     }
 
-    // HCP-History aktualisieren
+    const now = new Date().toISOString();
     const lastRoundDate = myGolfer.rounds
         .filter(r => r.official !== false)
         .slice(-1)[0]?.date || now;
     
     if (!myGolfer.hcpHistory) myGolfer.hcpHistory = [];
-    myGolfer.hcpHistory.push({ date: lastRoundDate, hcp: newHcp });
-
-    // hcpHistory begrenzen: max. 100 Einträge (12-Monats-Fenster braucht ~50 max)
+    myGolfer.hcpHistory.push({ date: lastRoundDate, hcp: result.hcp });
     if (myGolfer.hcpHistory.length > 100) {
         myGolfer.hcpHistory = myGolfer.hcpHistory.slice(-100);
     }
 
-    // Counted Round IDs (jetzt einfach, keine kombinierten Runden mehr)
-    myGolfer.countedRoundIds = bestRounds.map(r => r.id);
+    myGolfer.countedRoundIds = officialRounds.slice(0, result.numCounted).map(r => r.id);
 }
             
          function updateUnofficialHandicap() {
-            const allRounds = myGolfer.rounds
-                .slice(-20)
-                .map(r => ({ id: r.id, sd: r.scoreDifferential }))
-                .sort((a, b) => a.sd - b.sd);
-        
-            if (allRounds.length === 0) {
+            const sds = myGolfer.rounds.slice(-20).map(r => r.scoreDifferential);
+            if (sds.length < 3) {
                 myGolfer.unofficialHandicap = myGolfer.startHcp;
                 return;
             }
-        
-            const count = allRounds.length;
-        
-            if (count < 3) {
-                myGolfer.unofficialHandicap = myGolfer.startHcp;
-                return;
-            }
-        
-            const { numCounted, adjustment } = getWHSParameters(count);
-            const bestRounds = allRounds.slice(0, numCounted);
-            let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
-        
-            // ✅ FIX 1+3: 12-Monats-Fenster, nur offizielle HCP-History
-            const hcpHistory = myGolfer.hcpHistory || [];
-            const now = new Date().toISOString();
-            const lowestHcp12m = getLowestHcpLast12Months(now, hcpHistory, myGolfer.startHcp);
-        
-            // WHS-Reihenfolge: Adjustment → Runden → Soft Cap → Hard Cap
-            newHcp += adjustment;
-            newHcp = Math.round(newHcp * 10) / 10;
-            newHcp = applyCaps(newHcp, lowestHcp12m);
-
-            myGolfer.unofficialHandicap = newHcp;
-        
+            const result = calculateHCPFromSDs(sds, myGolfer.hcpHistory, myGolfer.startHcp);
+            myGolfer.unofficialHandicap = result ? result.hcp : myGolfer.startHcp;
         }
                 
                 function getWHSParameters(count) {
@@ -2077,7 +2326,7 @@ function getExpected9HoleSD(handicapIndex) {
 // WHS 2024: 9-Loch SD in 18-Loch-Äquivalent umrechnen
 // 18h-SD = tatsächliches 9h-SD + erwartetes 9h-SD
 function convert9HoleTo18HoleSD(sd9, handicapIndex) {
-    return parseFloat((sd9 + getExpected9HoleSD(handicapIndex)).toFixed(1));
+    return Math.round((sd9 + getExpected9HoleSD(handicapIndex)) * 10) / 10;
 }
         
         function toggleAdvancedStats() {
@@ -2124,44 +2373,27 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             }
         }
         
-        function renderAdvancedStats() {
-            const rounds = myGolfer.rounds;
-            if (rounds.length === 0) return;
-        
-            const generalStats = document.getElementById('generalStats');
-            const courseStats = document.getElementById('courseStats');
-            const trendStats = document.getElementById('trendStats');
-            const nextGoalEl = document.getElementById('nextGoal');
-        
-            const rounds18 = rounds.filter(r => r.holes === 18);
-            const rounds9 = rounds.filter(r => r.holes === 9);
+        // =========================================================
+        // STATISTIK-BERECHNUNG: Aufgeteilt in reine Funktionen
+        // =========================================================
+
+        function calcGeneralStats(rounds) {
+            const recent20 = rounds.slice(-20);
             const last10 = rounds.slice(-10);
             const last5 = rounds.slice(-5);
-
-            // Letzte 20 Runden: Basis für SD-basierte Statistiken
-            // Vermeidet Verzerrung durch alte Runden mit stark abweichendem HCP
-            const recent20 = rounds.slice(-20);
-        
-            // =========================================================
-            // VORAB-BERECHNUNGEN (benötigt für Ziele UND spätere Stats)
-            // =========================================================
-        
-            // --- Allgemeine SD-Werte (letzte 20) ---
             const sdValues = recent20.map(r => r.scoreDifferential);
+            const avgSDNum = sdValues.reduce((a, b) => a + b, 0) / sdValues.length;
+            const avgSD = avgSDNum.toFixed(1);
             const bestSD = Math.min(...sdValues).toFixed(1);
             const worstSD = Math.max(...sdValues).toFixed(1);
-            const avgSD = (sdValues.reduce((a, b) => a + b, 0) / sdValues.length).toFixed(1);
-        
-            // --- Konstanz (letzte 20) ---
-            const variance = sdValues.reduce((sum, sd) => sum + Math.pow(sd - parseFloat(avgSD), 2), 0) / sdValues.length;
+
+            const variance = sdValues.reduce((sum, sd) => sum + Math.pow(sd - avgSDNum, 2), 0) / sdValues.length;
             const consistency = Math.sqrt(variance).toFixed(1);
-        
-            // --- Unter HCP / Serien (letzte 20) ---
+
+            // Unter HCP / Serien
             const underPar = recent20.filter(r => r.scoreDifferential <= r.playingHcp).length;
-            let currentStreak = 0;
-            let bestStreak = 0;
-            let currentStreakActive = false;
-            recent20.forEach((r, i) => {
+            let currentStreak = 0, bestStreak = 0, currentStreakActive = false;
+            recent20.forEach(function(r, i) {
                 if (r.scoreDifferential <= r.playingHcp) {
                     currentStreak++;
                     if (i === recent20.length - 1) currentStreakActive = true;
@@ -2175,18 +2407,16 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             const seriesText = bestStreak > 0
                 ? `${bestStreak} Runden${currentStreakActive && currentStreak > 0 ? ` (aktuell: ${currentStreak})` : ''}`
                 : 'Noch keine';
-        
-            // --- Offizielle / Inoffizielle Runden (letzte 20) ---
+
+            // Offizielle / Inoffizielle (letzte 20)
             const officialRounds = recent20.filter(r => r.official !== false);
             const unofficialRounds = recent20.filter(r => r.official === false);
             const avgSDOfficial = officialRounds.length > 0
-                ? (officialRounds.map(r => r.scoreDifferential).reduce((a, b) => a + b, 0) / officialRounds.length).toFixed(1)
-                : '-';
+                ? (officialRounds.map(r => r.scoreDifferential).reduce((a, b) => a + b, 0) / officialRounds.length).toFixed(1) : '-';
             const avgSDUnofficial = unofficialRounds.length > 0
-                ? (unofficialRounds.map(r => r.scoreDifferential).reduce((a, b) => a + b, 0) / unofficialRounds.length).toFixed(1)
-                : '-';
-        
-            // --- Performance unter Druck (letzte 20) ---
+                ? (unofficialRounds.map(r => r.scoreDifferential).reduce((a, b) => a + b, 0) / unofficialRounds.length).toFixed(1) : '-';
+
+            // Performance unter Druck
             let pressureText = 'Nur offizielle Runden';
             let pressureColor = 'var(--color-text-secondary)';
             if (unofficialRounds.length > 0 && officialRounds.length > 0) {
@@ -2202,50 +2432,44 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     pressureColor = 'var(--color-text-secondary)';
                 }
             }
+            const hasPressure = unofficialRounds.length > 0 && officialRounds.length > 0;
 
-            // Alle offiziellen/inoffiziellen Runden (für Zähler und Ziele)
+            // Alle offiziell/inoffiziell (für Zähler)
             const allOfficialRounds = rounds.filter(r => r.official !== false);
             const allUnofficialRounds = rounds.filter(r => r.official === false);
 
-            // --- Beste/Schlechteste Runde (konkret, letzte 20) ---
+            // Beste/Schlechteste Runde
             const bestRound = recent20.reduce((best, r) => r.scoreDifferential < best.scoreDifferential ? r : best, recent20[0]);
             const worstRound = recent20.reduce((worst, r) => r.scoreDifferential > worst.scoreDifferential ? r : worst, recent20[0]);
-            
             function formatRoundInfo(r) {
-                const c = courses.find(c => c.name === r.course && c.holes === r.holes);
+                const c = findCourseForRound(r);
                 const par = c ? c.par : (r.holes === 9 ? 36 : 72);
                 const toPar = r.strokes - par;
                 const toParText = toPar > 0 ? `+${toPar}` : `${toPar}`;
-                const name = r.course;
-                return `${r.strokes} (${toParText}) • ${r.date}<br>${name}`;
+                const name = getCourseDisplayName(r);
+                return `${r.strokes} (${toParText}) • ${r.date}<br>${esc(name)}`;
             }
             const bestRoundText = formatRoundInfo(bestRound);
             const worstRoundText = formatRoundInfo(worstRound);
 
-            // --- Scoring Average ---
+            // Scoring Average
             const rounds18recent = recent20.filter(r => r.holes === 18);
             const rounds9recent = recent20.filter(r => r.holes === 9);
-            const avgStrokes18 = rounds18recent.length > 0 
+            const avgStrokes18 = rounds18recent.length > 0
                 ? (rounds18recent.reduce((s, r) => s + r.strokes, 0) / rounds18recent.length).toFixed(0) : '-';
-            const avgStrokes9 = rounds9recent.length > 0 
+            const avgStrokes9 = rounds9recent.length > 0
                 ? (rounds9recent.reduce((s, r) => s + r.strokes, 0) / rounds9recent.length).toFixed(0) : '-';
             let scoringAvgText = '';
-            if (avgStrokes18 !== '-' && avgStrokes9 !== '-') {
-                scoringAvgText = `${avgStrokes18} (18L) / ${avgStrokes9} (9L)`;
-            } else if (avgStrokes18 !== '-') {
-                scoringAvgText = `${avgStrokes18} (18L)`;
-            } else if (avgStrokes9 !== '-') {
-                scoringAvgText = `${avgStrokes9} (9L)`;
-            } else {
-                scoringAvgText = '-';
-            }
+            if (avgStrokes18 !== '-' && avgStrokes9 !== '-') scoringAvgText = `${avgStrokes18} (18L) / ${avgStrokes9} (9L)`;
+            else if (avgStrokes18 !== '-') scoringAvgText = `${avgStrokes18} (18L)`;
+            else if (avgStrokes9 !== '-') scoringAvgText = `${avgStrokes9} (9L)`;
+            else scoringAvgText = '-';
 
-            // --- Konstanz: Brutto zu Par + Netto Schwankungsbreite ---
+            // Schwankungsbreite
             let consistencyText = `σ ${consistency}`;
             if (recent20.length >= 2) {
-                // Brutto zu Par (normalisiert auf 18L)
                 const bruttoToPar = recent20.map(r => {
-                    const c = courses.find(c => c.name === r.course && c.holes === r.holes);
+                    const c = findCourseForRound(r);
                     const par = c ? c.par : (r.holes === 9 ? 36 : 72);
                     const tp = r.strokes - par;
                     return r.holes === 9 ? tp * 2 : tp;
@@ -2257,9 +2481,8 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 const bLowText = bLow > 0 ? `+${bLow}` : bLow === 0 ? 'Par' : `${bLow}`;
                 const bHighText = bHigh > 0 ? `+${bHigh}` : bHigh === 0 ? 'Par' : `${bHigh}`;
 
-                // Netto (normalisiert auf 18L)
                 const nettoVals = recent20.map(r => {
-                    const c = courses.find(c => c.name === r.course && c.holes === r.holes);
+                    const c = findCourseForRound(r);
                     const par = c ? c.par : (r.holes === 9 ? 36 : 72);
                     const netto = r.strokes - (par + (r.courseHandicap || 0));
                     return r.holes === 9 ? netto * 2 : netto;
@@ -2270,138 +2493,104 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 const nHigh = Math.round(nettoVals[np90]);
                 const nLowText = nLow > 0 ? `+${nLow}` : nLow === 0 ? '±0' : `${nLow}`;
                 const nHighText = nHigh > 0 ? `+${nHigh}` : nHigh === 0 ? '±0' : `${nHigh}`;
-
                 consistencyText = `${bLowText} bis ${bHighText} zu Par<br>Netto ${nLowText} bis ${nHighText}`;
             }
 
-            // --- Nächste HCP-Verbesserung: bei welchem SD? ---
+            // Nächste HCP-Verbesserung
             let nextImprovementText = '-';
             if (allOfficialRounds.length >= 3) {
-                const officialSDs = allOfficialRounds.slice(-20)
-                    .map(r => r.scoreDifferential)
-                    .sort((a, b) => a - b);
+                const officialSDs = allOfficialRounds.slice(-20).map(r => r.scoreDifferential).sort((a, b) => a - b);
                 const { numCounted } = getWHSParameters(Math.min(officialSDs.length, 20));
                 if (officialSDs.length >= numCounted) {
-                    // Die höchste SD die aktuell in den besten N gezählt wird
-                    const threshold = officialSDs[numCounted - 1];
-                    nextImprovementText = `SD ≤ ${threshold.toFixed(1)}`;
+                    nextImprovementText = `SD ≤ ${officialSDs[numCounted - 1].toFixed(1)}`;
                 }
             }
 
-            // --- Runden seit letzter HCP-Änderung ---
+            // Runden seit letzter HCP-Änderung
             let roundsSinceChange = '-';
             if (myGolfer.hcpHistory && myGolfer.hcpHistory.length >= 2) {
                 const lastHcp = myGolfer.hcpHistory[myGolfer.hcpHistory.length - 1].hcp;
                 let changeIdx = myGolfer.hcpHistory.length - 1;
                 for (let i = myGolfer.hcpHistory.length - 2; i >= 0; i--) {
-                    if (Math.abs(myGolfer.hcpHistory[i].hcp - lastHcp) > 0.05) {
-                        break;
-                    }
+                    if (Math.abs(myGolfer.hcpHistory[i].hcp - lastHcp) > 0.05) break;
                     changeIdx = i;
                 }
-                const roundsAfter = allOfficialRounds.filter(r => 
+                const roundsAfter = allOfficialRounds.filter(r =>
                     new Date(r.date) >= new Date(myGolfer.hcpHistory[changeIdx].date)
                 ).length;
                 roundsSinceChange = roundsAfter <= 1 ? 'Gerade geändert' : `${roundsAfter} Runden`;
             }
-        
-            // --- Trend-Werte ---
+
+            return {
+                recent20, last10, last5, avgSD, bestSD, worstSD, consistency,
+                underPar, bestStreak, currentStreak, currentStreakActive, seriesText,
+                avgSDOfficial, avgSDUnofficial, pressureText, pressureColor, hasPressure,
+                allOfficialRounds, allUnofficialRounds,
+                bestRoundText, worstRoundText,
+                scoringAvgText, consistencyText, nextImprovementText, roundsSinceChange,
+                rounds18: rounds.filter(r => r.holes === 18),
+                rounds9: rounds.filter(r => r.holes === 9)
+            };
+        }
+
+        function calcTrendStats(rounds, gen) {
             const hcpStart = myGolfer.startHcp;
             const hcpCurrent = myGolfer.handicapIndex;
             const hcpChange = (hcpCurrent - hcpStart).toFixed(1);
-            const hcpChangePercent = hcpStart !== 0 ? ((hcpChange / hcpStart) * 100).toFixed(1) : '0.0';
             const trendEmoji = hcpChange < 0 ? '📈' : (hcpChange > 0 ? '📉' : '➡️');
             const trendText = hcpChange < 0 ? 'Verbesserung' : (hcpChange > 0 ? 'Verschlechterung' : 'Stabil');
-        
-            // --- HCP vor 30 Tagen ---
+
+            // HCP vor 30 Tagen
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            const rounds30DaysAgo = myGolfer.rounds.filter(r => new Date(r.date) <= thirtyDaysAgo);
-            let hcp30DaysAgo = myGolfer.startHcp;
+            const rounds30DaysAgo = rounds.filter(r => new Date(r.date) <= thirtyDaysAgo);
+            let hcp30DaysAgo = hcpStart;
             if (rounds30DaysAgo.length >= 3) {
-                const officialRounds30 = rounds30DaysAgo
-                    .filter(r => r.official !== false)
-                    .slice(-20)
-                    .map(r => ({ id: r.id, sd: r.scoreDifferential }))
-                    .sort((a, b) => a.sd - b.sd);
-                if (officialRounds30.length >= 3) {
-                    const { numCounted, adjustment } = getWHSParameters(officialRounds30.length);
-                    const bestRounds30 = officialRounds30.slice(0, numCounted);
-                    let avgHcp = bestRounds30.reduce((a, b) => a + b.sd, 0) / numCounted;
-                    const lowestHcp = getLowestHcpLast12Months(
-                            thirtyDaysAgo.toISOString(),
-                            myGolfer.hcpHistory || [],
-                            myGolfer.startHcp
-                        );
-                    // WHS-Reihenfolge: Adjustment → Caps
-                    avgHcp += adjustment;
-                    avgHcp = Math.round(avgHcp * 10) / 10;
-                    avgHcp = applyCaps(avgHcp, lowestHcp);
-                    hcp30DaysAgo = avgHcp;
-                }
+                const officialSDs30 = rounds30DaysAgo.filter(r => r.official !== false)
+                    .slice(-20).map(r => r.scoreDifferential);
+                const result = calculateHCPFromSDs(officialSDs30, myGolfer.hcpHistory, hcpStart, thirtyDaysAgo.toISOString());
+                if (result) hcp30DaysAgo = result.hcp;
             }
-            const monthChange = (myGolfer.handicapIndex - hcp30DaysAgo).toFixed(1);
+            const monthChange = (hcpCurrent - hcp30DaysAgo).toFixed(1);
             const monthEmoji = monthChange < 0 ? '📈' : (monthChange > 0 ? '📉' : '➡️');
             const monthText = monthChange < 0 ? 'Verbesserung' : (monthChange > 0 ? 'Verschlechterung' : 'Stabil');
-        
-            // --- Verbesserungsrate ---
-            let improvementText = '-';
-            let improvementColor = 'var(--color-text-secondary)';
+
+            // Verbesserungsrate
+            let improvementText = '-', improvementColor = 'var(--color-text-secondary)';
             if (rounds.length >= 2) {
-                const firstRound = rounds[0];
-                const lastRound = rounds[rounds.length - 1];
-                const monthsDiff = (new Date(lastRound.date) - new Date(firstRound.date)) / (1000 * 60 * 60 * 24 * 30.44);
+                const monthsDiff = (new Date(rounds[rounds.length - 1].date) - new Date(rounds[0].date)) / (1000 * 60 * 60 * 24 * 30.44);
                 if (monthsDiff >= 1) {
-                    const improvementRate = ((hcpCurrent - hcpStart) / monthsDiff).toFixed(2);
-                    if (parseFloat(improvementRate) < -0.1) {
-                        improvementText = `${improvementRate} HCP/Monat 📈`;
-                        improvementColor = 'var(--color-primary)';
-                    } else if (parseFloat(improvementRate) > 0.1) {
-                        improvementText = `+${improvementRate} HCP/Monat 📉`;
-                        improvementColor = 'var(--color-danger)';
-                    } else {
-                        improvementText = 'Stabil (±0,1 HCP/Monat)';
-                    }
+                    const rate = ((hcpCurrent - hcpStart) / monthsDiff).toFixed(2);
+                    if (parseFloat(rate) < -0.1) { improvementText = `${rate} HCP/Monat 📈`; improvementColor = 'var(--color-primary)'; }
+                    else if (parseFloat(rate) > 0.1) { improvementText = `+${rate} HCP/Monat 📉`; improvementColor = 'var(--color-danger)'; }
+                    else { improvementText = 'Stabil (±0,1 HCP/Monat)'; }
                 }
             }
-        
-            // --- Form-Momentum ---
-            let momentumText = '-';
-            let momentumColor = 'var(--color-text-secondary)';
+
+            // Form-Momentum
+            let momentumText = '-', momentumColor = 'var(--color-text-secondary)';
             if (rounds.length >= 15) {
                 const previous10 = rounds.slice(-15, -5);
-                if (last5.length >= 5 && previous10.length >= 5) {
-                    const avgLast5SD = last5.map(r => r.scoreDifferential).reduce((a, b) => a + b, 0) / 5;
+                if (gen.last5.length >= 5 && previous10.length >= 5) {
+                    const avgLast5SD = gen.last5.map(r => r.scoreDifferential).reduce((a, b) => a + b, 0) / 5;
                     const avgPrev10SD = previous10.map(r => r.scoreDifferential).reduce((a, b) => a + b, 0) / previous10.length;
                     const momentum = avgLast5SD - avgPrev10SD;
-                    if (momentum <= -1.0) {
-                        momentumText = `📈 Aufwärtstrend (${momentum.toFixed(1)} SD)`;
-                        momentumColor = 'var(--color-primary)';
-                    } else if (momentum >= 1.0) {
-                        momentumText = `📉 Abwärtstrend (+${momentum.toFixed(1)} SD)`;
-                        momentumColor = 'var(--color-danger)';
-                    } else {
-                        momentumText = '➡️ Stabil';
-                        momentumColor = 'var(--color-text-secondary)';
-                    }
+                    if (momentum <= -1.0) { momentumText = `📈 Aufwärtstrend (${momentum.toFixed(1)} SD)`; momentumColor = 'var(--color-primary)'; }
+                    else if (momentum >= 1.0) { momentumText = `📉 Abwärtstrend (+${momentum.toFixed(1)} SD)`; momentumColor = 'var(--color-danger)'; }
+                    else { momentumText = '➡️ Stabil'; }
                 }
             }
-        
-            // --- Saisonale Performance (letzte 20) ---
+
+            // Saisonale Performance
             const monthlyStats = {};
             const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
-            recent20.forEach(r => {
+            gen.recent20.forEach(r => {
                 const month = new Date(r.date).getMonth();
-                if (!monthlyStats[month]) {
-                    monthlyStats[month] = { scoreDiffs: [], count: 0 };
-                }
+                if (!monthlyStats[month]) monthlyStats[month] = { scoreDiffs: [], count: 0 };
                 monthlyStats[month].scoreDiffs.push(r.scoreDifferential);
                 monthlyStats[month].count++;
             });
-            let bestMonth = null;
-            let worstMonth = null;
-            let bestAvg = Infinity;
-            let worstAvg = -Infinity;
+            let bestMonth = null, worstMonth = null, bestAvg = Infinity, worstAvg = -Infinity;
             Object.entries(monthlyStats).forEach(([month, data]) => {
                 if (data.count >= 2) {
                     const avg = data.scoreDiffs.reduce((a, b) => a + b, 0) / data.count;
@@ -2411,317 +2600,192 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             });
             const bestMonthText = bestMonth !== null ? `${monthNames[bestMonth]} (Ø SD ${bestAvg.toFixed(1)})` : 'Zu wenig Daten';
             const worstMonthText = worstMonth !== null ? `${monthNames[worstMonth]} (Ø SD ${worstAvg.toFixed(1)})` : 'Zu wenig Daten';
-        
-            // --- Ø SD letzte 10 ---
-            const avgSDLast10 = last10.length > 0
-                ? (last10.map(r => r.scoreDifferential).reduce((a, b) => a + b, 0) / last10.length).toFixed(1)
-                : '-';
-            const sdLast10Diff = parseFloat(avgSDLast10) - parseFloat(avgSD);
+
+            // Ø SD letzte 10
+            const avgSDLast10 = gen.last10.length > 0
+                ? (gen.last10.map(r => r.scoreDifferential).reduce((a, b) => a + b, 0) / gen.last10.length).toFixed(1) : '-';
+            const sdLast10Diff = parseFloat(avgSDLast10) - parseFloat(gen.avgSD);
             const sdLast10Color = sdLast10Diff < -0.5 ? 'var(--color-primary)' : sdLast10Diff > 0.5 ? 'var(--color-danger)' : 'var(--color-text-secondary)';
-        
-            // =========================================================
-            // NÄCHSTES ZIEL (jetzt sind alle Variablen verfügbar)
-            // =========================================================
-        
-            let goalText = 'Weiter so! 💪';
-            let goalPriority = 0;
-        
-            if (allOfficialRounds.length < 20) {
-                const remaining = 20 - allOfficialRounds.length;
+
+            return {
+                hcpStart, hcpCurrent, hcpChange, trendEmoji, trendText,
+                monthChange, monthEmoji, monthText,
+                improvementText, improvementColor,
+                momentumText, momentumColor,
+                bestMonth, worstMonth, bestMonthText, worstMonthText,
+                avgSDLast10, sdLast10Color
+            };
+        }
+
+        function calcGoalText(rounds, gen, trend) {
+            let goalText = 'Weiter so! 💪', goalPriority = 0;
+            const hcpCurrent = trend.hcpCurrent;
+            const hcpStart = trend.hcpStart;
+
+            if (gen.allOfficialRounds.length < 20) {
+                const remaining = 20 - gen.allOfficialRounds.length;
                 goalText = `Noch ${remaining} offizielle Runde${remaining > 1 ? 'n' : ''} bis stabiles HCP (20 Runden)`;
                 goalPriority = 100;
             }
-        
-            if (goalPriority < 95 && myGolfer.handicapIndex > 9.5 && myGolfer.handicapIndex < 54) {
-                const toSingle = (myGolfer.handicapIndex - 9.4).toFixed(1);
-                goalText = `Noch ${toSingle} Schläge bis Single-Handicap! 🏌️`;
+            if (goalPriority < 95 && hcpCurrent > 9.5 && hcpCurrent < 54) {
+                goalText = `Noch ${(hcpCurrent - 9.4).toFixed(1)} Schläge bis Single-Handicap! 🏌️`;
                 goalPriority = 95;
             }
-        
-            if (goalPriority < 94 && myGolfer.handicapIndex <= 9.5 && myGolfer.handicapIndex > 0) {
-                const toPlus = myGolfer.handicapIndex.toFixed(1);
-                goalText = `Single-Handicap erreicht! Noch ${toPlus} bis Plus-Handicap 🔥`;
+            if (goalPriority < 94 && hcpCurrent <= 9.5 && hcpCurrent > 0) {
+                goalText = `Single-Handicap erreicht! Noch ${hcpCurrent.toFixed(1)} bis Plus-Handicap 🔥`;
                 goalPriority = 94;
             }
-        
             if (goalPriority < 90 && hcpCurrent < hcpStart && rounds.length >= 5) {
                 goalText = `📉➡️📈 Von ${hcpStart.toFixed(1)} auf ${hcpCurrent.toFixed(1)} – du hast dein Start-HCP unterboten! Weiter runter!`;
                 goalPriority = 90;
             }
-        
             if (goalPriority < 85 && hcpStart > 10) {
-                const halfTarget = hcpStart / 2;
-                const toHalf = (hcpCurrent - halfTarget).toFixed(1);
+                const toHalf = (hcpCurrent - hcpStart / 2).toFixed(1);
                 if (parseFloat(toHalf) > 0 && parseFloat(toHalf) <= 10) {
                     goalText = `🎊 Von ${hcpStart.toFixed(1)} auf ${hcpCurrent.toFixed(1)} – Noch ${toHalf} Schläge bis zur Halbierung deines Start-HCP!`;
                     goalPriority = 85;
                 }
             }
-        
-            if (goalPriority < 80 && currentStreakActive && currentStreak >= 2) {
-                const nextTarget = currentStreak >= 5 ? 10 : 5;
-                goalText = `🔥 Aktuelle Serie: ${currentStreak} Runden unter HCP – Ziel: ${nextTarget}er-Serie!`;
+            if (goalPriority < 80 && gen.currentStreakActive && gen.currentStreak >= 2) {
+                const nextTarget = gen.currentStreak >= 5 ? 10 : 5;
+                goalText = `🔥 Aktuelle Serie: ${gen.currentStreak} Runden unter HCP – Ziel: ${nextTarget}er-Serie!`;
                 goalPriority = 80;
             }
-        
             if (goalPriority < 75 && rounds.length >= 2) {
-                const firstRound = rounds[0];
-                const lastRound = rounds[rounds.length - 1];
-                const monthsDiff = (new Date(lastRound.date) - new Date(firstRound.date)) / (1000 * 60 * 60 * 24 * 30.44);
+                const monthsDiff = (new Date(rounds[rounds.length - 1].date) - new Date(rounds[0].date)) / (1000 * 60 * 60 * 24 * 30.44);
                 if (monthsDiff >= 1) {
-                    const improvementRateGoal = ((hcpCurrent - hcpStart) / monthsDiff);
-                    if (improvementRateGoal < -0.4) {
-                        goalText = `🚀 ${improvementRateGoal.toFixed(1)} HCP in ${Math.round(monthsDiff)} Monaten – Auf Rekordjagd! Weiter so!`;
-                        goalPriority = 75;
-                    }
+                    const rate = (hcpCurrent - hcpStart) / monthsDiff;
+                    if (rate < -0.4) { goalText = `🚀 ${rate.toFixed(1)} HCP in ${Math.round(monthsDiff)} Monaten – Auf Rekordjagd! Weiter so!`; goalPriority = 75; }
                 }
             }
-        
             if (goalPriority < 70) {
                 const milestones = [25, 50, 75, 100, 150, 200, 250, 300];
-                for (let milestone of milestones) {
-                    if (rounds.length < milestone && rounds.length >= milestone - 5) {
-                        const remaining = milestone - rounds.length;
-                        goalText = `🎉 Noch ${remaining} Runde${remaining > 1 ? 'n' : ''} bis zur magischen ${milestone}! Keep going!`;
-                        goalPriority = 70;
-                        break;
+                for (const m of milestones) {
+                    if (rounds.length < m && rounds.length >= m - 5) {
+                        goalText = `🎉 Noch ${m - rounds.length} Runde${m - rounds.length > 1 ? 'n' : ''} bis zur magischen ${m}! Keep going!`;
+                        goalPriority = 70; break;
                     }
                 }
             }
-        
-            if (goalPriority < 65 && last5.length > 0) {
-                const recentBestSD = Math.min(...last5.map(r => r.scoreDifferential));
-                const allTimeBestSD = parseFloat(bestSD);
-                const gapToBest = recentBestSD - allTimeBestSD;
-                if (gapToBest > 0 && gapToBest <= 1.0) {
-                    goalText = `⭐ Beste Runde: SD ${allTimeBestSD} – Noch ${gapToBest.toFixed(1)} Schläge bis neuer Rekord!`;
-                    goalPriority = 65;
-                }
+            if (goalPriority < 65 && gen.last5.length > 0) {
+                const recentBestSD = Math.min(...gen.last5.map(r => r.scoreDifferential));
+                const gap = recentBestSD - parseFloat(gen.bestSD);
+                if (gap > 0 && gap <= 1.0) { goalText = `⭐ Beste Runde: SD ${gen.bestSD} – Noch ${gap.toFixed(1)} Schläge bis neuer Rekord!`; goalPriority = 65; }
             }
-        
             if (goalPriority < 60) {
-                const roundTargets = [0, 5, 10, 15, 18, 20, 25, 30, 36, 40, 45, 50, 54];
-                for (let target of roundTargets) {
+                for (const target of [0, 5, 10, 15, 18, 20, 25, 30, 36, 40, 45, 50, 54]) {
                     const diff = Math.abs(hcpCurrent - target);
-                    if (diff > 0 && diff <= 0.3) {
-                        goalText = `🎯 HCP ${hcpCurrent.toFixed(1)} – Nur noch ${diff.toFixed(1)} bis zur runden ${target.toFixed(1)}!`;
-                        goalPriority = 60;
-                        break;
-                    }
+                    if (diff > 0 && diff <= 0.3) { goalText = `🎯 HCP ${hcpCurrent.toFixed(1)} – Nur noch ${diff.toFixed(1)} bis zur runden ${target.toFixed(1)}!`; goalPriority = 60; break; }
                 }
             }
-        
             if (goalPriority < 55) {
-                const currentMonth = new Date().getMonth();
-                const currentYear = new Date().getFullYear();
-                const thisMonthOfficial = allOfficialRounds.filter(r => {
-                    const rDate = new Date(r.date);
-                    return rDate.getMonth() === currentMonth && rDate.getFullYear() === currentYear;
-                }).length;
-                if (allOfficialRounds.length >= 3) {
-                    const firstOfficial = allOfficialRounds[0];
-                    const lastOfficial = allOfficialRounds[allOfficialRounds.length - 1];
-                    const monthsActive = (new Date(lastOfficial.date) - new Date(firstOfficial.date)) / (1000 * 60 * 60 * 24 * 30.44);
+                const now = new Date();
+                const thisMonthOfficial = gen.allOfficialRounds.filter(r => { const d = new Date(r.date); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); }).length;
+                if (gen.allOfficialRounds.length >= 3) {
+                    const monthsActive = (new Date(gen.allOfficialRounds[gen.allOfficialRounds.length - 1].date) - new Date(gen.allOfficialRounds[0].date)) / (1000 * 60 * 60 * 24 * 30.44);
                     if (monthsActive >= 1) {
-                        const avgPerMonth = Math.round(allOfficialRounds.length / monthsActive);
-                        const target = Math.max(3, avgPerMonth);
-                        if (thisMonthOfficial < target) {
-                            const remaining = target - thisMonthOfficial;
-                            goalText = `📅 Diesen Monat: ${thisMonthOfficial}/${target} offizielle Runden – noch ${remaining} für dein HCP-Monatsziel!`;
-                            goalPriority = 55;
-                        }
+                        const target = Math.max(3, Math.round(gen.allOfficialRounds.length / monthsActive));
+                        if (thisMonthOfficial < target) { goalText = `📅 Diesen Monat: ${thisMonthOfficial}/${target} offizielle Runden – noch ${target - thisMonthOfficial} für dein HCP-Monatsziel!`; goalPriority = 55; }
                     }
                 }
             }
-        
-            if (goalPriority < 50 && allUnofficialRounds.length > 0 && allOfficialRounds.length > 0) {
-                const pressureDiffGoal = parseFloat(avgSDOfficial) - parseFloat(avgSDUnofficial);
-                if (pressureDiffGoal > 0.5) {
-                    goalText = `🏆 Performance unter Druck: +${pressureDiffGoal.toFixed(1)} SD – Ziel: Auf ±0,5 verbessern!`;
-                    goalPriority = 50;
-                }
+            if (goalPriority < 50 && gen.allUnofficialRounds.length > 0 && gen.allOfficialRounds.length > 0) {
+                const pd = parseFloat(gen.avgSDOfficial) - parseFloat(gen.avgSDUnofficial);
+                if (pd > 0.5) { goalText = `🏆 Performance unter Druck: +${pd.toFixed(1)} SD – Ziel: Auf ±0,5 verbessern!`; goalPriority = 50; }
             }
-        
             if (goalPriority < 45) {
-                const consistencyVal = parseFloat(consistency);
-                if (consistencyVal >= 2.5 && consistencyVal <= 3.5) {
-                    goalText = `🎯 SD-Streuung: ${consistency} – Ziel: Unter 2,5 für Elite-Konstanz!`;
-                    goalPriority = 45;
-                }
+                const cv = parseFloat(gen.consistency);
+                if (cv >= 2.5 && cv <= 3.5) { goalText = `🎯 SD-Streuung: ${gen.consistency} – Ziel: Unter 2,5 für Elite-Konstanz!`; goalPriority = 45; }
             }
-        
-            if (goalPriority < 40 && last5.length >= 5) {
-                // Klassisches Netto für die letzten 5 Runden:
-                const nettoLast5 = last5.map(r => {
-                    const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+            if (goalPriority < 40 && gen.last5.length >= 5) {
+                const nettoLast5 = gen.last5.map(r => {
+                    const course = findCourseForRound(r);
                     const par = course ? course.par : (r.holes === 9 ? 36 : 72);
-                    const allowedStrokes = par + r.courseHandicap;
-                    const netto = r.strokes - allowedStrokes;
-                    
-                    // ✅ Normalisiere 9-Loch auf 18-Loch
+                    const netto = r.strokes - (par + r.courseHandicap);
                     return r.holes === 9 ? netto * 2 : netto;
                 });
-            
-                const avgNettoLast5 = (nettoLast5.reduce((a, b) => a + b, 0) / 5).toFixed(1);
-            
-                // Zielbedingung: im Schnitt ca. auf oder unter Vorgabe (Fenster -5 bis +5)
-                if (parseFloat(avgNettoLast5) >= -5 && parseFloat(avgNettoLast5) <= 5) {
-                    const sign = parseFloat(avgNettoLast5) > 0 ? '+' : '';
-                    goalText = `Netto letzte 5: ${sign}${avgNettoLast5} – Ziel: konstant unter Vorgabe spielen!`;
+                const avg = (nettoLast5.reduce((a, b) => a + b, 0) / 5).toFixed(1);
+                if (parseFloat(avg) >= -5 && parseFloat(avg) <= 5) {
+                    const sign = parseFloat(avg) > 0 ? '+' : '';
+                    goalText = `Netto letzte 5: ${sign}${avg} – Ziel: konstant unter Vorgabe spielen!`;
                     goalPriority = 40;
                 }
             }
-        
             if (goalPriority < 35 && rounds.length >= 3) {
                 const last3 = rounds.slice(-3);
                 const consistentRounds = last3.filter(r => r.scoreDifferential < 5.0).length;
-                if (consistentRounds > 0 && consistentRounds < 3) {
-                    goalText = `💎 Ziel: 3 Runden hintereinander mit SD < 5,0 (aktuell: ${consistentRounds}/3)`;
-                    goalPriority = 35;
-                }
+                if (consistentRounds > 0 && consistentRounds < 3) { goalText = `💎 Ziel: 3 Runden hintereinander mit SD < 5,0 (aktuell: ${consistentRounds}/3)`; goalPriority = 35; }
             }
-        
             if (goalPriority < 20 && rounds.length >= 10) {
-                const last10Official = allOfficialRounds.slice(-10);
-                if (last10Official.length >= 10) {
-                    if (Math.abs(parseFloat(monthChange)) < 0.5) {
-                        goalText = `Seit 10 Runden ohne große Änderung – Zeit für neuen Impuls? 📚`;
-                        goalPriority = 20;
-                    }
+                const last10Official = gen.allOfficialRounds.slice(-10);
+                if (last10Official.length >= 10 && Math.abs(parseFloat(trend.monthChange)) < 0.5) {
+                    goalText = 'Seit 10 Runden ohne große Änderung – Zeit für neuen Impuls? 📚';
+                    goalPriority = 20;
                 }
             }
-        
-            if (nextGoalEl) nextGoalEl.textContent = goalText;
-        
-            // =========================================================
-            // HTML-Ausgabe: ALLGEMEINE STATISTIK
-            // =========================================================
-        
-            generalStats.innerHTML = `
-                <div style="font-size: 11px; color: var(--color-text-secondary); text-align: right; margin-bottom: 4px; opacity: 0.7;">
-                    Basis: letzte ${recent20.length} Runde${recent20.length !== 1 ? 'n' : ''} (wie WHS)
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Ø Schläge</span>
-                    <span class="stat-data">${scoringAvgText}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Ø Score Differential</span>
-                    <span class="stat-data">${avgSD}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Beste Runde</span>
-                    <span class="stat-data" style="color: var(--color-primary)">${bestRoundText}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Schwächste Runde</span>
-                    <span class="stat-data">${worstRoundText}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Schwankungsbreite (80%)</span>
-                    <span class="stat-data">${consistencyText}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Unter HCP gespielt</span>
-                    <span class="stat-data">${underPar} von ${recent20.length} (${((underPar / recent20.length) * 100).toFixed(0)}%)</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Beste Serie</span>
-                    <span class="stat-data">${seriesText}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">HCP verbessert sich bei</span>
-                    <span class="stat-data" style="color: var(--color-primary); font-weight: 600;">${nextImprovementText}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Seit letzter HCP-Änderung</span>
-                    <span class="stat-data">${roundsSinceChange}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Runden</span>
-                    <span class="stat-data">${rounds18.length} (18L) / ${rounds9.length} (9L)</span>
-                </div>
-                ${unofficialRounds.length > 0 && officialRounds.length > 0 ? `
-                <div class="stat-row">
-                    <span class="stat-label">Performance unter Druck</span>
-                    <span class="stat-data" style="color: ${pressureColor}">${pressureText}</span>
-                </div>` : ''}
-            `;
-        
-            // =========================================================
-            // HTML-Ausgabe: PLATZ-STATISTIK (letzte 20 Runden)
-            // =========================================================
-        
+            return goalText;
+        }
+
+        function calcCourseStatsData(recent20) {
             const coursesPlayed = {};
             recent20.forEach(r => {
-                const key = `${r.course}-${r.holes}L`;
+                const key = r.courseId || `${r.course}-${r.holes}L`;
                 if (!coursesPlayed[key]) {
-                    coursesPlayed[key] = { name: r.course, holes: r.holes, count: 0, strokes: [], scoreDiffs: [], rounds: [] };
+                    coursesPlayed[key] = { name: getCourseDisplayName(r), holes: r.holes, courseId: r.courseId, count: 0, strokes: [], scoreDiffs: [], rounds: [] };
                 }
                 coursesPlayed[key].count++;
                 coursesPlayed[key].strokes.push(r.strokes);
                 coursesPlayed[key].scoreDiffs.push(r.scoreDifferential);
                 coursesPlayed[key].rounds.push(r);
             });
-        
-            const allCourseEntries = Object.entries(coursesPlayed).sort((a, b) => b[1].count - a[1].count);
-            const showAllCourses = window.showAllCoursesStats || false;
-        
-            const showAllCoursesBtn = document.getElementById('showAllCoursesStatsBtn');
-            if (showAllCoursesBtn) {
-                if (allCourseEntries.length > 5) {
-                    showAllCoursesBtn.style.display = 'block';
-                    showAllCoursesBtn.textContent = showAllCourses ? 'Weniger anzeigen' : 'Alle Plätze anzeigen';
-                } else {
-                    showAllCoursesBtn.style.display = 'none';
-                }
-            }
-        
-        const displayCoursesArr = showAllCourses ? allCourseEntries : allCourseEntries.slice(0, 5);
-        
-        const courseStatsHtml = displayCoursesArr
-            .map(([key, data]) => {
+            return Object.entries(coursesPlayed).sort((a, b) => b[1].count - a[1].count);
+        }
+
+        function buildGeneralStatsHTML(gen) {
+            return `
+                <div style="font-size: 11px; color: var(--color-text-secondary); text-align: right; margin-bottom: 4px; opacity: 0.7;">
+                    Basis: letzte ${gen.recent20.length} Runde${gen.recent20.length !== 1 ? 'n' : ''} (wie WHS)
+                </div>
+                <div class="stat-row"><span class="stat-label">Ø Schläge</span><span class="stat-data">${gen.scoringAvgText}</span></div>
+                <div class="stat-row"><span class="stat-label">Ø Score Differential</span><span class="stat-data">${gen.avgSD}</span></div>
+                <div class="stat-row"><span class="stat-label">Beste Runde</span><span class="stat-data" style="color: var(--color-primary)">${gen.bestRoundText}</span></div>
+                <div class="stat-row"><span class="stat-label">Schwächste Runde</span><span class="stat-data">${gen.worstRoundText}</span></div>
+                <div class="stat-row"><span class="stat-label">Schwankungsbreite (80%)</span><span class="stat-data">${gen.consistencyText}</span></div>
+                <div class="stat-row"><span class="stat-label">Unter HCP gespielt</span><span class="stat-data">${gen.underPar} von ${gen.recent20.length} (${((gen.underPar / gen.recent20.length) * 100).toFixed(0)}%)</span></div>
+                <div class="stat-row"><span class="stat-label">Beste Serie</span><span class="stat-data">${gen.seriesText}</span></div>
+                <div class="stat-row"><span class="stat-label">HCP verbessert sich bei</span><span class="stat-data" style="color: var(--color-primary); font-weight: 600;">${gen.nextImprovementText}</span></div>
+                <div class="stat-row"><span class="stat-label">Seit letzter HCP-Änderung</span><span class="stat-data">${gen.roundsSinceChange}</span></div>
+                <div class="stat-row"><span class="stat-label">Runden</span><span class="stat-data">${gen.rounds18.length} (18L) / ${gen.rounds9.length} (9L)</span></div>
+                ${gen.hasPressure ? `<div class="stat-row"><span class="stat-label">Performance unter Druck</span><span class="stat-data" style="color: ${gen.pressureColor}">${gen.pressureText}</span></div>` : ''}
+            `;
+        }
+
+        function buildCourseStatsHTML(allCourseEntries, showAll) {
+            const displayArr = showAll ? allCourseEntries : allCourseEntries.slice(0, 5);
+            if (displayArr.length === 0) return '<div style="text-align:center;color:var(--color-text-secondary);padding:20px">Keine Platzdaten</div>';
+
+            return displayArr.map(function([key, data]) {
                 const avgSDCourse = (data.scoreDiffs.reduce((a, b) => a + b, 0) / data.count).toFixed(1);
-                
-                // ✅ WHS-Performance mit AKTUELLEM Handicap
-                const courseInfo = courses.find(c => c.name === data.name && c.holes === data.holes);
-                let avgWHS = '-';
-                let whsColor = 'var(--color-text-secondary)';
-                let whsText = '-';
-                
+                const courseInfo = data.courseId
+                    ? courses.find(c => c.id === data.courseId)
+                    : courses.find(c => c.name === data.name && c.holes === data.holes);
+                let whsText = '-', whsColor = 'var(--color-text-secondary)';
+
                 if (courseInfo) {
-    const is9 = data.holes === 9;
-    let adjustedIndex = myGolfer.handicapIndex;
-    if (is9) adjustedIndex = adjustedIndex / 2;
-    
-    const currentCourseHcp = calculateCourseHandicap(
-        adjustedIndex, 
-        courseInfo.sr, 
-        courseInfo.cr, 
-        courseInfo.par
-    );
-    
-    // ✅ FIX 5: Normalisierung auf 18-Loch für Vergleichbarkeit
-    const whsPerformance = data.rounds.map(r => {
-        const allowedStrokes = courseInfo.par + currentCourseHcp;
-        const netto = r.strokes - allowedStrokes;
-        // 9-Loch auf 18-Loch normalisieren
-        return is9 ? netto * 2 : netto;
-    });
-    avgWHS = (whsPerformance.reduce((a, b) => a + b, 0) / data.count).toFixed(1);
-    
-    const whsValue = parseFloat(avgWHS);
-    if (whsValue <= -5) {
-        whsColor = 'var(--color-primary)';   // Deutlich besser als Vorgabe
-    } else if (whsValue <= 5) {
-        whsColor = 'var(--color-text-secondary)';  // Im Rahmen
-    } else {
-        whsColor = 'var(--color-danger)';    // Deutlich schlechter
-    }
-    
-    whsText = whsValue > 0 ? `+${avgWHS}` : avgWHS;
-}
-        
+                    const is9 = data.holes === 9;
+                    let adjustedIndex = myGolfer.handicapIndex;
+                    if (is9) adjustedIndex = adjustedIndex / 2;
+                    const currentCourseHcp = calculateCourseHandicap(adjustedIndex, courseInfo.sr, courseInfo.cr, courseInfo.par);
+                    const whsPerformance = data.rounds.map(r => {
+                        const netto = r.strokes - (courseInfo.par + currentCourseHcp);
+                        return is9 ? netto * 2 : netto;
+                    });
+                    const avgWHS = (whsPerformance.reduce((a, b) => a + b, 0) / data.count).toFixed(1);
+                    const whsValue = parseFloat(avgWHS);
+                    whsColor = whsValue <= -5 ? 'var(--color-primary)' : whsValue <= 5 ? 'var(--color-text-secondary)' : 'var(--color-danger)';
+                    whsText = whsValue > 0 ? `+${avgWHS}` : avgWHS;
+                }
+
                 const coursePar = courseInfo ? courseInfo.par : (data.holes === 9 ? 36 : 72);
                 const avgStrokes = (data.strokes.reduce((a, b) => a + b, 0) / data.count).toFixed(0);
                 const bestSDCourse = Math.min(...data.scoreDiffs);
@@ -2730,11 +2794,11 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 const bestToPar = bestStrokes - coursePar;
                 const bestToParText = bestToPar > 0 ? `+${bestToPar}` : bestToPar.toString();
                 const bestDate = bestRoundC ? bestRoundC.date : '';
-                const displayName = `${data.name} (${data.holes}L)`;
-                
+                const displayName = `${esc(data.name)} (${data.holes}L)`;
+
                 return `
                     <div class="course-stats-item">
-                        <div style="font-weight: 600; font-size: 0.85em; margin-bottom: 5px">${displayName}</div>
+                        <div style="font-weight: 600; font-size: 0.85em; margin-bottom: 5px">${esc(displayName)}</div>
                         <div style="font-size: 0.85em; color: var(--color-text-secondary)">
                             ${data.count}x gespielt • Ø ${avgStrokes} Schläge<br>
                             <span style="color: ${whsColor}; font-weight: 600">Netto-Performance: ${whsText}</span><br>
@@ -2742,52 +2806,66 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                         </div>
                     </div>
                 `;
-            })
-            .join('');
-        
-        
-        
-            courseStats.innerHTML = courseStatsHtml || `<div style="text-align:center;color:var(--color-text-secondary);padding:20px">Keine Platzdaten</div>`;
-        
-            // =========================================================
-            // HTML-Ausgabe: TREND-ANALYSE
-            // =========================================================
-        
-            trendStats.innerHTML = `
+            }).join('');
+        }
+
+        function buildTrendStatsHTML(trend) {
+            return `
                 <div class="stat-row">
-                    <span class="stat-label">${trendEmoji} Handicap-Entwicklung</span>
-                    <span class="stat-data" style="color: ${hcpChange < 0 ? 'var(--color-primary)' : hcpChange > 0 ? 'var(--color-danger)' : 'var(--color-warning)'}">
-                        ${hcpStart.toFixed(1)} → ${hcpCurrent.toFixed(1)} (${hcpChange > 0 ? '+' : ''}${hcpChange})
+                    <span class="stat-label">${trend.trendEmoji} Handicap-Entwicklung</span>
+                    <span class="stat-data" style="color: ${trend.hcpChange < 0 ? 'var(--color-primary)' : trend.hcpChange > 0 ? 'var(--color-danger)' : 'var(--color-warning)'}">
+                        ${trend.hcpStart.toFixed(1)} → ${trend.hcpCurrent.toFixed(1)} (${trend.hcpChange > 0 ? '+' : ''}${trend.hcpChange})
                     </span>
                 </div>
                 <div class="stat-row">
                     <span class="stat-label">📅 Letzte 30 Tage</span>
-                    <span class="stat-data" style="color: ${monthChange < 0 ? 'var(--color-primary)' : monthChange > 0 ? 'var(--color-danger)' : 'var(--color-warning)'}">
-                        ${monthEmoji} ${monthChange > 0 ? '+' : ''}${monthChange} • ${monthText}
+                    <span class="stat-data" style="color: ${trend.monthChange < 0 ? 'var(--color-primary)' : trend.monthChange > 0 ? 'var(--color-danger)' : 'var(--color-warning)'}">
+                        ${trend.monthEmoji} ${trend.monthChange > 0 ? '+' : ''}${trend.monthChange} • ${trend.monthText}
                     </span>
                 </div>
-                <div class="stat-row">
-                    <span class="stat-label">Verbesserungsrate</span>
-                    <span class="stat-data" style="color: ${improvementColor}">${improvementText}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Ø SD (letzte 10)</span>
-                    <span class="stat-data" style="color: ${sdLast10Color}">${avgSDLast10}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Form-Momentum</span>
-                    <span class="stat-data" style="color: ${momentumColor}">${momentumText}</span>
-                </div>
-                ${bestMonth !== null ? `
-                <div class="stat-row">
-                    <span class="stat-label">🌞 Bester Monat</span>
-                    <span class="stat-data">${bestMonthText}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">❄️ Schwächster Monat</span>
-                    <span class="stat-data">${worstMonthText}</span>
-                </div>` : ''}
+                <div class="stat-row"><span class="stat-label">Verbesserungsrate</span><span class="stat-data" style="color: ${trend.improvementColor}">${trend.improvementText}</span></div>
+                <div class="stat-row"><span class="stat-label">Ø SD (letzte 10)</span><span class="stat-data" style="color: ${trend.sdLast10Color}">${trend.avgSDLast10}</span></div>
+                <div class="stat-row"><span class="stat-label">Form-Momentum</span><span class="stat-data" style="color: ${trend.momentumColor}">${trend.momentumText}</span></div>
+                ${trend.bestMonth !== null ? `
+                <div class="stat-row"><span class="stat-label">🌞 Bester Monat</span><span class="stat-data">${trend.bestMonthText}</span></div>
+                <div class="stat-row"><span class="stat-label">❄️ Schwächster Monat</span><span class="stat-data">${trend.worstMonthText}</span></div>` : ''}
             `;
+        }
+
+        // =========================================================
+        // ORCHESTRATOR: Ruft Berechnung + HTML-Builder auf
+        // =========================================================
+        function renderAdvancedStats() {
+            const rounds = myGolfer.rounds;
+            if (rounds.length === 0) return;
+
+            const gen = calcGeneralStats(rounds);
+            const trend = calcTrendStats(rounds, gen);
+            const goalText = calcGoalText(rounds, gen, trend);
+            const courseEntries = calcCourseStatsData(gen.recent20);
+
+            // DOM-Update
+            const generalStats = document.getElementById('generalStats');
+            const courseStats = document.getElementById('courseStats');
+            const trendStats = document.getElementById('trendStats');
+            const nextGoalEl = document.getElementById('nextGoal');
+
+            if (generalStats) generalStats.innerHTML = buildGeneralStatsHTML(gen);
+            if (courseStats) {
+                const showAll = window.showAllCoursesStats || false;
+                courseStats.innerHTML = buildCourseStatsHTML(courseEntries, showAll);
+                const showAllCoursesBtn = document.getElementById('showAllCoursesStatsBtn');
+                if (showAllCoursesBtn) {
+                    if (courseEntries.length > 5) {
+                        showAllCoursesBtn.style.display = 'block';
+                        showAllCoursesBtn.textContent = showAll ? 'Weniger anzeigen' : 'Alle Plätze anzeigen';
+                    } else {
+                        showAllCoursesBtn.style.display = 'none';
+                    }
+                }
+            }
+            if (trendStats) trendStats.innerHTML = buildTrendStatsHTML(trend);
+            if (nextGoalEl) nextGoalEl.textContent = goalText;
         }
         
                 function getPlayingCourseHandicap(round, course, handicapIndex) {
@@ -2796,7 +2874,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     const is9 = round.holes === 9;
                 
                     // Par/CR/SR aus dem Kursobjekt
-                    const par = course.par;
+                    const par = course.par || (course.holes === 9 ? 36 : 72);
                     const cr  = course.cr;
                     const sr  = course.sr;
                 
@@ -2836,7 +2914,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             const displayRounds = (showAll || rounds.length <= 5) ? rounds : rounds.slice(0, 5);
         
         container.innerHTML = displayRounds.map((r) => {
-            const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+            const course = findCourseForRound(r);
             const coursePar = course ? course.par : (r.holes === 9 ? 36 : 72);
         
             // Brutto: Differenz zu Par
@@ -2894,7 +2972,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     ${r.date} • HCP ${historicHcp}${countedBadge}
                 </div>
                 <div style="font-weight: 500; font-size: 15px; margin: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                    ${r.course}
+                    ${esc(getCourseDisplayName(r))}
                 </div>
                 <div style="font-size: 13px; color: var(--color-text-secondary);">
                     ${r.holes}L • ${r.strokes} Schläge${hcpiLabel}
@@ -2951,56 +3029,92 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             const round = myGolfer.rounds.find(r => r.id === roundId);
             if (!round) return;
         
-            const newStrokes = prompt('Schläge ändern:', round.strokes);
-            if (newStrokes === null) return;
-        
-            const newDate = prompt('Datum ändern (YYYY-MM-DD):', round.date);
-            if (newDate === null) return;
-        
-            const strokes = parseInt(newStrokes);
-            const holes = round.holes || 18;
-            const validationErrors = validateRoundData(strokes, holes, newDate);
-            if (validationErrors.length > 0) {
-                return alert('❌ Eingabefehler:\n\n' + validationErrors.join('\n'));
-            }
-        
-            // Prüfe Datumsformat (YYYY-MM-DD)
-            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-            if (!dateRegex.test(newDate) || isNaN(new Date(newDate).getTime())) {
-                return alert('❌ Ungültiges Datumsformat!\nBitte YYYY-MM-DD verwenden (z.B. 2025-06-15)');
-            }
-        
-            // Update nur die Basis-Daten
-            round.strokes = strokes;
-            round.date = newDate;
-        
-            // recalculateHistory berechnet SD, HCP, courseHandicap etc. korrekt
-            recalculateHistory();
+            editingRoundId = roundId;
             
-            // WICHTIG: Wird von recalculateHistory schon gemacht!
-            // Aber doppelt schadet nicht
-            localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
-            updateUI();
-            alert('✅ Runde aktualisiert!');
+            // Holes-Radio setzen
+            const holesRadio = document.getElementById(round.holes === 9 ? 'roundHoles9' : 'roundHoles18');
+            holesRadio.checked = true;
+            filterCoursesByHoles();
+            
+            // Kurs auswählen
+            const courseSelect = document.getElementById('roundCourse');
+            if (round.courseId) {
+                courseSelect.value = round.courseId;
+            }
+            
+            // Felder befüllen
+            document.getElementById('roundDate').value = round.date;
+            document.getElementById('roundStrokes').value = round.strokes;
+            updateStrokesSuffix();
+            updateStrokesPlaceholder();
+            document.getElementById('roundOfficial').checked = round.official !== false;
+            
+            // Button-Text ändern
+            const btn = document.getElementById('saveRoundBtn');
+            btn.textContent = 'Änderung speichern';
+            btn.style.background = 'var(--color-accent)';
+            
+            // Abbrechen-Button zeigen
+            document.getElementById('cancelEditRoundBtn').style.display = 'block';
+            
+            // Zur Sidebar scrollen
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) sidebar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        function cancelEditRound() {
+            editingRoundId = null;
+            const btn = document.getElementById('saveRoundBtn');
+            btn.textContent = 'Runde speichern';
+            btn.style.background = '';
+            document.getElementById('cancelEditRoundBtn').style.display = 'none';
+            document.getElementById('roundStrokes').value = '';
+            document.getElementById('roundOfficial').checked = false;
+            document.getElementById('roundDate').valueAsDate = new Date();
+            updateStrokesSuffix();
         }
                 
         function deleteRound(roundId) {
-            if (!confirm('Diese Runde wirklich löschen?\n\nDein Handicap wird neu berechnet.')) return;
-            myGolfer.rounds = myGolfer.rounds.filter(r => r.id !== roundId);
-        
-                if (myGolfer.rounds.length === 0) {
-                    myGolfer.handicapIndex = myGolfer.startHcp;
-                    myGolfer.unofficialHandicap = myGolfer.startHcp;
-                    myGolfer.lowestHandicapIndex = myGolfer.startHcp;
-                    myGolfer.hcpHistory = [];
-                    myGolfer.countedRoundIds = [];
+            if (!confirm('Diese Runde wirklich löschen?')) return;
+            const deletedRound = myGolfer.rounds.find(function(r) { return r.id === roundId; });
+            const deletedIndex = myGolfer.rounds.findIndex(function(r) { return r.id === roundId; });
+            if (!deletedRound) return;
+
+            myGolfer.rounds.splice(deletedIndex, 1);
+
+            if (myGolfer.rounds.length === 0) {
+                myGolfer.handicapIndex = myGolfer.startHcp;
+                myGolfer.unofficialHandicap = myGolfer.startHcp;
+                myGolfer.lowestHandicapIndex = myGolfer.startHcp;
+                myGolfer.hcpHistory = [];
+                myGolfer.countedRoundIds = [];
             } else {
                 recalculateHistory();
             }
-        
-            localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
-            updateUI();
-            alert('✅ Runde gelöscht und Handicap neu berechnet!');
+
+            saveAll();
+            updateUI({ dashboard: true, rounds: true, chart: true });
+
+            lastDeletedRound = { round: deletedRound, index: deletedIndex };
+            if (undoRoundTimeout) clearTimeout(undoRoundTimeout);
+            undoRoundTimeout = setTimeout(function() { lastDeletedRound = null; }, 10000);
+            showToast('Runde gelöscht', 'success', 10000, {
+                label: 'Rückgängig',
+                fn: function() { undoDeleteRound(); }
+            });
+        }
+
+        function undoDeleteRound() {
+            if (!lastDeletedRound) return;
+            var r = lastDeletedRound.round;
+            var idx = Math.min(lastDeletedRound.index, myGolfer.rounds.length);
+            myGolfer.rounds.splice(idx, 0, r);
+            recalculateHistory();
+            saveAll();
+            updateUI({ dashboard: true, rounds: true, chart: true });
+            lastDeletedRound = null;
+            if (undoRoundTimeout) clearTimeout(undoRoundTimeout);
+            showToast('Runde wiederhergestellt!', 'success');
         }
                 
                 function renderChart() {
@@ -3010,6 +3124,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     
                     const canvas = document.getElementById('hcpCanvas');
                     const ctx = canvas.getContext('2d');
+                    if (!ctx) return;
                     
                     // Responsive Canvas-Größe mit HiDPI-Unterstützung
                     const container = canvas.parentElement;
@@ -3052,76 +3167,23 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     for (let i = 0; i < rounds.length; i++) {
                         const round = rounds[i];
                         
-                    // Inoffizielles HCP nach dieser Runde (WHS-KORREKT!)
-                    // Berechne mit allen Runden bis zu diesem Zeitpunkt
-                    const tempAllRounds = myGolfer.rounds
+                    // Inoffizielles HCP (alle Runden bis zu diesem Zeitpunkt)
+                    const allSDsToDate = myGolfer.rounds
                         .filter(r => new Date(r.date) <= new Date(round.date))
                         .slice(-20)
-                        .map(r => ({ id: r.id, sd: r.scoreDifferential }))
-                        .sort((a, b) => a.sd - b.sd);
+                        .map(r => r.scoreDifferential);
                     
-                    if (tempAllRounds.length === 0) {
-                        unofficialHistory.push(myGolfer.startHcp);
-                    } else if (tempAllRounds.length < 3) {
-                        // Bei <3 Runden: Start-HCP
-                        unofficialHistory.push(myGolfer.startHcp);
-                    } else {
-                    const count = tempAllRounds.length;
-                    const { numCounted, adjustment } = getWHSParameters(count);
-        
-                    const bestRounds = tempAllRounds.slice(0, numCounted);
-                        let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
+                    const unoffResult = calculateHCPFromSDs(allSDsToDate, myGolfer.hcpHistory || [], myGolfer.startHcp, round.date);
+                    unofficialHistory.push(unoffResult ? unoffResult.hcp : myGolfer.startHcp);
                         
-                        // Soft Cap anwenden
-                        // ✅ FIX 1: 12-Monats-Fenster für Chart
-                        const lowestHcp = getLowestHcpLast12Months(
-                            round.date,
-                            myGolfer.hcpHistory || [],
-                            myGolfer.startHcp
-                        );
-        
-                        // WHS-Reihenfolge: Adjustment → Caps
-                        newHcp += adjustment;
-                        newHcp = Math.round(newHcp * 10) / 10;
-                        newHcp = applyCaps(newHcp, lowestHcp);
-        
-                        unofficialHistory.push(newHcp);
-                        }
-                        
-                    // Offizielles HCP nach dieser Runde (WHS-KORREKT!)
-                    const tempOfficialRounds = myGolfer.rounds
+                    // Offizielles HCP (nur offizielle Runden bis zu diesem Zeitpunkt)
+                    const officialSDsToDate = myGolfer.rounds
                         .filter(r => r.official !== false && new Date(r.date) <= new Date(round.date))
                         .slice(-20)
-                        .map(r => ({ id: r.id, sd: r.scoreDifferential }))
-                        .sort((a, b) => a.sd - b.sd);
+                        .map(r => r.scoreDifferential);
                     
-                    if (tempOfficialRounds.length === 0) {
-                        officialHistory.push(myGolfer.startHcp);
-                    } else if (tempOfficialRounds.length < 3) {
-                        // Bei <3 Runden: Start-HCP
-                        officialHistory.push(myGolfer.startHcp);
-                    } else {
-                    const count = tempOfficialRounds.length;
-                    const { numCounted, adjustment } = getWHSParameters(count);
-        
-                    const bestRounds = tempOfficialRounds.slice(0, numCounted);
-                        let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
-        
-                        // Soft Cap anwenden
-                        // ✅ FIX 1: 12-Monats-Fenster für Chart (offiziell)
-                        const lowestHcp = getLowestHcpLast12Months(
-                            round.date,
-                            myGolfer.hcpHistory || [],
-                            myGolfer.startHcp
-                        );
-
-                        // WHS-Reihenfolge: Adjustment → Caps
-                        newHcp += adjustment;
-                        newHcp = Math.round(newHcp * 10) / 10;
-                        newHcp = applyCaps(newHcp, lowestHcp);
-        
-                        officialHistory.push(newHcp);
-                    }
+                    const offResult = calculateHCPFromSDs(officialSDsToDate, myGolfer.hcpHistory || [], myGolfer.startHcp, round.date);
+                    officialHistory.push(offResult ? offResult.hcp : myGolfer.startHcp);
                         }
                     
                     if (unofficialHistory.length > 0) {
@@ -3248,6 +3310,11 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 }
                 
                     function addCourse() {
+                        const btn = document.getElementById('addCourseBtn');
+                        if (btn.disabled) return;
+                        btn.disabled = true;
+                        setTimeout(function() { btn.disabled = false; }, 1000);
+                        
                         const name = document.getElementById('courseName').value.trim();
                         const crRaw = document.getElementById('courseCR').value.replace(',', '.');
                         const cr = parseFloat(crRaw);
@@ -3257,7 +3324,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                         const par = parseInt(parRaw) || (holes === 9 ? 36 : 72);
                         
                         if (!name || isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
-                            return alert('Bitte korrekte Platzdaten eingeben!\n(CR min. 20, SR 55-155)');
+                            return showToast('Bitte korrekte Platzdaten eingeben!\n(CR min. 20, SR 55-155)', 'error');
                         }
                         
                         // Duplikat-Prüfung: gleicher Name + gleiche Lochzahl
@@ -3266,6 +3333,73 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                             if (!confirm(`⚠️ Ein Platz "${duplicate.name}" mit ${holes} Löchern existiert bereits!\n\nCR ${duplicate.cr.toFixed(1)} / SR ${duplicate.sr} / Par ${duplicate.par}\n\nTrotzdem einen weiteren Eintrag anlegen?`)) {
                                 return;
                             }
+                        }
+                        
+                        // Plausibilitäts-Warnungen
+                        const warnings = [];
+                        if (holes === 18 && cr < 55) warnings.push('CR ' + cr.toFixed(1) + ' ist ungewöhnlich niedrig für 18 Löcher');
+                        if (holes === 18 && cr > 80) warnings.push('CR ' + cr.toFixed(1) + ' ist ungewöhnlich hoch für 18 Löcher');
+                        if (holes === 9 && cr > 42) warnings.push('CR ' + cr.toFixed(1) + ' ist ungewöhnlich hoch für 9 Löcher');
+                        if (holes === 9 && cr < 22) warnings.push('CR ' + cr.toFixed(1) + ' ist ungewöhnlich niedrig für 9 Löcher');
+                        if (Math.abs(cr - par) > 10) warnings.push('CR weicht ' + Math.abs(cr - par).toFixed(1) + ' Schläge von Par ab – bitte prüfen');
+                        if (sr < 70 || sr > 150) warnings.push('SR ' + sr + ' ist außerhalb des üblichen Bereichs (70-150)');
+                        
+                        if (warnings.length > 0) {
+                            if (!confirm('⚠️ Hinweise:\n\n' + warnings.join('\n') + '\n\nTrotzdem speichern?')) {
+                                return;
+                            }
+                        }
+                        
+                        // === EDIT-MODE: bestehenden Platz aktualisieren ===
+                        if (editingCourseId) {
+                            const course = courses.find(c => c.id === editingCourseId);
+                            if (!course) { cancelEditCourse(); return; }
+                            
+                            const oldName = course.name;
+                            const oldCR = course.cr;
+                            const oldSR = course.sr;
+                            const oldHoles = course.holes || 18;
+                            
+                            course.name = name;
+                            course.holes = holes;
+                            course.par = par;
+                            course.cr = cr;
+                            course.sr = sr;
+                            
+                            // Runden per courseId finden
+                            const usedInRounds = myGolfer.rounds.filter(r => r.courseId === editingCourseId);
+                            
+                            if (usedInRounds.length > 0) {
+                                const nameChanged = oldName !== name;
+                                const holesChanged = oldHoles !== holes;
+                                
+                                if (nameChanged || holesChanged) {
+                                    usedInRounds.forEach(round => {
+                                        if (nameChanged) round.course = name;
+                                        if (holesChanged) round.holes = holes;
+                                    });
+                                }
+                                
+                                if (oldCR !== cr || oldSR !== sr) {
+                                    usedInRounds.forEach(round => {
+                                        round.cr = parseFloat(cr.toFixed(1));
+                                        round.sr = parseInt(sr.toFixed(0));
+                                    });
+                                    recalculateHistory();
+                                    saveAll();
+                                    updateUI({ dashboard: true, rounds: true, chart: true, courses: true });
+                                    showToast(`Platz aktualisiert! ${usedInRounds.length} Runden neu berechnet.`, 'success', 4000);
+                                    cancelEditCourse();
+                                    return;
+                                }
+                                saveAll();
+                            }
+                            
+                            saveCourses();
+                            updateUI({ courses: true, rounds: true });
+                            showToast('Platz aktualisiert!', 'success');
+                            cancelEditCourse();
+                            return;
                         }
                         
                         courses.push({
@@ -3279,7 +3413,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
         
                 
                         saveCourses();
-                        updateUI();
+                        updateUI({ courses: true });
                         
                         document.getElementById('courseName').value = '';
                         document.getElementById('courseCR').value = '';
@@ -3287,7 +3421,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                         document.getElementById('coursePar').value = '';
         
                         
-                        alert(`${name} wurde gespeichert!`);
+                        showToast(`${esc(name)} gespeichert!`, 'success');
                     }
             
           
@@ -3295,114 +3429,62 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                         const course = courses.find(c => c.id === courseId);
                         if (!course) return;
                     
-                        const oldName = course.name;
-                        const newName = prompt('Platzname ändern:', course.name);
-                        if (newName === null) return;
-        
-                        const newHoles = prompt('Lochzahl ändern (9 oder 18):', course.holes || 18);
-                        if (newHoles === null) return;
-                    
-                        const holes = parseInt(newHoles);
-                        if (holes !== 9 && holes !== 18) {
-                            return alert('Lochzahl muss 9 oder 18 sein!');
-                        }
-                          
-                        const newPar = prompt('Par ändern:', course.par || (holes === 9 ? 36 : 72));
-                        if (newPar === null) return;
-                          
-                        const par = parseInt(newPar);
-                        if (isNaN(par) || par < 27 || par > 90) {
-                            return alert('Par muss zwischen 27 und 90 liegen!');
-                        }
-                    
-                        const newCR = prompt('Course Rating ändern:', course.cr);
-                        if (newCR === null) return;
-                    
-                        const newSR = prompt('Slope Rating ändern:', course.sr);
-                        if (newSR === null) return;
-                          
-                        const cr = parseFloat(newCR.replace(',', '.'));
-                        const sr = parseInt(newSR);
-                    
-                        if (!newName.trim() || isNaN(cr) || isNaN(sr) || cr < 20 || sr < 55 || sr > 155) {
-                            return alert('Ungültige Eingaben! (CR min. 20, SR 55-155)');
-                        }
-                    
-                                const oldCR = course.cr;
-                                const oldSR = course.sr;
-                                const oldHoles = course.holes || 18;
+                        editingCourseId = courseId;
                         
-                                course.name = newName.trim();
-                                course.holes = holes;
-                                course.par = par;
-                                course.cr = cr;
-                                course.sr = sr;
-        
+                        // Holes-Radio setzen
+                        const holesRadio = document.getElementById(course.holes === 9 ? 'courseHoles9' : 'courseHoles18');
+                        holesRadio.checked = true;
                         
-                                const usedInRounds = myGolfer.rounds.filter(r => r.course === oldName && r.holes === oldHoles);
-                          
-                        // Tracke ob Name/Holes in Runden aktualisiert wurden
-                        let roundsNameUpdated = false;
-                        let roundsHolesUpdated = false;
-
-                        if (usedInRounds.length > 0) {
-                                const nameChanged = oldName !== newName.trim();
-                                const holesChanged = oldHoles !== holes;
-                                if (nameChanged || holesChanged) {
-                                    const changes = [];
-                                    if (nameChanged) changes.push('Name');
-                                    if (holesChanged) changes.push('Lochzahl');
-                                    if (confirm(`${usedInRounds.length} Runden verwenden diesen Platz. ${changes.join(' und ')} in allen Runden aktualisieren?`)) {
-                                        usedInRounds.forEach(round => {
-                                            if (nameChanged) { round.course = newName.trim(); roundsNameUpdated = true; }
-                                            if (holesChanged) { round.holes = holes; roundsHolesUpdated = true; }
-                                        });
-                                    }
-                                }
-                    
-                    if (oldCR !== cr || oldSR !== sr) {
-                        // Finde nur Runden die tatsächlich zu diesem Platz gehören
-                        // (entweder mit aktualisiertem oder altem Namen, je nachdem was der User gewählt hat)
-                        const matchName = roundsNameUpdated ? newName.trim() : oldName;
-                        const matchHoles = roundsHolesUpdated ? holes : oldHoles;
-                        const roundsToRecalc = myGolfer.rounds.filter(r => 
-                            r.course === matchName && r.holes === matchHoles
-                        );
-                        roundsToRecalc.forEach(round => {
-                            // Nur Basisdaten aktualisieren - SD wird durch recalculateHistory korrekt berechnet
-                            round.cr = cr.toFixed(1);
-                            round.sr = sr.toFixed(0);
-                        });
-                        // recalculateHistory berechnet SD inkl. 9-Loch-Konvertierung
-                        recalculateHistory();
-                        updateUI();
-                        alert(`Platz wurde aktualisiert!\n${roundsToRecalc.length} Runden wurden mit neuen CR/SR-Werten neu berechnet.\nHandicap wurde aktualisiert.`);
-                        return;
+                        // Felder befüllen
+                        document.getElementById('courseName').value = course.name;
+                        document.getElementById('coursePar').value = course.par || '';
+                        document.getElementById('courseCR').value = course.cr || '';
+                        document.getElementById('courseSR').value = course.sr || '';
+                        
+                        // Button-Text ändern
+                        const btn = document.getElementById('addCourseBtn');
+                        btn.textContent = 'Änderung speichern';
+                        btn.style.background = 'var(--color-accent)';
+                        
+                        // Abbrechen-Button zeigen
+                        document.getElementById('cancelEditCourseBtn').style.display = 'block';
+                        
+                        // Zur Sidebar scrollen
+                        const sidebar = document.querySelector('.sidebar');
+                        if (sidebar) sidebar.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
-                            localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
-                        }
                     
-                        saveCourses();
-                        updateUI();
-                        alert('Platz wurde aktualisiert!');
+                    function cancelEditCourse() {
+                        editingCourseId = null;
+                        const btn = document.getElementById('addCourseBtn');
+                        btn.textContent = 'Platz speichern';
+                        btn.style.background = '';
+                        document.getElementById('cancelEditCourseBtn').style.display = 'none';
+                        document.getElementById('courseName').value = '';
+                        document.getElementById('coursePar').value = '';
+                        document.getElementById('courseCR').value = '';
+                        document.getElementById('courseSR').value = '';
                     }
         
         function deleteCourse(courseId) {
             const course = courses.find(c => c.id === courseId);
             if (!course) return;
             
-            // 🔧 Null-Check + holes prüfen + Daten-Validierung
             let affectedRounds = [];
             if (myGolfer && myGolfer.rounds && Array.isArray(myGolfer.rounds)) {
                 affectedRounds = myGolfer.rounds.filter(r => 
-                    r && r.course === course.name && r.holes === course.holes
+                    r && r.courseId === courseId
                 );
+                if (affectedRounds.length === 0) {
+                    affectedRounds = myGolfer.rounds.filter(r => 
+                        r && r.course === course.name && r.holes === course.holes
+                    );
+                }
             }
             
             let confirmMsg = `Platz "${course.name}" (${course.holes} Löcher) wirklich löschen?`;
             
             if (affectedRounds.length > 0) {
-                // 🔧 Beispiel-Datum mit Fallback
                 let dateText = '';
                 try {
                     if (affectedRounds[0] && affectedRounds[0].date) {
@@ -3411,9 +3493,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                             dateText = `\n(z.B. am ${date.toLocaleDateString('de-DE')})`;
                         }
                     }
-                } catch (e) {
-                    // Ignoriere Datum-Fehler
-                }
+                } catch (e) {}
                 
                 confirmMsg += `\n\n⚠️ ACHTUNG: Dieser Platz wurde in ${affectedRounds.length} Runde(n) verwendet!${dateText}\n\n` +
                               `Die Runden bleiben erhalten, aber der Platz wird aus der Liste entfernt.\n` +
@@ -3423,10 +3503,31 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             
             if (!confirm(confirmMsg)) return;
             
-            courses = courses.filter(c => c.id !== courseId);
+            const deletedIndex = courses.findIndex(c => c.id === courseId);
+            courses.splice(deletedIndex, 1);
             saveCourses();
-            updateUI();
-            alert('✅ Platz wurde gelöscht!');
+            updateUI({ courses: true });
+
+            // Undo-Möglichkeit
+            lastDeletedCourse = { course: course, index: deletedIndex };
+            if (undoCourseTimeout) clearTimeout(undoCourseTimeout);
+            undoCourseTimeout = setTimeout(function() { lastDeletedCourse = null; }, 10000);
+            showToast('Platz gelöscht', 'success', 10000, {
+                label: 'Rückgängig',
+                fn: function() { undoDeleteCourse(); }
+            });
+        }
+
+        function undoDeleteCourse() {
+            if (!lastDeletedCourse) return;
+            var c = lastDeletedCourse.course;
+            var idx = Math.min(lastDeletedCourse.index, courses.length);
+            courses.splice(idx, 0, c);
+            saveCourses();
+            updateUI({ courses: true });
+            lastDeletedCourse = null;
+            if (undoCourseTimeout) clearTimeout(undoCourseTimeout);
+            showToast('Platz wiederhergestellt!', 'success');
         }
         
         function showEditProfile() {
@@ -3439,13 +3540,13 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
           if (newName.trim()) {
             myGolfer.name = newName.trim();
           } else {
-            return alert('Name darf nicht leer sein!');
+            return showToast('Name darf nicht leer sein!', 'error');
           }
           myGolfer.club = newClub.trim();
           
-          localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
-          updateUI();
-          alert('✅ Profil wurde gespeichert!');
+          saveAll();
+          updateUI({ dashboard: true });
+          showToast('Profil gespeichert!', 'success');
         }
         
                 
@@ -3467,7 +3568,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                     
-                    alert('✅ Daten wurden exportiert!');
+                    showToast('Daten exportiert!', 'success');
                 }
                 
         function importData(event) {
@@ -3482,6 +3583,9 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     // Validierung
                     if (!data.golfer || !data.golfer.rounds || !Array.isArray(data.golfer.rounds)) {
                         throw new Error('Ungültiges Datenformat');
+                    }
+                    if (!data.courses || !Array.isArray(data.courses)) {
+                        throw new Error('Ungültiges Datenformat: courses fehlt oder ist kein Array');
                     }
                     
                     // Vorschau mit Bestätigung
@@ -3502,16 +3606,24 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                                 ...r,
                                 id: String(r.id)
                             }));
+                            // Migration: courseId ergänzen falls fehlend
+                            myGolfer.rounds.forEach(r => {
+                                if (!r.courseId) {
+                                    const c = courses.find(c => c.name === r.course && c.holes === r.holes);
+                                    if (c) r.courseId = c.id;
+                                }
+                                if (typeof r.cr === 'string') r.cr = parseFloat(r.cr);
+                                if (typeof r.sr === 'string') r.sr = parseInt(r.sr);
+                            });
                         }
                         
-                        localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
-                        saveCourses();
+                        saveAll();
                         checkSetup();
-                        alert(`✅ Import erfolgreich!\n\nSpieler: ${myGolfer.name || 'Unbekannt'}\nHandicap: ${myGolfer.handicapIndex.toFixed(1)}\nRunden: ${myGolfer.rounds ? myGolfer.rounds.length : 0}`);
+                        showToast(`Import erfolgreich! ${myGolfer.name || 'Unbekannt'} • HCP ${myGolfer.handicapIndex.toFixed(1)} • ${myGolfer.rounds ? myGolfer.rounds.length : 0} Runden`, 'success', 4000);
                     });
                     
                 } catch(err) {
-                    alert('❌ Import-Fehler: ' + err.message);
+                    showToast('Import-Fehler: ' + err.message, 'error', 5000);
                 }
             };
             reader.readAsText(file);
@@ -3531,6 +3643,9 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     if (!data.golfer || !data.golfer.rounds || !Array.isArray(data.golfer.rounds)) {
                         throw new Error('Ungültiges Datenformat - golfer.rounds fehlt oder ist kein Array.');
                     }
+                    if (!data.courses || !Array.isArray(data.courses)) {
+                        throw new Error('Ungültiges Datenformat - courses fehlt oder ist kein Array.');
+                    }
                     
                     // Direkter Import ohne Bestätigung (Ersteinrichtung)
                     myGolfer = data.golfer;
@@ -3549,18 +3664,26 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                             ...r,
                             id: String(r.id)
                         }));
+                        // Migration: courseId ergänzen falls fehlend
+                        myGolfer.rounds.forEach(r => {
+                            if (!r.courseId) {
+                                const c = courses.find(c => c.name === r.course && c.holes === r.holes);
+                                if (c) r.courseId = c.id;
+                            }
+                            if (typeof r.cr === 'string') r.cr = parseFloat(r.cr);
+                            if (typeof r.sr === 'string') r.sr = parseInt(r.sr);
+                        });
                     }
                     
-                    localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
-                    saveCourses();
+                    saveAll();
                     
-                    alert(`✅ Import erfolgreich!\n\nSpieler: ${myGolfer.name || 'Unbekannt'}\nHandicap: ${myGolfer.handicapIndex.toFixed(1)}\nRunden: ${myGolfer.rounds ? myGolfer.rounds.length : 0}\nPlätze: ${Array.isArray(courses) ? courses.length : 0}`);
+                    showToast(`Import erfolgreich! ${myGolfer.name || 'Unbekannt'} • HCP ${myGolfer.handicapIndex.toFixed(1)} • ${myGolfer.rounds ? myGolfer.rounds.length : 0} Runden`, 'success', 4000);
                     
                     checkSetup();
                     
                 } catch(err) {
                     console.error('Setup Import failed:', err);
-                    alert('❌ Import-Fehler: ' + err.message);
+                    showToast('Import-Fehler: ' + err.message, 'error', 5000);
                 }
             };
             reader.readAsText(file);
@@ -3575,7 +3698,8 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     .map(r => ({ 
                         id: r.id,
                         date: r.date, 
-                        course: r.course, 
+                        course: r.course,
+                        courseId: r.courseId,
                         holes: r.holes,
                         strokes: r.strokes,
                         sd: r.scoreDifferential,
@@ -3585,7 +3709,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     .sort((a, b) => a.sd - b.sd);
                 
                     if (officialRounds.length === 0) {
-                        alert("Keine offiziellen Runden vorhanden!\n\nDein Handicap basiert auf dem Startwert: " + myGolfer.startHcp.toFixed(1));
+                        showToast('Keine offiziellen Runden. HCP basiert auf Startwert: ' + myGolfer.startHcp.toFixed(1), 'info', 4000);
                         return;
                     }
                 
@@ -3593,36 +3717,24 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     
                     // Bei weniger als 3 Runden: Start-HCP bleibt
                     if (count < 3) {
-                        alert(`WHS HANDICAP-BERECHNUNG\n\nDu hast erst ${count} offizielle Runde${count > 1 ? 'n' : ''}.\n\nMindestens 3 Runden sind nötig für die Berechnung.\nBis dahin gilt dein Start-Handicap: ${myGolfer.startHcp.toFixed(1)}`);
+                        showToast(`Erst ${count} offizielle Runde${count > 1 ? 'n' : ''}. Mindestens 3 nötig.\nStart-HCP: ${myGolfer.startHcp.toFixed(1)}`, 'info', 5000);
                         return;
                     }
                 
-                    // 2. WHS-Parameter: Wie viele Runden werden gewertet?
-                    const { numCounted, adjustment } = getWHSParameters(count);
+                    // 2. Zentrale HCP-Berechnung
+                    const sds = officialRounds.map(r => r.sd);
+                    const hcpHistory = myGolfer.hcpHistory || [];
+                    const hcpResult = calculateHCPFromSDs(sds, hcpHistory, myGolfer.startHcp, new Date().toISOString());
+                    
+                    const numCounted = hcpResult.numCounted;
+                    const adjustment = hcpResult.adjustment;
                     const countedRounds = officialRounds.slice(0, numCounted);
                     const countedIds = countedRounds.map(r => r.id);
-                    
-                    // 3. Berechne Durchschnitt + Adjustment
-                    let avgBest = countedRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
-                    const beforeAdj = avgBest;
-                    
-                    // 4. Adjustment anwenden (VOR Caps)
-                    let calculatedHcp = avgBest + adjustment;
-                    
-                    // 5. Runden auf 0.1
-                    calculatedHcp = Math.round(calculatedHcp * 10) / 10;
-                    const beforeCap = calculatedHcp;
-                    
-                    // 6. Soft/Hard Cap
-                    const hcpHistory = myGolfer.hcpHistory || [];
-                    const now = new Date().toISOString();
-                    const lowestHcp12m = getLowestHcpLast12Months(now, hcpHistory, myGolfer.startHcp);
-                    const softCapLimit = lowestHcp12m + 3.0;
-                    const hardCapLimit = lowestHcp12m + 5.0;
-                    const afterCap = applyCaps(calculatedHcp, lowestHcp12m);
+                    const beforeAdj = hcpResult.avgBeforeAdj;
+                    const beforeCap = hcpResult.beforeCap;
+                    const lowestHcp12m = hcpResult.lowestHcp12m;
+                    const afterCap = hcpResult.hcp;
                     const capsApplied = afterCap !== beforeCap;
-                    
-                    // 7. Endergebnis
                     const finalHcp = afterCap;
                     
                     // 8. Prüfe ob ESR (Exceptional Score Reduction) angewendet wurde
@@ -3663,7 +3775,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     msg += "\n━━━━━━━━━━━━━━━━━━━━━━━\n\n";
                     
                     countedRounds.forEach((r, i) => {
-                    const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+                    const course = findCourseForRound(r);
                     const par = course ? course.par : (r.holes === 9 ? 36 : 72);
                     const toPar = r.strokes - par;
                     const toParText = toPar > 0 ? `+${toPar}` : toPar.toString();
@@ -3672,7 +3784,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                         ? `SD ${r.sd.toFixed(1)} (9L: ${r.sd9.toFixed(1)})`
                         : `SD ${r.sd.toFixed(1)}`;
                     
-                    msg += `${i + 1}. ${r.date} • ${r.course}\n`;
+                    msg += `${i + 1}. ${r.date} • ${getCourseDisplayName(r)}\n`;
                     msg += `   ${r.strokes} Schläge (${toParText} zu Par) • ${sdText}\n`;
                 });
                     
@@ -3687,7 +3799,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                         msg += "Diese Runden sind in der Berechnung, zählen aber nicht:\n\n";
                         
                         notCounted.slice(0, 12).forEach(r => {
-                            const course = courses.find(c => c.name === r.course && c.holes === r.holes);
+                            const course = findCourseForRound(r);
                             const par = course ? course.par : (r.holes === 9 ? 36 : 72);
                             const toPar = r.strokes - par;
                             const toParText = toPar > 0 ? `+${toPar}` : toPar.toString();
@@ -3696,7 +3808,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                             const willFallOut = fallOutIds.includes(r.id);
                             const marker = willFallOut ? "⚠" : "•";
                             
-                            msg += `${marker} ${r.date} • ${r.course} • SD ${r.sd.toFixed(1)}\n`;
+                            msg += `${marker} ${r.date} • ${getCourseDisplayName(r)} • SD ${r.sd.toFixed(1)}\n`;
                         });
                         
                         if (notCounted.length > 12) {
@@ -3721,13 +3833,19 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
 
     // 2. Vom Start-HCP aus chronologisch durchrechnen
     let runningHcp = myGolfer.startHcp;
+    let lowestHcpEver = myGolfer.startHcp;
     
     // HCP-History aufbauen (für 12-Monats-Fenster)
     const hcpHistory = [{ date: myGolfer.created || myGolfer.rounds[0].date, hcp: myGolfer.startHcp }];
 
     for (let i = 0; i < myGolfer.rounds.length; i++) {
         const round = myGolfer.rounds[i];
-        const course = courses.find(c => c.name === round.course && c.holes === round.holes);
+        const course = findCourseForRound(round);
+
+        // Sync courseId falls noch fehlend (Altdaten)
+        if (course && !round.courseId) {
+            round.courseId = course.id;
+        }
 
         // A) Setze das damalige HCPI
         round.playingHcp = runningHcp;
@@ -3739,11 +3857,9 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
 
         // C) Score Differential neu berechnen
         if (course) {
-            const rawSD = parseFloat(
-                ((round.strokes - course.cr) * (113 / course.sr)).toFixed(1)
-            );
-            round.cr = course.cr.toFixed(1);
-            round.sr = course.sr.toFixed(0);
+            const rawSD = Math.round(((round.strokes - course.cr) * (113 / course.sr)) * 10) / 10;
+            round.cr = parseFloat(course.cr.toFixed(1));
+            round.sr = parseInt(course.sr.toFixed(0));
 
             // WHS 2024: 9-Loch SD → 18-Loch-Äquivalent
             if (round.holes === 9) {
@@ -3756,29 +3872,17 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
         }
 
         // D) HCP nach dieser Runde neu berechnen (nur offizielle)
-        const officialSoFar = myGolfer.rounds
+        const officialSDsSoFar = myGolfer.rounds
             .slice(0, i + 1)
             .filter(r => r.official !== false)
             .slice(-20)
-            .map(r => ({ id: r.id, sd: r.scoreDifferential }))
-            .sort((a, b) => a.sd - b.sd);
+            .map(r => r.scoreDifferential);
 
-        if (officialSoFar.length >= 3) {
-            const { numCounted, adjustment } = getWHSParameters(officialSoFar.length);
-            const bestRounds = officialSoFar.slice(0, numCounted);
-                let newHcp = bestRounds.reduce((a, b) => a + b.sd, 0) / numCounted;
+        const hcpResult = calculateHCPFromSDs(officialSDsSoFar, hcpHistory, myGolfer.startHcp, round.date);
+        if (hcpResult) {
+            runningHcp = hcpResult.hcp;
 
-            // Adjustment anwenden (VOR Caps, wie in updateMyHandicap)
-            newHcp += adjustment;
-            newHcp = Math.round(newHcp * 10) / 10;
-
-            // Soft/Hard Cap
-            const lowestHcp12m = getLowestHcpLast12Months(round.date, hcpHistory, myGolfer.startHcp);
-            newHcp = applyCaps(newHcp, lowestHcp12m);
-
-            runningHcp = newHcp;
-
-            // ESR in recalculateHistory
+            // ESR in recalculateHistory — prüfe gegen das HCP VOR dieser Runde (playingHcp)
             if (round.official !== false) {
                 const esrDiff = round.playingHcp - round.scoreDifferential;
                 if (esrDiff >= 10.0) {
@@ -3786,6 +3890,11 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 } else if (esrDiff >= 7.0) {
                     runningHcp = Math.max(-5.0, runningHcp - 1.0);
                 }
+            }
+
+            // FIX: Allzeit-Tiefstwert bei jedem Schritt tracken
+            if (runningHcp < lowestHcpEver) {
+                lowestHcpEver = runningHcp;
             }
         }
 
@@ -3796,10 +3905,8 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
     }
 
     myGolfer.handicapIndex = runningHcp;
-    // Allzeit-Tiefstwert pflegen
-    if (myGolfer.lowestHandicapIndex === undefined || runningHcp < myGolfer.lowestHandicapIndex) {
-        myGolfer.lowestHandicapIndex = runningHcp;
-    }
+    // FIX: Allzeit-Tiefstwert aus vollständigem Durchlauf übernehmen
+    myGolfer.lowestHandicapIndex = lowestHcpEver;
     // hcpHistory begrenzen: max. 100 Einträge
     myGolfer.hcpHistory = hcpHistory.length > 100 ? hcpHistory.slice(-100) : hcpHistory;
     updateUnofficialHandicap();
@@ -3817,19 +3924,16 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
     } else {
         myGolfer.countedRoundIds = [];
     }
-
-    localStorage.setItem('myGolfer', JSON.stringify(myGolfer));
 }
         
         function manualRecalculate() {
             if (!confirm('Alle Runden chronologisch neu berechnen?\n\nDas korrigiert HCPI, Spielvorgaben und Score Differentials für alle Runden.')) return;
             
             recalculateHistory();
+            saveAll();
             updateUI();
             
-            alert('✅ Neuberechnung abgeschlossen!\n\n' +
-                'Handicap: ' + myGolfer.handicapIndex.toFixed(1) + '\n' +
-                'Runden neu berechnet: ' + myGolfer.rounds.length);
+            showToast('Neuberechnung abgeschlossen!\nHCP: ' + myGolfer.handicapIndex.toFixed(1) + ' • ' + myGolfer.rounds.length + ' Runden', 'success', 4000);
         }
         
         // Auto-Focus Einstellung laden
@@ -3898,7 +4002,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             if (confirm(message)) {
                 callback(importedData);
             } else {
-                alert('Import abgebrochen. Keine Daten wurden geändert.');
+                showToast('Import abgebrochen', 'info');
             }
         }
         
@@ -3910,6 +4014,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                             localStorage.removeItem('courses');
                             localStorage.removeItem('autoFocusStrokes');
                             localStorage.removeItem('iosInstallPromptShown');
+                            localStorage.removeItem('offlineReadyShown');
                             location.reload();
                         }
                     }
@@ -3922,13 +4027,32 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     if ('serviceWorker' in navigator) {
                         navigator.serviceWorker.register('./sw.js')
                             .then(reg => {
-                                console.log('Service Worker registriert:', reg.scope);
+                                // Offline-ready Toast (nur einmal)
+                                if (reg.active && !navigator.serviceWorker.controller) {
+                                    // Erste Installation – SW ist aktiv aber steuert die Seite noch nicht
+                                    setTimeout(() => {
+                                        if (!localStorage.getItem('offlineReadyShown')) {
+                                            showToast('App ist offline verfügbar ✓', 'success', 4000);
+                                            localStorage.setItem('offlineReadyShown', 'true');
+                                        }
+                                    }, 1500);
+                                }
+                                
                                 // Update prüfen
                                 reg.addEventListener('updatefound', () => {
                                     const newWorker = reg.installing;
                                     newWorker.addEventListener('statechange', () => {
                                         if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
-                                            console.log('Neue Version verfügbar – Seite wird aktualisiert.');
+                                            showToast('Neue Version verfügbar!', 'info', 10000, {
+                                                label: 'Aktualisieren',
+                                                fn: function() { location.reload(); }
+                                            });
+                                        } else if (newWorker.state === 'activated' && !navigator.serviceWorker.controller) {
+                                            // Erstinstallation abgeschlossen
+                                            if (!localStorage.getItem('offlineReadyShown')) {
+                                                showToast('App ist offline verfügbar ✓', 'success', 4000);
+                                                localStorage.setItem('offlineReadyShown', 'true');
+                                            }
                                         }
                                     });
                                 });
@@ -3984,6 +4108,20 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     }
                 }
         
+                // Auto-Backup: Letzte Sicherung in localStorage merken
+                function autoBackupCheck() {
+                    if (!myGolfer || !myGolfer.rounds || myGolfer.rounds.length < 3) return;
+                    const lastBackup = localStorage.getItem('lastAutoBackupDate');
+                    const now = new Date().toISOString().split('T')[0];
+                    const lastRoundDate = myGolfer.rounds[myGolfer.rounds.length - 1].date;
+                    // Backup empfehlen wenn letztes Backup > 7 Tage und neue Runden vorhanden
+                    if (!lastBackup || (new Date(now) - new Date(lastBackup)) > 7 * 24 * 60 * 60 * 1000) {
+                        if (lastBackup !== lastRoundDate) {
+                            localStorage.setItem('lastAutoBackupDate', now);
+                        }
+                    }
+                }
+                
                 // Chart bei Fenstergrößenänderung neu zeichnen (mit Debouncing)
                 let resizeTimer;
                 window.addEventListener('resize', function() {
