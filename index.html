@@ -2726,12 +2726,12 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                 coursesPlayed[key].scoreDiffs.push(r.scoreDifferential);
                 coursesPlayed[key].rounds.push(r);
             });
-            // Pro Platz: nur die letzten 20 Runden für Statistik
+            // Pro Platz: nur die letzten 7 Runden für Statistik
             for (const key of Object.keys(coursesPlayed)) {
                 const d = coursesPlayed[key];
-                d.rounds = d.rounds.slice(-20);
-                d.strokes = d.strokes.slice(-20);
-                d.scoreDiffs = d.scoreDiffs.slice(-20);
+                d.rounds = d.rounds.slice(-7);
+                d.strokes = d.strokes.slice(-7);
+                d.scoreDiffs = d.scoreDiffs.slice(-7);
                 d.count = d.rounds.length;
             }
             return Object.entries(coursesPlayed).sort((a, b) => b[1].totalCount - a[1].totalCount);
