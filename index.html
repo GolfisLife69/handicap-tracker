@@ -2741,19 +2741,27 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             return goalText;
         }
 
-        function calcCourseStatsData(recent20) {
+        function calcCourseStatsData(allRounds) {
             const coursesPlayed = {};
-            recent20.forEach(r => {
+            allRounds.forEach(r => {
                 const key = r.courseId || `${r.course}-${r.holes}L`;
                 if (!coursesPlayed[key]) {
-                    coursesPlayed[key] = { name: getCourseDisplayName(r), holes: r.holes, courseId: r.courseId, count: 0, strokes: [], scoreDiffs: [], rounds: [] };
+                    coursesPlayed[key] = { name: getCourseDisplayName(r), holes: r.holes, courseId: r.courseId, totalCount: 0, count: 0, strokes: [], scoreDiffs: [], rounds: [] };
                 }
-                coursesPlayed[key].count++;
+                coursesPlayed[key].totalCount++;
                 coursesPlayed[key].strokes.push(r.strokes);
                 coursesPlayed[key].scoreDiffs.push(r.scoreDifferential);
                 coursesPlayed[key].rounds.push(r);
             });
-            return Object.entries(coursesPlayed).sort((a, b) => b[1].count - a[1].count);
+            // Pro Platz: nur die letzten 20 Runden für Statistik
+            for (const key of Object.keys(coursesPlayed)) {
+                const d = coursesPlayed[key];
+                d.rounds = d.rounds.slice(-20);
+                d.strokes = d.strokes.slice(-20);
+                d.scoreDiffs = d.scoreDiffs.slice(-20);
+                d.count = d.rounds.length;
+            }
+            return Object.entries(coursesPlayed).sort((a, b) => b[1].totalCount - a[1].totalCount);
         }
 
         function buildGeneralStatsHTML(gen) {
@@ -2815,7 +2823,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
                     <div class="course-stats-item">
                         <div style="font-weight: 600; font-size: 0.85em; margin-bottom: 5px">${esc(displayName)}</div>
                         <div style="font-size: 0.85em; color: var(--color-text-secondary)">
-                            ${data.count}x gespielt • Ø ${avgStrokes} Schläge<br>
+                            ${data.totalCount}x gespielt • Ø ${avgStrokes} Schläge${data.totalCount > data.count ? ` <span style="opacity:0.6">(Statistik: letzte ${data.count})</span>` : ''}<br>
                             <span style="color: ${whsColor}; font-weight: 600">Netto-Performance: ${whsText}</span><br>
                             <strong>Beste:</strong> ${bestStrokes} Schläge (${bestToParText})${bestDate ? ` • ${bestDate}` : ''}
                         </div>
@@ -2857,7 +2865,7 @@ function convert9HoleTo18HoleSD(sd9, handicapIndex) {
             const gen = calcGeneralStats(rounds);
             const trend = calcTrendStats(rounds, gen);
             const goalText = calcGoalText(rounds, gen, trend);
-            const courseEntries = calcCourseStatsData(gen.recent20);
+            const courseEntries = calcCourseStatsData(rounds);
 
             // DOM-Update
             const generalStats = document.getElementById('generalStats');
